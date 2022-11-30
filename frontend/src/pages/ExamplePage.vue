@@ -1,7 +1,15 @@
 <template>
     <div class="page">
-        <h1>Test</h1>
-        <h1>Test</h1>
-        <h1>Test</h1>
+        <calendar />
     </div>
 </template>
+
+<script lang="ts">
+import Calendar from '../components/Calendar.vue';
+
+export default {
+    components: {
+        "calendar": Calendar,
+    }
+}
+</script>

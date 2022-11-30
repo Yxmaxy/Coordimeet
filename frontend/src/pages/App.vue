@@ -8,6 +8,6 @@
 <style scoped lang="scss">
 .wrapper-page {
     min-height: 100vh;
-    background-color: red;
+    display: flex;
 }
 </style>
