@@ -29,8 +29,8 @@ export default {
     data() {
         return {
             dateRange: {
-                from: new Date("12-7-2022"),
-                to: new Date("12-23-2022")
+                from: new Date(2022, 11, 11),
+                to: new Date(2022, 11, 19)
             } as IDateRange
         }
     }

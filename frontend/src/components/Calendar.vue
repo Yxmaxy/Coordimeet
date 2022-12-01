@@ -1,7 +1,8 @@
 <template>
     <div class="calendar">
-        <div v-for="day in days">
-            {{day.date.getDate()}}
+        <div v-for="day in days" :class="{'inRange': day.isInRange}">
+            {{day.date}}
+            {{day.isInRange}}
         </div>
     </div>
 </template>
@@ -47,12 +48,11 @@ export default defineComponent({
             const range = this.dateRange as IDateRange;
             const from = this.getBufferedDate(range.from, 7);
             const to = this.getBufferedDate(range.to, 7, true);
-            
-            for (let d = from; d <= to; d.setDate(d.getDate() + 1)) {
-                console.log(d.getDate());
-                
+
+            for (let d = new Date(from); d <= to; d = new Date(d.setDate(d.getDate() + 1))) {
                 this.days.push({
-                    date: new Date(d),
+                    date: d.getDate(),
+                    isInRange: d >= range.from && d <= range.to,
                 });
             }
         }
@@ -88,6 +88,11 @@ export default defineComponent({
             color: $border-color;
         };
         box-sizing: border-box;
+        cursor: pointer;
+        user-select: none;
+    }
+    .inRange {
+        background-color: lightpink;
     }
 }
 </style>
