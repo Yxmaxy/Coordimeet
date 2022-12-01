@@ -30,6 +30,7 @@ header {
     min-height: 100vh;
 }
 .page-container {
+    display: flex;
     flex: 1;
 }
 </style>
