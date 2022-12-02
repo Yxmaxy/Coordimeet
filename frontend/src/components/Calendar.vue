@@ -7,10 +7,12 @@
                 'available': day.isAvailable && !selectUnavailable,
                 'unavailable': day.isInRange && selectUnavailable && !day.isAvailable,
             }"
-            @pointerdown="(event) => onPointerDown(event, day)"
-            @pointerenter="(event) => onPointerEnter(event, day)"
-            @pointerup="onPoinerUp"
-            @pointerleave="(event) => onPointerLeave(event, day)"
+            @mousedown="(event) => onMouseDown(event, day)"
+            @mouseenter="(event) => onMouseEnter(event, day)"
+            @mouseup="onMouseUp"
+            @mouseleave="(event) => onMouseLeave(event, day)"
+            @touchstart="(event) => onTouchStart(event, day)"
+            @touchend="(event) => onTouchEnd(event, day)"
         >
             {{day.display}}
         </div>
@@ -19,6 +21,7 @@
 
 <script lang="ts">
 import { IDateRange, ICalendarDate } from '../common/interfaces';
+const longpressTimeout = 475;
 
 export default {
     name: "calendar",
@@ -39,6 +42,7 @@ export default {
         return {
             days: [] as ICalendarDate[],
             touchStart: undefined as ICalendarDate|undefined,
+            timeoutObj: undefined as number|undefined,
         }
     },
     methods: {
@@ -80,24 +84,47 @@ export default {
             }
         },
         // methods for selecting available
-        onPointerDown(event: PointerEvent, day: ICalendarDate) {
+        onMouseDown(event: MouseEvent, day: ICalendarDate) {
             if (!day.isInRange)
                 return;
             this.touchStart = day;
             day.isAvailable = !day.isAvailable;
         },
-        onPointerEnter(event: PointerEvent, day: ICalendarDate) {
+        onMouseEnter(event: MouseEvent, day: ICalendarDate) {
             if (event.buttons === 1 && this.touchStart !== undefined) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
-        onPoinerUp() {
+        onMouseUp() {
             this.touchStart = undefined;
         },
-        onPointerLeave(event: PointerEvent, day: ICalendarDate) {
+        onMouseLeave(event: MouseEvent, day: ICalendarDate) {
             if (event.buttons === 1 && this.touchStart !== undefined) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
+        },
+        // methods for mobile devices
+        onTouchStart(event: TouchEvent, day: ICalendarDate) {
+            event.preventDefault();
+            if (this.touchStart === undefined) {  // press on first date
+                this.timeoutObj = setTimeout(() => {  // if event is longpress select multiple
+                    // Longpress event
+                    window.navigator.vibrate(200);
+                    this.touchStart = day;
+                    this.timeoutObj = undefined;
+                }, longpressTimeout);
+            } else {  // press on first date if previous press was longpress
+                this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
+                this.touchStart = undefined;
+            }
+        },
+        onTouchEnd(event: TouchEvent, day: ICalendarDate) {
+            if (this.timeoutObj !== undefined) {
+                // Normal event
+                day.isAvailable = !day.isAvailable;
+            }
+            clearInterval(this.timeoutObj);
+            this.timeoutObj = undefined;
         },
     },
     mounted() {
