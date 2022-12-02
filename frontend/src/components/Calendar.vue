@@ -4,7 +4,8 @@
             v-for="day in days"
             :class="{
                 'in-range': day.isInRange,
-                'available': day.isAvailable,
+                'available': day.isAvailable && !selectUnavailable,
+                'unavailable': day.isAvailable && selectUnavailable,
             }"
             @pointerdown="(event) => onPointerDown(event, day)"
             @pointerenter="(event) => onPointerEnter(event, day)"
@@ -30,6 +31,10 @@ export default defineComponent({
                 to: new Date()
             } as IDateRange
         },
+        selectUnavailable: {
+            type: Boolean,
+            default: false
+        }
     },
     data() {
         return {
@@ -82,7 +87,7 @@ export default defineComponent({
         },
         onPointerEnter(event: PointerEvent, day: ICalendarDate) {
             if (event.buttons === 1 && this.touchStart !== undefined) {
-                this.selectDateFromTo(this.touchStart, day);
+                this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
         onPoinerUp() {
@@ -90,7 +95,7 @@ export default defineComponent({
         },
         onPointerLeave(event: PointerEvent, day: ICalendarDate) {
             if (event.buttons === 1 && this.touchStart !== undefined) {
-                this.selectDateFromTo(this.touchStart, day, false);
+                this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
     },
@@ -134,7 +139,7 @@ export default defineComponent({
     .available {
         background-color: lightgreen;
     }
-    .not-avilable {
+    .unavailable {
         background-color: lightcoral;
     }
 }

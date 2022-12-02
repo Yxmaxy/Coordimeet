@@ -11,8 +11,13 @@
         </aside>
         <main>
             <div>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ut sint aliquam fugit esse beatae, earum quas fugiat qui. Minus quae distinctio corrupti assumenda harum quod ab, perferendis id amet saepe?</div>
+            <label>
+                Select unavailable dates
+                <input v-model="selectUnavailable" type="checkbox" />
+            </label>
             <calendar
                 :dateRange="dateRange"
+                :selectUnavailable="selectUnavailable"
             />
         </main>
     </div>
@@ -31,7 +36,8 @@ export default {
             dateRange: {
                 from: new Date(2022, 11, 11),
                 to: new Date(2022, 11, 19)
-            } as IDateRange
+            } as IDateRange,
+            selectUnavailable: false,
         }
     }
 }
