@@ -18,10 +18,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
 import { IDateRange, ICalendarDate } from '../common/interfaces';
 
-export default defineComponent({
+export default {
     name: "calendar",
     props: {
         dateRange: {
@@ -104,7 +103,7 @@ export default defineComponent({
     mounted() {
         this.calculateShownDates();
     },
-});
+};
 </script>
 <style lang="scss" scoped>
 .calendar {
