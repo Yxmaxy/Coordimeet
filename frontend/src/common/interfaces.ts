@@ -6,6 +6,8 @@ export interface IDateRange {
 
 // Single calendar date
 export interface ICalendarDate {
-    date: number,
+    display: number,
+    date: Date,
     isInRange: boolean,
+    isAvailable?: boolean,
 }

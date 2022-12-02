@@ -1,8 +1,17 @@
 <template>
     <div class="calendar">
-        <div v-for="day in days" :class="{'inRange': day.isInRange}">
-            {{day.date}}
-            {{day.isInRange}}
+        <div
+            v-for="day in days"
+            :class="{
+                'in-range': day.isInRange,
+                'available': day.isAvailable,
+            }"
+            @pointerdown="(event) => onPointerDown(event, day)"
+            @pointerenter="(event) => onPointerEnter(event, day)"
+            @pointerup="onPoinerUp"
+            @pointerleave="(event) => onPointerLeave(event, day)"
+        >
+            {{day.display}}
         </div>
     </div>
 </template>
@@ -25,6 +34,7 @@ export default defineComponent({
     data() {
         return {
             days: [] as ICalendarDate[],
+            touchStart: undefined as ICalendarDate|undefined,
         }
     },
     methods: {
@@ -51,11 +61,38 @@ export default defineComponent({
 
             for (let d = new Date(from); d <= to; d = new Date(d.setDate(d.getDate() + 1))) {
                 this.days.push({
-                    date: d.getDate(),
+                    display: d.getDate(),
+                    date: new Date(d),
                     isInRange: d >= range.from && d <= range.to,
                 });
             }
-        }
+        },
+        selectDateFromTo(start: ICalendarDate, end: ICalendarDate, setAvailable: boolean = true) {
+            const from = start.date < end.date ? start : end;
+            const to = start.date < end.date ? end : start;
+            for (const day of this.days) {
+                if (day.date >= from.date && day.date <= to.date)
+                    day.isAvailable = setAvailable;
+            }
+        },
+        // methods for selecting available
+        onPointerDown(event: PointerEvent, day: ICalendarDate) {
+            this.touchStart = day;
+            day.isAvailable = !day.isAvailable;
+        },
+        onPointerEnter(event: PointerEvent, day: ICalendarDate) {
+            if (event.buttons === 1 && this.touchStart !== undefined) {
+                this.selectDateFromTo(this.touchStart, day);
+            }
+        },
+        onPoinerUp() {
+            this.touchStart = undefined;
+        },
+        onPointerLeave(event: PointerEvent, day: ICalendarDate) {
+            if (event.buttons === 1 && this.touchStart !== undefined) {
+                this.selectDateFromTo(this.touchStart, day, false);
+            }
+        },
     },
     mounted() {
         this.calculateShownDates();
@@ -91,8 +128,14 @@ export default defineComponent({
         cursor: pointer;
         user-select: none;
     }
-    .inRange {
-        background-color: lightpink;
+    .in-range {
+        background-color: lightgoldenrodyellow;
+    }
+    .available {
+        background-color: lightgreen;
+    }
+    .not-avilable {
+        background-color: lightcoral;
     }
 }
 </style>
