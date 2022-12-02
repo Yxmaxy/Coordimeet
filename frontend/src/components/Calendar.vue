@@ -5,7 +5,7 @@
             :class="{
                 'in-range': day.isInRange,
                 'available': day.isAvailable && !selectUnavailable,
-                'unavailable': day.isAvailable && selectUnavailable,
+                'unavailable': day.isInRange && selectUnavailable && !day.isAvailable,
             }"
             @pointerdown="(event) => onPointerDown(event, day)"
             @pointerenter="(event) => onPointerEnter(event, day)"
@@ -61,8 +61,8 @@ export default defineComponent({
         // calculate dates to display on calendar
         calculateShownDates() {
             const range = this.dateRange as IDateRange;
-            const from = this.getBufferedDate(range.from, 7);
-            const to = this.getBufferedDate(range.to, 7, true);
+            const from = this.getBufferedDate(range.from, 0);
+            const to = this.getBufferedDate(range.to, 0, true);
 
             for (let d = new Date(from); d <= to; d = new Date(d.setDate(d.getDate() + 1))) {
                 this.days.push({
@@ -76,12 +76,14 @@ export default defineComponent({
             const from = start.date < end.date ? start : end;
             const to = start.date < end.date ? end : start;
             for (const day of this.days) {
-                if (day.date >= from.date && day.date <= to.date)
+                if (day.date >= from.date && day.date <= to.date && day.isInRange)
                     day.isAvailable = setAvailable;
             }
         },
         // methods for selecting available
         onPointerDown(event: PointerEvent, day: ICalendarDate) {
+            if (!day.isInRange)
+                return;
             this.touchStart = day;
             day.isAvailable = !day.isAvailable;
         },

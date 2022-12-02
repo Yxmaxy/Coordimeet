@@ -10,7 +10,6 @@
             </div>
         </aside>
         <main>
-            <div>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ut sint aliquam fugit esse beatae, earum quas fugiat qui. Minus quae distinctio corrupti assumenda harum quod ab, perferendis id amet saepe?</div>
             <label>
                 Select unavailable dates
                 <input v-model="selectUnavailable" type="checkbox" />
