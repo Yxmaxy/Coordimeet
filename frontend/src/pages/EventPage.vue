@@ -1,18 +1,24 @@
 <template>
     <div class="event-page">
         <aside class="responses-area">
-            <div>
-                Responses
+            <h1>Responses</h1>
+            <div v-for="index in 50" class="response">
+                <div>Ime</div>
+                <div>Odgovor</div>
             </div>
         </aside>
         <div class="details-area">
-            Event name
+            <h1>Dogodek 1</h1>
+            <div>Deadline: 3. 12. 2022</div>
+            <div>Trajanje: 11. 12. 2022 - 19. 12. 2022</div>
         </div>
         <main class="calendar-area">
-            <label>
-                Select unavailable dates
-                <input v-model="selectUnavailable" type="checkbox" />
-            </label>
+            <div>
+                <label>
+                    Select unavailable dates
+                    <input v-model="selectUnavailable" type="checkbox" />
+                </label>
+            </div>
             <calendar
                 class="calendar"
                 :dateRange="dateRange"
@@ -44,6 +50,8 @@ export default {
 
 <style lang="scss" scoped>
 .event-page {
+    $sectionPadding: 0.5rem;
+
     flex: 1;
     display: grid;
     grid-template-rows: min(15rem, 30vh) 1fr;
@@ -55,20 +63,35 @@ export default {
     .responses-area {
         grid-area: responses;
         background-color: lightcoral;
+        overflow: auto;
+
+        h1 {
+            background-color: lightcoral;
+            padding: $sectionPadding;
+            position: sticky;
+            top: 0;
+        }
+
+        .response {
+            display: flex;
+            justify-content: space-between;
+            padding: $sectionPadding;
+        }
     }
     .calendar-area {
         grid-area: calendar;
         background-color: lightcyan;
-        flex: 1;
-
+        display: flex;
+        flex-direction: column;
+        padding: $sectionPadding;
         .calendar {
-            height: 100%;
-            padding: 2rem;
+            flex: 1;
         }
     }
     .details-area {
         grid-area: details;
         background-color: lightsalmon;
+        padding: $sectionPadding;
     }
 }
 </style>

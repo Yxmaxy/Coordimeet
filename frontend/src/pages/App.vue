@@ -1,11 +1,9 @@
 <!-- Wrapper page for all other pages -->
 <template>
-    <div class="wrapper-page">
-       <header-component />
-        <div class="page-container">
-            <router-view />
-        </div>
-        <footer-component />
+    <div class="app">
+        <header-component class="header-section"/>
+        <router-view class="page-section"/>
+        <footer-component class="footer-section" />
     </div>
 </template>
 
@@ -21,14 +19,23 @@ export default {
 }
 </script>
 
-<style scoped lang="scss">
-.wrapper-page {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+<style lang="scss" scoped>
+.app {
+    height: 100vh;
+    display: grid;
+    grid-template-areas:
+        "header"
+        "page"
+        "footer";
+    grid-template-rows: 3rem calc(100vh - 6rem) 3rem;
 }
-.page-container {
-    display: flex;
-    flex: 1;
+.header-section {
+    grid-area: header;
+}
+.page-section {
+    grid-area: page;
+}
+.footer-section {
+    grid-area: footer;
 }
 </style>
