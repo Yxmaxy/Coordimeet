@@ -19,9 +19,6 @@
                 :selectUnavailable="selectUnavailable"
             />
         </main>
-        <div class="bottom-area">
-            
-        </div>
     </div>
 </template>
 
@@ -49,12 +46,11 @@ export default {
 .event-page {
     flex: 1;
     display: grid;
-    grid-template-rows: min(15rem, 30vh) 1fr 3rem;
+    grid-template-rows: min(15rem, 30vh) 1fr;
     grid-template-columns: min(20rem, 30vw) 1fr;
     grid-template-areas:
         "responses details"
-        "responses calendar"
-        "bottom bottom";
+        "responses calendar";
 
     .responses-area {
         grid-area: responses;
@@ -73,10 +69,6 @@ export default {
     .details-area {
         grid-area: details;
         background-color: lightsalmon;
-    }
-    .bottom-area {
-        grid-area: bottom;
-        background-color: lightseagreen;
     }
 }
 </style>

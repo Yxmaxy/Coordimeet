@@ -5,25 +5,23 @@
         <div class="page-container">
             <router-view />
         </div>
+        <footer-component />
     </div>
 </template>
 
 <script lang="ts">
 import Header from "../components/Header.vue";
+import Footer from "../components/Footer.vue";
 
 export default {
     components: {
         "header-component": Header,
+        "footer-component": Footer,
     }
 }
 </script>
 
 <style scoped lang="scss">
-header {
-    display: flex;
-    justify-content: space-between;
-    background-color: lightgray;
-}
 .wrapper-page {
     display: flex;
     flex-direction: column;
