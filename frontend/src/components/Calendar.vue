@@ -20,6 +20,7 @@
 </template>
 
 <script lang="ts">
+import { formatDateDayMonth } from "../common/helpers";
 import { IDateRange, ICalendarDate } from '../common/interfaces';
 const longpressTimeout = 475;
 
@@ -69,7 +70,7 @@ export default {
 
             for (let d = new Date(from); d <= to; d = new Date(d.setDate(d.getDate() + 1))) {
                 this.days.push({
-                    display: d.getDate(),
+                    display: formatDateDayMonth(d),
                     date: new Date(d),
                     isInRange: d >= range.from && d <= range.to,
                 });
