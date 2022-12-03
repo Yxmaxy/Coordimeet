@@ -1,5 +1,5 @@
 <template>
-    <div class="calendar">
+    <div class="calendar-component">
         <div
             v-for="day in days"
             :class="{
@@ -133,30 +133,19 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-.calendar {
-    $border-width: 1px;
-    $border-color: black;
+.calendar-component {
 
     box-sizing: border-box;
     flex: 1;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    border: {
-        width: calc($border-width / 2);
-        style: solid;
-        color: $border-color;
-    };
+    gap: 2px;
 
     // td
     & > div {
         display: flex;
         justify-content: center;
         align-items: center;
-        border: {
-            width: $border-width;
-            style: solid;
-            color: $border-color;
-        };
         box-sizing: border-box;
         cursor: pointer;
         user-select: none;

@@ -1,24 +1,27 @@
 <template>
-    <div class="wrapper">
-        <aside>
-            <div>
-                <h2>Event name</h2>
-                <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Officia beatae exercitationem.</p>
-            </div>
+    <div class="event-page">
+        <aside class="responses-area">
             <div>
                 Responses
             </div>
         </aside>
-        <main>
+        <div class="details-area">
+            Event name
+        </div>
+        <main class="calendar-area">
             <label>
                 Select unavailable dates
                 <input v-model="selectUnavailable" type="checkbox" />
             </label>
             <calendar
+                class="calendar"
                 :dateRange="dateRange"
                 :selectUnavailable="selectUnavailable"
             />
         </main>
+        <div class="bottom-area">
+            
+        </div>
     </div>
 </template>
 
@@ -43,17 +46,37 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.wrapper {
+.event-page {
     flex: 1;
-    display: flex;
-    flex-direction: row;
-}
-aside {
-    flex: 1;
-}
-main {
-    flex: 3;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-rows: min(15rem, 30vh) 1fr 3rem;
+    grid-template-columns: min(20rem, 30vw) 1fr;
+    grid-template-areas:
+        "responses details"
+        "responses calendar"
+        "bottom bottom";
+
+    .responses-area {
+        grid-area: responses;
+        background-color: lightcoral;
+    }
+    .calendar-area {
+        grid-area: calendar;
+        background-color: lightcyan;
+        flex: 1;
+
+        .calendar {
+            height: 100%;
+            padding: 2rem;
+        }
+    }
+    .details-area {
+        grid-area: details;
+        background-color: lightsalmon;
+    }
+    .bottom-area {
+        grid-area: bottom;
+        background-color: lightseagreen;
+    }
 }
 </style>
