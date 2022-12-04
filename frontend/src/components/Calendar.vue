@@ -1,27 +1,33 @@
 <template>
-    <div class="calendar-component">
-        <div
-            v-for="day in days"
-            :class="{
-                'in-range': day.isInRange,
-                'available': day.isAvailable && !selectUnavailable,
-                'unavailable': day.isInRange && selectUnavailable && !day.isAvailable,
-            }"
-            @mousedown="(event) => onMouseDown(event, day)"
-            @mouseenter="(event) => onMouseEnter(event, day)"
-            @mouseup="onMouseUp"
-            @mouseleave="(event) => onMouseLeave(event, day)"
-            @touchstart="(event) => onTouchStart(event, day)"
-            @touchend="(event) => onTouchEnd(event, day)"
-        >
-            {{day.display}}
-        </div>
+    <div v-if="(type === 1)">
+        <button @click="selectedWeek--">Prev</button>
+        <button @click="selectedWeek++">Next</button>
+    </div>
+    <div :class="{'calendar-component': true, 'type-datetime': type === 1}">
+        <template v-for="(day, index) in days">
+            <div
+                v-if="type === 0 || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
+                :class="{
+                    'in-range': day.isInRange,
+                    'available': day.isAvailable && !selectUnavailable,
+                    'unavailable': day.isInRange && selectUnavailable && !day.isAvailable,
+                }"
+                @mousedown="(event) => onMouseDown(event, day)"
+                @mouseenter="(event) => onMouseEnter(event, day)"
+                @mouseup="onMouseUp"
+                @mouseleave="(event) => onMouseLeave(event, day)"
+                @touchstart="(event) => onTouchStart(event, day)"
+                @touchend="(event) => onTouchEnd(event, day)"
+            >
+                {{day.display}}
+            </div>
+        </template>
     </div>
 </template>
 
 <script lang="ts">
-import { formatDateDayMonth } from "../common/helpers";
-import { IDateRange, ICalendarDate } from '../common/interfaces';
+import { formatDateDayMonth, formatDateHourDayMonth } from "../common/helpers";
+import { IDateRange, ICalendarDate, CalendarType } from '../common/interfaces';
 const longpressTimeout = 475;
 
 export default {
@@ -37,13 +43,18 @@ export default {
         selectUnavailable: {
             type: Boolean,
             default: false
-        }
+        },
+        type: {
+            type: Number,
+            default: CalendarType.Date
+        },
     },
     data() {
         return {
             days: [] as ICalendarDate[],
             touchStart: undefined as ICalendarDate|undefined,
             timeoutObj: undefined as number|undefined,
+            selectedWeek: 0,
         }
     },
     methods: {
@@ -58,19 +69,27 @@ export default {
             const d = new Date(date);  // copy date
             const dayOfWeek = (end ? 6 - this.getDayMonToSun(d) : this.getDayMonToSun(d)) + buffer;
             return end ?
-                new Date(d.setDate(d.getDate() + dayOfWeek)) :
+                new Date(new Date(d.setDate(d.getDate() + dayOfWeek)).setHours(23)) :
                 new Date(d.setDate(d.getDate() - dayOfWeek));
-            
+        },
+        // increment date by hour or day
+        incrementDate(date: Date): Date {
+            if (this.type === CalendarType.Date)
+                return new Date(date.setDate(date.getDate() + 1));
+            return new Date(date.setHours(date.getHours() + 1));
         },
         // calculate dates to display on calendar
         calculateShownDates() {
             const range = this.dateRange as IDateRange;
+            if (this.type === CalendarType.DateTime)
+                range.to.setHours(24);  // set to full day
             const from = this.getBufferedDate(range.from, 0);
             const to = this.getBufferedDate(range.to, 0, true);
 
-            for (let d = new Date(from); d <= to; d = new Date(d.setDate(d.getDate() + 1))) {
+            for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {
                 this.days.push({
-                    display: formatDateDayMonth(d),
+                    display: (this.type === CalendarType.Date) ?
+                        formatDateDayMonth(d) : formatDateHourDayMonth(d),
                     date: new Date(d),
                     isInRange: d >= range.from && d <= range.to,
                 });
@@ -135,12 +154,17 @@ export default {
 </script>
 <style lang="scss" scoped>
 .calendar-component {
-
     box-sizing: border-box;
     flex: 1;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 2px;
+
+    &.type-datetime {
+        grid-template-rows: repeat(24, 1fr);
+        grid-auto-flow: column;
+        grid-template-columns: unset !important;
+    }
 
     // td
     & > div {

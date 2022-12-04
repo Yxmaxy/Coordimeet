@@ -2,9 +2,11 @@
     <div class="event-page">
         <aside class="responses-area">
             <h1>Responses</h1>
-            <div v-for="index in 50" class="response">
-                <div>Ime</div>
-                <div>Odgovor</div>
+            <div>
+                <div v-for="index in 50" class="response">
+                    <div>Ime</div>
+                    <div>Odgovor</div>
+                </div>
             </div>
         </aside>
         <div class="details-area">
@@ -21,6 +23,7 @@
             </div>
             <calendar
                 class="calendar"
+                :type="calendarType"
                 :dateRange="dateRange"
                 :selectUnavailable="selectUnavailable"
             />
@@ -29,13 +32,12 @@
 </template>
 
 <script lang="ts">
-import CalendarTime from '../components/CalendarTime.vue';
 import Calendar from '../components/Calendar.vue';
-import { IDateRange } from '../common/interfaces';
+import { IDateRange, CalendarType } from '../common/interfaces';
 
 export default {
     components: {
-        "calendar": CalendarTime,
+        "calendar": Calendar,
     },
     data() {
         return {
@@ -44,6 +46,7 @@ export default {
                 to: new Date(2022, 11, 19)
             } as IDateRange,
             selectUnavailable: false,
+            calendarType: CalendarType.DateTime,
         }
     }
 }

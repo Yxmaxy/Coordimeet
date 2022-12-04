@@ -11,3 +11,9 @@ export interface ICalendarDate {
     isInRange: boolean,
     isAvailable?: boolean,
 }
+
+// Calendar type
+export enum CalendarType {
+    Date = 0,
+    DateTime = 1,
+}
