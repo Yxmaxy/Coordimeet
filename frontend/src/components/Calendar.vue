@@ -4,10 +4,14 @@
             Select unavailable dates
             <input v-model="selectUnavailable" type="checkbox" />
         </label>
-        <div v-if="(type === 1)">
+        <label>
+            <button @click="invertDates">Invert dates</button>
+        </label>
+        <label v-if="(type === 1)">
+            Selected week:
             <button @click="changeSelectedWeek(false)">Prev</button>
             <button @click="changeSelectedWeek(true)">Next</button>
-        </div>
+        </label>
     </div>
     <div :class="['calendar-component', {'type-datetime': type === 1}]">
         <template v-for="(day, index) in days">
@@ -115,6 +119,13 @@ export default {
             if (!increment && 0 < this.selectedWeek)
                 this.selectedWeek--;
             
+        },
+        // inverts all dates from selected to non selected
+        invertDates() {
+            for (const day of this.days) {
+                if (day.isInRange)
+                    day.isAvailable = !day.isAvailable;
+            }
         },
         // methods for selecting available
         onMouseDown(event: MouseEvent, day: ICalendarDate) {
