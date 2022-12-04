@@ -3,7 +3,7 @@
         <button @click="selectedWeek--">Prev</button>
         <button @click="selectedWeek++">Next</button>
     </div>
-    <div :class="{'calendar-component': true, 'type-datetime': type === 1}">
+    <div :class="['calendar-component', {'type-datetime': type === 1}]">
         <template v-for="(day, index) in days">
             <div
                 v-if="type === 0 || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"

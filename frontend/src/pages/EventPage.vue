@@ -22,7 +22,6 @@
                 </label>
             </div>
             <calendar
-                class="calendar"
                 :type="calendarType"
                 :dateRange="dateRange"
                 :selectUnavailable="selectUnavailable"
@@ -92,9 +91,6 @@ export default {
         .controls {
             position: sticky;
             top: 0;
-        }
-        .calendar {
-            flex: 1;
         }
     }
     .details-area {
