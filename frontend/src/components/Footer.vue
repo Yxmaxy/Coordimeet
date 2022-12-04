@@ -1,7 +1,7 @@
 <!-- Footer on bottom of the page -->
 <template>
     <footer class="footer-component">
-        &copy; Marko Bine Nik
+        &copy; Marko Bine Nik Nika Rok
     </footer>
 </template>
 

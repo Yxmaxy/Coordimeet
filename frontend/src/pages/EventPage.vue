@@ -13,7 +13,7 @@
             <div>Trajanje: 11. 12. 2022 - 19. 12. 2022</div>
         </div>
         <main class="calendar-area">
-            <div>
+            <div class="controls">
                 <label>
                     Select unavailable dates
                     <input v-model="selectUnavailable" type="checkbox" />
@@ -29,12 +29,13 @@
 </template>
 
 <script lang="ts">
+import CalendarTime from '../components/CalendarTime.vue';
 import Calendar from '../components/Calendar.vue';
 import { IDateRange } from '../common/interfaces';
 
 export default {
     components: {
-        "calendar": Calendar,
+        "calendar": CalendarTime,
     },
     data() {
         return {
@@ -84,6 +85,11 @@ export default {
         display: flex;
         flex-direction: column;
         padding: $sectionPadding;
+        overflow: auto;
+        .controls {
+            position: sticky;
+            top: 0;
+        }
         .calendar {
             flex: 1;
         }
