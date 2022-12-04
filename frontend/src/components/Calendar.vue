@@ -1,7 +1,13 @@
 <template>
-    <div v-if="(type === 1)">
-        <button @click="selectedWeek--">Prev</button>
-        <button @click="selectedWeek++">Next</button>
+    <div class="controls">
+        <label>
+            Select unavailable dates
+            <input v-model="selectUnavailable" type="checkbox" />
+        </label>
+        <div v-if="(type === 1)">
+            <button @click="changeSelectedWeek(false)">Prev</button>
+            <button @click="changeSelectedWeek(true)">Next</button>
+        </div>
     </div>
     <div :class="['calendar-component', {'type-datetime': type === 1}]">
         <template v-for="(day, index) in days">
@@ -40,10 +46,6 @@ export default {
                 to: new Date()
             } as IDateRange
         },
-        selectUnavailable: {
-            type: Boolean,
-            default: false
-        },
         type: {
             type: Number,
             default: CalendarType.Date
@@ -55,6 +57,7 @@ export default {
             touchStart: undefined as ICalendarDate|undefined,
             timeoutObj: undefined as number|undefined,
             selectedWeek: 0,
+            selectUnavailable: false,
         }
     },
     methods: {
@@ -82,7 +85,7 @@ export default {
         calculateShownDates() {
             const range = this.dateRange as IDateRange;
             if (this.type === CalendarType.DateTime)
-                range.to.setHours(24);  // set to full day
+                range.to.setHours(23);  // set to full day
             const from = this.getBufferedDate(range.from, 0);
             const to = this.getBufferedDate(range.to, 0, true);
 
@@ -102,6 +105,16 @@ export default {
                 if (day.date >= from.date && day.date <= to.date && day.isInRange)
                     day.isAvailable = setAvailable;
             }
+        },
+        // increment/decrement shown week
+        changeSelectedWeek(increment: boolean) {            
+            if (increment && this.selectedWeek < this.days.length / 24 / 7 - 1) {
+                this.selectedWeek++;
+                return;
+            }
+            if (!increment && 0 < this.selectedWeek)
+                this.selectedWeek--;
+            
         },
         // methods for selecting available
         onMouseDown(event: MouseEvent, day: ICalendarDate) {

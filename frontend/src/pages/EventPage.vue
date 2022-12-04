@@ -15,16 +15,9 @@
             <div>Trajanje: 11. 12. 2022 - 19. 12. 2022</div>
         </div>
         <main class="calendar-area">
-            <div class="controls">
-                <label>
-                    Select unavailable dates
-                    <input v-model="selectUnavailable" type="checkbox" />
-                </label>
-            </div>
             <calendar
                 :type="calendarType"
                 :dateRange="dateRange"
-                :selectUnavailable="selectUnavailable"
             />
         </main>
     </div>
@@ -44,7 +37,6 @@ export default {
                 from: new Date(2022, 11, 11),
                 to: new Date(2022, 11, 19)
             } as IDateRange,
-            selectUnavailable: false,
             calendarType: CalendarType.DateTime,
         }
     }
