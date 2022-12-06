@@ -1,13 +1,41 @@
 <!-- Wrapper page for all other pages -->
 <template>
-    <div class="wrapper-page">
-        <router-view />
+    <div class="app">
+        <header-component class="header-section"/>
+        <router-view class="page-section"/>
+        <footer-component class="footer-section" />
     </div>
 </template>
 
-<style scoped lang="scss">
-.wrapper-page {
-    min-height: 100vh;
-    display: flex;
+<script lang="ts">
+import Header from "../components/Header.vue";
+import Footer from "../components/Footer.vue";
+
+export default {
+    components: {
+        "header-component": Header,
+        "footer-component": Footer,
+    }
+}
+</script>
+
+<style lang="scss" scoped>
+.app {
+    height: 100vh;
+    display: grid;
+    grid-template-areas:
+        "header"
+        "page"
+        "footer";
+    grid-template-rows: 3rem calc(100vh - 6rem) 3rem;
+}
+.header-section {
+    grid-area: header;
+}
+.page-section {
+    grid-area: page;
+}
+.footer-section {
+    grid-area: footer;
 }
 </style>
