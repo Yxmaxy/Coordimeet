@@ -46,12 +46,9 @@ const longpressTimeout = 475;
 export default {
     name: "calendar",
     props: {
-        dateRange: {
-            type: Object,
-            default: {
-                from: new Date(),
-                to: new Date()
-            } as IDateRange
+        dateRanges: {
+            type: Array,
+            default: [] as IDateRange[]
         },
         type: {
             type: Number,
@@ -95,19 +92,22 @@ export default {
         },
         // calculate dates to display on calendar
         calculateShownDates() {
-            const range = this.dateRange as IDateRange;
-            if (this.type === CalendarType.DateTime)
-                range.to.setHours(23);  // set to full day
-            const from = this.getBufferedDate(range.from, 0);
-            const to = this.getBufferedDate(range.to, 0, true);
+            for (const range of (this.dateRanges as IDateRange[])) {
+                if (this.type === CalendarType.DateTime) {  // set to full day
+                    range.from.setHours(0);
+                    range.to.setHours(23);
+                }
+                const from = this.getBufferedDate(range.from, 0);
+                const to = this.getBufferedDate(range.to, 0, true);
 
-            for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {
-                this.days.push({
-                    display: (this.type === CalendarType.Date) ?
-                        formatDateDayMonth(d) : formatDateHourDayMonth(d),
-                    date: new Date(d),
-                    isInRange: d >= range.from && d <= range.to,
-                });
+                for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {
+                    this.days.push({
+                        display: (this.type === CalendarType.Date) ?
+                            formatDateDayMonth(d) : formatDateHourDayMonth(d),
+                        date: new Date(d),
+                        isInRange: d >= range.from && d <= range.to,
+                    });
+                }
             }
         },
         selectDateFromTo(start: ICalendarDate, end: ICalendarDate, setAvailable: boolean = true) {
@@ -185,6 +185,11 @@ export default {
             clearInterval(this.timeoutObj);
             this.timeoutObj = undefined;
         },
+    },
+    watch: {
+        dateRanges() {
+            this.calculateShownDates();
+        }
     },
     mounted() {
         this.calculateShownDates();

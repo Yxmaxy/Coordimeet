@@ -22,22 +22,7 @@ export enum CalendarType {
 export interface IEvent {
     CalendarType: CalendarType,
     Config: Object,
-    EventDates: {
-        StartDate: {
-            Day: number,
-            Month: number,
-            Year: number,
-            Hour: number,
-            Second: number,
-        },
-        EndDate: {
-            Day: number,
-            Month: number,
-            Year: number,
-            Hour: number,
-            Second: number,
-        },
-    },
+    EventDates: IDateRange[],
     Length: number,
     Name: string,
     Organiser: {
