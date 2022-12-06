@@ -40,3 +40,33 @@ export enum EventPageType {
     Organiser = 1,      // data about user responses, ending data
     NonConfirmed = 2,   // invitee sees just basic event data, confirm decline button
 }
+
+// Event data
+export interface IEvent {
+    CalendarType: CalendarType,
+    Config: Object,
+    EventDates: {
+        StartDate: {
+            Day: number,
+            Month: number,
+            Year: number,
+            Hour: number,
+            Second: number,
+        },
+        EndDate: {
+            Day: number,
+            Month: number,
+            Year: number,
+            Hour: number,
+            Second: number,
+        },
+    },
+    Length: number,
+    Name: string,
+    Organiser: {
+        FirstName: string,
+        LastName: string,
+        Email: string,
+    },
+    UrlJoinLink: string,
+}
