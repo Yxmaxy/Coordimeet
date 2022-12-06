@@ -10,14 +10,15 @@
             </div>
         </aside>
         <div class="details-area">
-            <h1>Event 1</h1>
+            <h1>{{ eventData.Name }}</h1>
             <div>Deadline: 3. 12. 2022</div>
-            <div>Duration: 11. 12. 2022 - 19. 12. 2022</div>
+            <div>From 11. 12. 2022 to 19. 12. 2022</div>
+            <div>Duration: {{ eventData.Length }}</div>
         </div>
         <main class="calendar-area">
             <calendar
-                :type="calendarType"
-                :dateRange="dateRange"
+                :type="eventData.CalendarType"
+                :dateRanges="eventData.EventDates"
             />
         </main>
     </div>
@@ -25,7 +26,9 @@
 
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
-import { IDateRange, CalendarType } from '../common/interfaces';
+import { CalendarType, IEvent } from '../common/interfaces';
+import { apiServer } from '../common/globals';
+import axios from "axios";
 
 export default {
     components: {
@@ -33,13 +36,42 @@ export default {
     },
     data() {
         return {
-            dateRange: {
-                from: new Date(2022, 11, 11),
-                to: new Date(2022, 11, 19)
-            } as IDateRange,
-            calendarType: CalendarType.DateTime,
+            calendarType: CalendarType.Date,
+            eventData: {} as IEvent,
         }
-    }
+    },
+    mounted() {
+        axios.post(`${apiServer}/event.php`, {
+            IDEvent: 1,
+        }).then(res => {
+            if (res.data.error) {
+                alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+                this.$router.push("/");
+                return;
+            }
+            this.eventData = {
+                ...res.data,
+                EventDates: res.data.EventDates.map((eventDate: any) => {
+                    return {
+                        from: new Date(
+                            eventDate.StartDate.Year,
+                            eventDate.StartDate.Month - 1,
+                            eventDate.StartDate.Day,
+                            eventDate.StartDate.Hour,
+                            eventDate.StartDate.Minute,
+                        ),
+                        to: new Date(
+                            eventDate.EndDate.Year,
+                            eventDate.EndDate.Month - 1,
+                            eventDate.EndDate.Day,
+                            eventDate.EndDate.Hour,
+                            eventDate.EndDate.Minute,
+                        )   
+                    }
+                })
+            } as IEvent
+        });
+    },
 }
 </script>
 
