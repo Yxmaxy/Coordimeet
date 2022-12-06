@@ -17,3 +17,33 @@ export enum CalendarType {
     Date = 0,
     DateTime = 1,
 }
+
+// Event data
+export interface IEvent {
+    CalendarType: CalendarType,
+    Config: Object,
+    EventDates: {
+        StartDate: {
+            Day: number,
+            Month: number,
+            Year: number,
+            Hour: number,
+            Second: number,
+        },
+        EndDate: {
+            Day: number,
+            Month: number,
+            Year: number,
+            Hour: number,
+            Second: number,
+        },
+    },
+    Length: number,
+    Name: string,
+    Organiser: {
+        FirstName: string,
+        LastName: string,
+        Email: string,
+    },
+    UrlJoinLink: string,
+}

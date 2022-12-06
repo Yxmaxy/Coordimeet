@@ -1,1 +1,1 @@
-export const apiServer = "";  // link to api
+export const apiServer = "https://coordimeet.eu/backend";
