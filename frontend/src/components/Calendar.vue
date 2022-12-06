@@ -7,8 +7,11 @@
         <label>
             <button @click="invertDates">Invert dates</button>
         </label>
+        <label>
+            <button @click="resetDates">Reset dates</button>
+        </label>
         <label v-if="(type === 1)">
-            Selected week:
+            Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
             <button @click="changeSelectedWeek(false)">Prev</button>
             <button @click="changeSelectedWeek(true)">Next</button>
         </label>
@@ -64,6 +67,11 @@ export default {
             selectUnavailable: false,
         }
     },
+    computed: {
+        numOfWeeks(): number {
+            return this.days.length / 24 / 7 - 1;
+        }
+    },
     methods: {
         // converts sun-mon to mon-sun
         // mon = 0; sun = 6
@@ -112,7 +120,7 @@ export default {
         },
         // increment/decrement shown week
         changeSelectedWeek(increment: boolean) {            
-            if (increment && this.selectedWeek < this.days.length / 24 / 7 - 1) {
+            if (increment && this.selectedWeek < this.numOfWeeks) {
                 this.selectedWeek++;
                 return;
             }
@@ -125,6 +133,13 @@ export default {
             for (const day of this.days) {
                 if (day.isInRange)
                     day.isAvailable = !day.isAvailable;
+            }
+        },
+        // resets all dates to not selected
+        resetDates() {
+            for (const day of this.days) {
+                if (day.isInRange)
+                    day.isAvailable = this.selectUnavailable;
             }
         },
         // methods for selecting available

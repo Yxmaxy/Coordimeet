@@ -4,15 +4,15 @@
             <h1>Responses</h1>
             <div>
                 <div v-for="index in 50" class="response">
-                    <div>Ime</div>
-                    <div>Odgovor</div>
+                    <div>Name</div>
+                    <div>Responded</div>
                 </div>
             </div>
         </aside>
         <div class="details-area">
-            <h1>Dogodek 1</h1>
+            <h1>Event 1</h1>
             <div>Deadline: 3. 12. 2022</div>
-            <div>Trajanje: 11. 12. 2022 - 19. 12. 2022</div>
+            <div>Duration: 11. 12. 2022 - 19. 12. 2022</div>
         </div>
         <main class="calendar-area">
             <calendar
