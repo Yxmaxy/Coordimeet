@@ -17,7 +17,7 @@
         </div>
         <main class="calendar-area">
             <calendar
-                :type="1"
+                :type="eventData.CalendarType"
                 :dateRanges="eventData.EventDates"
             />
         </main>
