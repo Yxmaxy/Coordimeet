@@ -3,9 +3,8 @@
         <aside class="responses-area">
             <h1>Responses</h1>
             <div>
-                <div v-for="index in 50" class="response">
-                    <div>Name</div>
-                    <div>Responded</div>
+                <div v-for="participant in eventParticipants" class="response">
+                    <div>{{ participant }}</div>
                 </div>
             </div>
         </aside>
@@ -38,39 +37,59 @@ export default {
         return {
             calendarType: CalendarType.Date,
             eventData: {} as IEvent,
+            eventParticipants: [] as string[],
+        }
+    },
+    methods: {
+        getEventData() {
+            axios.post(`${apiServer}/event.php`, {
+                IDEvent: 1,
+            }).then(res => {
+                if (res.data.error) {
+                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+                    this.$router.push("/");
+                    return;
+                }
+                this.eventData = {
+                    ...res.data,
+                    EventDates: res.data.EventDates.map((eventDate: any) => {
+                        return {
+                            from: new Date(
+                                eventDate.StartDate.Year,
+                                eventDate.StartDate.Month - 1,
+                                eventDate.StartDate.Day,
+                                eventDate.StartDate.Hour,
+                                eventDate.StartDate.Minute,
+                            ),
+                            to: new Date(
+                                eventDate.EndDate.Year,
+                                eventDate.EndDate.Month - 1,
+                                eventDate.EndDate.Day,
+                                eventDate.EndDate.Hour,
+                                eventDate.EndDate.Minute,
+                            )   
+                        }
+                    })
+                } as IEvent
+            });
+        },
+        getEventParticipants() {
+            axios.post(`${apiServer}/usersOnEvent.php`, {
+                IDEvent: 1,
+            }).then(res => {
+                if (res.data.error) {
+                   console.log(res.data.error);
+                    return;
+                }
+                this.eventParticipants = res.data.map((participant: any) => {
+                    return `${participant.FirstName} ${participant.LastName}`;
+                })
+            });
         }
     },
     mounted() {
-        axios.post(`${apiServer}/event.php`, {
-            IDEvent: 1,
-        }).then(res => {
-            if (res.data.error) {
-                alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
-                this.$router.push("/");
-                return;
-            }
-            this.eventData = {
-                ...res.data,
-                EventDates: res.data.EventDates.map((eventDate: any) => {
-                    return {
-                        from: new Date(
-                            eventDate.StartDate.Year,
-                            eventDate.StartDate.Month - 1,
-                            eventDate.StartDate.Day,
-                            eventDate.StartDate.Hour,
-                            eventDate.StartDate.Minute,
-                        ),
-                        to: new Date(
-                            eventDate.EndDate.Year,
-                            eventDate.EndDate.Month - 1,
-                            eventDate.EndDate.Day,
-                            eventDate.EndDate.Hour,
-                            eventDate.EndDate.Minute,
-                        )   
-                    }
-                })
-            } as IEvent
-        });
+        this.getEventData();
+        this.getEventParticipants();
     },
 }
 </script>
