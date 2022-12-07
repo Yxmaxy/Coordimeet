@@ -12,7 +12,9 @@
             <h1>{{ eventData.Name }}</h1>
             <div>Deadline: 3. 12. 2022</div>
             <div>From 11. 12. 2022 to 19. 12. 2022</div>
-            <div>Duration: {{ eventData.Length }}</div>
+            <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
+
+            <button id="submit-response">Submit response</button>
         </div>
         <main class="calendar-area">
             <calendar
@@ -35,9 +37,15 @@ export default {
     },
     data() {
         return {
-            calendarType: CalendarType.Date,
             eventData: {} as IEvent,
             eventParticipants: [] as string[],
+        }
+    },
+    computed: {
+        readableCalendarUnits(): string {
+            if (this.eventData.CalendarType === CalendarType.Date)
+                return "days";
+            return "hours";
         }
     },
     methods: {
@@ -140,6 +148,13 @@ export default {
         grid-area: details;
         background-color: lightsalmon;
         padding: $sectionPadding;
+        position: relative;
+
+        #submit-response {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+        }
     }
 }
 </style>
