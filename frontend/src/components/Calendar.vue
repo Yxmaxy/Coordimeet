@@ -216,11 +216,11 @@ export default {
         justify-content: center;
         align-items: center;
         box-sizing: border-box;
-        cursor: pointer;
         user-select: none;
     }
     .in-range {
         background-color: lightgoldenrodyellow;
+        cursor: pointer;
     }
     .available {
         background-color: lightgreen;
