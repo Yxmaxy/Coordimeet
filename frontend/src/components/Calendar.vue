@@ -39,6 +39,7 @@
 </template>
 
 <script lang="ts">
+import { PropType } from "vue";
 import { formatDateDayMonth, formatDateHourDayMonth } from "../common/helpers";
 import { IDateRange, ICalendarDate, CalendarType } from '../common/interfaces';
 const longpressTimeout = 475;
@@ -47,17 +48,20 @@ export default {
     name: "calendar",
     props: {
         dateRanges: {
-            type: Array,
-            default: [] as IDateRange[]
+            type: Array as PropType<IDateRange[]>,
+            default: [],
         },
         type: {
             type: Number,
-            default: CalendarType.Date
+            default: CalendarType.Date,
+        },
+        days: {
+            type: Array as PropType<ICalendarDate[]>,
+            default: [],
         },
     },
     data() {
         return {
-            days: [] as ICalendarDate[],
             touchStart: undefined as ICalendarDate|undefined,
             timeoutObj: undefined as number|undefined,
             selectedWeek: 0,
