@@ -14,12 +14,18 @@
             <div>From 11. 12. 2022 to 19. 12. 2022</div>
             <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
 
-            <button id="submit-response">Submit response</button>
+            <button
+                id="submit-response"
+                @click="onSubmitEvent"
+            >
+                Submit response
+            </button>
         </div>
         <main class="calendar-area">
             <calendar
                 :type="eventData.CalendarType"
                 :dateRanges="eventData.EventDates"
+                :days="selectedDates"
             />
         </main>
     </div>
@@ -27,7 +33,7 @@
 
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
-import { CalendarType, IEvent } from '../common/interfaces';
+import { CalendarType, ICalendarDate, IEvent } from '../common/interfaces';
 import { apiServer } from '../common/globals';
 import axios from "axios";
 
@@ -37,6 +43,7 @@ export default {
     },
     data() {
         return {
+            selectedDates: [] as ICalendarDate[],
             eventData: {} as IEvent,
             eventParticipants: [] as string[],
         }
@@ -93,6 +100,24 @@ export default {
                     return `${participant.FirstName} ${participant.LastName}`;
                 })
             });
+        },
+        onSubmitEvent() {
+            const dates: any = [];
+            let currentStart: Date|undefined = undefined;
+            for (let i = 0; i < this.selectedDates.length; i++) {
+                const date = this.selectedDates[i];
+                if (currentStart === undefined && date.isAvailable)  // set currentStart
+                    currentStart = date.date;
+                else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
+                    const prevDate = this.selectedDates[i - 1];
+                    dates.push({
+                        StartDate: new Date(currentStart),
+                        EndDate: new Date(prevDate.date),
+                    })
+                    currentStart = undefined;
+                }
+            }
+            console.log(dates);
         }
     },
     mounted() {
