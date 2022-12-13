@@ -27,7 +27,7 @@ export default {
         "header"
         "page"
         "footer";
-    grid-template-rows: 3rem calc(100vh - 6rem) 3rem;
+    grid-template-rows: 3.5rem calc(100vh - 6.5rem) 3rem;
 }
 .header-section {
     grid-area: header;
