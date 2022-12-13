@@ -14,8 +14,8 @@ export interface ICalendarDate {
 
 // Calendar type
 export enum CalendarType {
-    Date = 0,
-    DateTime = 1,
+    DateTime = 0,
+    Date = 1,
 }
 
 // Event data

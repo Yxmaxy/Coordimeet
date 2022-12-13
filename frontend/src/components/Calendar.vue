@@ -10,16 +10,16 @@
         <label>
             <button @click="resetDates">Reset dates</button>
         </label>
-        <label v-if="(type === 1)">
+        <label v-if="(type === 0)">
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
             <button @click="changeSelectedWeek(false)">Prev</button>
             <button @click="changeSelectedWeek(true)">Next</button>
         </label>
     </div>
-    <div :class="['calendar-component', {'type-datetime': type === 1}]">
+    <div :class="['calendar-component', {'type-datetime': type === 0}]">
         <template v-for="(day, index) in days">
             <div
-                v-if="type === 0 || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
+                v-if="type === 1 || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
                 :class="{
                     'in-range': day.isInRange,
                     'available': day.isAvailable && !selectUnavailable,
@@ -92,22 +92,38 @@ export default {
         },
         // calculate dates to display on calendar
         calculateShownDates() {
+            // get from and to dates
+            let from: undefined|Date = undefined
+            let to: undefined|Date = undefined
             for (const range of (this.dateRanges as IDateRange[])) {
-                if (this.type === CalendarType.DateTime) {  // set to full day
-                    range.from.setHours(0);
-                    range.to.setHours(23);
+                if (from === undefined || range.from < from)
+                    from = new Date(new Date(range.from).setHours(0));
+                if (to === undefined || range.to > to)
+                    to = new Date(new Date(range.to).setHours(0));
+            }
+            if (from === undefined || to === undefined)  // setting failed
+                return;
+            if (this.type === CalendarType.DateTime) {  // set to full day
+                from.setHours(0);
+                to.setHours(23);
+            }
+            from = this.getBufferedDate(from, 0);
+            to = this.getBufferedDate(to, 0, true);
+            
+            for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {  // loop through all dates
+                let isInRange = false;
+                for (const range of (this.dateRanges as IDateRange[])) {  // loop through selection
+                    if (d >= range.from && d <= range.to) {
+                        isInRange = true;
+                        break;
+                    }
                 }
-                const from = this.getBufferedDate(range.from, 0);
-                const to = this.getBufferedDate(range.to, 0, true);
-
-                for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {
-                    this.days.push({
-                        display: (this.type === CalendarType.Date) ?
-                            formatDateDayMonth(d) : formatDateHourDayMonth(d),
-                        date: new Date(d),
-                        isInRange: d >= range.from && d <= range.to,
-                    });
-                }
+                this.days.push({
+                    display: (this.type === CalendarType.Date) ?
+                        formatDateDayMonth(d) : formatDateHourDayMonth(d),
+                    date: new Date(d),
+                    isInRange: isInRange,
+                });
             }
         },
         selectDateFromTo(start: ICalendarDate, end: ICalendarDate, setAvailable: boolean = true) {
@@ -126,7 +142,6 @@ export default {
             }
             if (!increment && 0 < this.selectedWeek)
                 this.selectedWeek--;
-            
         },
         // inverts all dates from selected to non selected
         invertDates() {
