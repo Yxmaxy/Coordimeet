@@ -1,7 +1,7 @@
 <!-- Header on top of the page -->
 <template>
     <header class="header-component">
-        <h1>Coordimeet</h1>
+        <img src="/images/logo.png" alt="logo" @click="$router.push('/')"/>
         <div>
             <button>Log in</button>
         </div>
@@ -15,5 +15,10 @@
     align-items: center;
     padding: 1rem;
     background-color: lightgray;
+
+    img {
+        height: 200%;
+        cursor: pointer;
+    }
 }
 </style>
