@@ -164,10 +164,6 @@ export default {
         flex-direction: column;
         padding: $sectionPadding;
         overflow: auto;
-        .controls {
-            position: sticky;
-            top: 0;
-        }
     }
     .details-area {
         grid-area: details;
