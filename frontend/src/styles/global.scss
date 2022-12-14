@@ -1,5 +1,8 @@
+@import "colors";
+
 * {
-    font-family: Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
+    color: $color-text;
 }
 html, body {
     margin: 0;
@@ -10,6 +13,38 @@ h1, h2, h3, h4 {
 button, input[type=checkbox] {
     cursor: pointer;
 }
+button {
+    background-color: $color-background-2;
+    border: 0;
+    border-radius: 0.5rem;
+    $p-t-b: 0.2rem;
+    $p-l-r: 0.6rem;
+    padding: {
+        left: $p-l-r;
+        right: $p-l-r;
+        top: $p-t-b;
+        bottom: $p-t-b;
+    }
+    transition: 200ms;
+}
+button:active {
+    background-color: $color-aside;
+}
+input[type=checkbox] {
+    accent-color: $color-details;
+}
 input:invalid {
     background-color: lightcoral;
+}
+a {
+    text-decoration: none;
+    color: $color-text;
+    transition: 200ms;
+    cursor: pointer;
+}
+a:hover {
+    color: $color-details;
+}
+.shadow {
+    box-shadow: 0 3px 15px 2px #00000069;
 }

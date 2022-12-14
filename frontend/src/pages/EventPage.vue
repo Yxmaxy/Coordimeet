@@ -13,6 +13,10 @@
             <div>Deadline: 3. 12. 2022</div>
             <div>From 11. 12. 2022 to 19. 12. 2022</div>
             <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
+            <div v-for="key, value in eventData.Config">
+                {{ key }}
+                {{ value }}
+            </div>
 
             <button
                 id="submit-response"
@@ -128,6 +132,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../styles/colors.scss";
+
 .event-page {
     $sectionPadding: 0.5rem;
 
@@ -141,11 +147,11 @@ export default {
 
     .responses-area {
         grid-area: responses;
-        background-color: lightcoral;
+        background-color: $color-background-2;
         overflow: auto;
 
         h1 {
-            background-color: lightcoral;
+            background-color: $color-background-2;
             padding: $sectionPadding;
             position: sticky;
             top: 0;
@@ -159,7 +165,7 @@ export default {
     }
     .calendar-area {
         grid-area: calendar;
-        background-color: lightcyan;
+        background-color: $color-background;
         display: flex;
         flex-direction: column;
         padding: $sectionPadding;
@@ -167,14 +173,14 @@ export default {
     }
     .details-area {
         grid-area: details;
-        background-color: lightsalmon;
+        background-color: $color-background-3;
         padding: $sectionPadding;
         position: relative;
 
         #submit-response {
             position: absolute;
-            right: 0;
-            bottom: 0;
+            right: 0.5rem;
+            bottom: 0.5rem;
         }
     }
 }
