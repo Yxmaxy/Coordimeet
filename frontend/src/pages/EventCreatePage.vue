@@ -8,6 +8,8 @@
                     type="text"
                     placeholder="Enter a name for your event"
                     v-model="name"
+                    @focusout="() => nameInputRequired = true"
+                    :required="nameInputRequired"
                 />
             </label>
             <div class="input-subsection">
@@ -92,7 +94,6 @@ export default {
     },
     data() {
         return {
-            name: "",
             calendarType: 1,
             length: 1,
             selectedDates: []  as ICalendarDate[],
@@ -100,6 +101,10 @@ export default {
             toDate: "",
             selectedDateRanges: [] as IDateRange[],
             customFields: "",
+
+            // name input
+            name: "",
+            nameInputRequired: false,
         }
     },
     computed: {
@@ -126,6 +131,15 @@ export default {
             }];
         },
         onCreateEvent() {
+            if (this.name.length === 0) {
+                alert("You must enter a name for the event")
+                return;
+            }
+            if (this.length < 0) {
+                alert("Event length must me bigger or equal to 1")
+                return;
+            }
+            
             // calculate config
             const config: any = {}
             if (this.customFields.length > 0) {
@@ -152,6 +166,10 @@ export default {
                     })
                     currentStart = undefined;
                 }
+            }
+            if (dates.length === 0) {
+                alert(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
+                return;
             }
 
             console.log({
