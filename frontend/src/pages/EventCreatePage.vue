@@ -73,7 +73,7 @@
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
 import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
-
+import { removeHoursMinutesFromDate } from '../common/helpers';
 export default {
     components: {
         "calendar": Calendar,
@@ -86,6 +86,7 @@ export default {
             selectedDates: []  as ICalendarDate[],
             fromDate: "",
             toDate: "",
+            selectedDateRanges: [] as IDateRange[],
         }
     },
     computed: {
@@ -99,20 +100,36 @@ export default {
                 return "date";
             return "datetime-local";
         },
-        selectedDateRanges(): IDateRange[] {
-            const from = this.fromDate.length > 0 ? new Date(this.fromDate) : new Date();
-            const to = this.toDate.length > 0 ? new Date(this.toDate) : new Date();
-            return [{
-                from: from,
-                to: to,
-            }]
-        },
     },
     methods: {
+        getDateRanges() {
+            const now = new Date();
+            const from = this.fromDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.fromDate)) : new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const to = this.toDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.toDate)) :  new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23);
+            
+            this.selectedDateRanges = [{
+                from: from,
+                to: to,
+            }];
+        },
         onSubmitEvent() {
             
         }
     },
+    watch: {
+        fromDate() {
+            this.getDateRanges();
+        },
+        toDate() {
+            this.getDateRanges();
+        },
+        calendarType() {
+            this.getDateRanges();
+        },
+    },
+    mounted() {
+        this.getDateRanges();
+    }
 }
 </script>
 

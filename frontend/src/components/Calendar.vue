@@ -16,6 +16,16 @@
             <button @click="changeSelectedWeek(true)">Next</button>
         </label>
     </div>
+    <div v-if="insertMode" class="controls">
+        <label>
+            <button @click="resetDates">Reset dates</button>
+        </label>
+        <label v-if="(type === 0)">
+            Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
+            <button @click="changeSelectedWeek(false)">Prev</button>
+            <button @click="changeSelectedWeek(true)">Next</button>
+        </label>
+    </div>
     <div :class="['calendar-component', {'type-datetime': type === 0}]">
         <template v-for="(day, index) in days">
             <div
@@ -119,6 +129,7 @@ export default {
             from = this.getBufferedDate(from, 0);
             to = this.getBufferedDate(to, 0, true);
             
+            this.days.length = 0;  // reset array
             for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {  // loop through all dates
                 let isInRange = false || this.insertMode;
                 for (const range of (this.dateRanges as IDateRange[])) {  // loop through selection
