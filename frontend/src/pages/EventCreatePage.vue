@@ -58,6 +58,18 @@
                     </label>
                 </div>
             </div>
+            <label>
+                Additional values
+                <textarea
+                    v-model="customFields"
+                    placeholder="Enter custom fields eg.
+Formal attire: Yes
+Ticket price: 5€"
+                ></textarea>
+            </label>
+            <button @click="onCreateEvent">
+                Create new event
+            </button>
         </div>
         <main class="calendar-area">
             <calendar
@@ -87,6 +99,7 @@ export default {
             fromDate: "",
             toDate: "",
             selectedDateRanges: [] as IDateRange[],
+            customFields: "",
         }
     },
     computed: {
@@ -112,8 +125,46 @@ export default {
                 to: to,
             }];
         },
-        onSubmitEvent() {
-            
+        onCreateEvent() {
+            // calculate config
+            const config: any = {}
+            if (this.customFields.length > 0) {
+                for (const line of this.customFields.split("\n")) {
+                    const splitted = line.split(":");
+                    if (splitted.length === 2) {
+                        config[splitted[0].trim()] = splitted[1].trim();
+                    }
+                }
+            }
+
+            // calculate dates
+            const dates: any = [];
+            let currentStart: Date|undefined = undefined;
+            for (let i = 0; i < this.selectedDates.length; i++) {
+                const date = this.selectedDates[i];
+                if (currentStart === undefined && date.isAvailable)  // set currentStart
+                    currentStart = date.date;
+                else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
+                    const prevDate = this.selectedDates[i - 1];
+                    dates.push({
+                        StartDate: new Date(currentStart),
+                        EndDate: new Date(prevDate.date),
+                    })
+                    currentStart = undefined;
+                }
+            }
+
+            console.log({
+                Event: {
+                    IDOrganizer: 1,
+                    Name: this.name,
+                    Length: this.length,
+                    UrlJoinLink: "https://coordimeet.eu/joinEvent?id=123",
+                    CalendarType: this.calendarType,
+                    Config: config
+                },
+                EventRanges: dates,
+            });
         }
     },
     watch: {
@@ -153,9 +204,13 @@ export default {
         flex-direction: column;
         gap: 1.5rem;
 
-        input[type=text], input[type=date], input[type=datetime-local] {
+        input[type=text], input[type=date], input[type=datetime-local], textarea {
             box-sizing: border-box;
             width: 100%;
+        }
+
+        textarea {
+            min-height: 10ch;
         }
 
         & > label, div[class=input-subsection] {

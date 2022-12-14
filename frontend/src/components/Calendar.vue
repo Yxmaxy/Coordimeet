@@ -252,6 +252,7 @@ export default {
         align-items: center;
         box-sizing: border-box;
         user-select: none;
+        max-height: 8rem;
     }
     .in-range {
         background-color: lightgoldenrodyellow;
