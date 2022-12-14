@@ -1,5 +1,5 @@
 <template>
-    <div class="controls">
+    <div v-if="!insertMode" class="controls">
         <label>
             Select unavailable dates
             <input v-model="selectUnavailable" type="checkbox" />
@@ -21,7 +21,8 @@
             <div
                 v-if="type === 1 || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
                 :class="{
-                    'in-range': day.isInRange,
+                    'in-range': day.isInRange && !insertMode,
+                    'in-range-insert': insertMode,
                     'available': day.isAvailable && !selectUnavailable,
                     'unavailable': day.isInRange && selectUnavailable && !day.isAvailable,
                 }"
@@ -59,6 +60,10 @@ export default {
             type: Array as PropType<ICalendarDate[]>,
             default: [],
         },
+        insertMode: {  // if all selected are in range
+            type: Boolean,
+            default: false,
+        }
     },
     data() {
         return {
@@ -115,7 +120,7 @@ export default {
             to = this.getBufferedDate(to, 0, true);
             
             for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {  // loop through all dates
-                let isInRange = false;
+                let isInRange = false || this.insertMode;
                 for (const range of (this.dateRanges as IDateRange[])) {  // loop through selection
                     if (d >= range.from && d <= range.to) {
                         isInRange = true;
@@ -239,6 +244,9 @@ export default {
     }
     .in-range {
         background-color: lightgoldenrodyellow;
+        cursor: pointer;
+    }
+    .in-range-insert {
         cursor: pointer;
     }
     .available {

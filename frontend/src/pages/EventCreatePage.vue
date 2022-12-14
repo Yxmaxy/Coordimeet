@@ -10,7 +10,7 @@
                     v-model="name"
                 />
             </label>
-            <div class="checkbox-section">
+            <div class="input-subsection">
                 Select calendar type
                 <div>
                     <label>
@@ -39,20 +39,40 @@
                     min="1"
                 />
             </label>
+            <div class="input-subsection">
+                Rough event duration
+                <div>
+                    <label>
+                        From
+                        <input
+                            :type="selectedDateInputType"
+                            v-model="fromDate"
+                        />
+                    </label>
+                    <label>
+                        To
+                        <input
+                            :type="selectedDateInputType"
+                            v-model="toDate"
+                        />
+                    </label>
+                </div>
+            </div>
         </div>
         <main class="calendar-area">
-            <!-- <calendar
-                :type="eventData.CalendarType"
-                :dateRanges="eventData.EventDates"
+            <calendar
+                :type="calendarType"
                 :days="selectedDates"
-            /> -->
+                :dateRanges="selectedDateRanges"
+                :insertMode="true"
+            />
         </main>
     </div>
 </template>
 
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
-import { CalendarType } from '../common/interfaces';
+import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
 
 export default {
     components: {
@@ -61,18 +81,32 @@ export default {
     data() {
         return {
             name: "",
-            calendarType: 0,
+            calendarType: 1,
             length: 1,
+            selectedDates: []  as ICalendarDate[],
+            fromDate: "",
+            toDate: "",
         }
     },
     computed: {
         calendarTypeDisplay() {
-            console.log(this.calendarType, CalendarType.Date);
-            
             if (this.calendarType === CalendarType.Date)
                 return "days";
             return "hours";
-        }
+        },
+        selectedDateInputType() {
+            if (this.calendarType === CalendarType.Date)
+                return "date";
+            return "datetime-local";
+        },
+        selectedDateRanges(): IDateRange[] {
+            const from = this.fromDate.length > 0 ? new Date(this.fromDate) : new Date();
+            const to = this.toDate.length > 0 ? new Date(this.toDate) : new Date();
+            return [{
+                from: from,
+                to: to,
+            }]
+        },
     },
     methods: {
         onSubmitEvent() {
@@ -100,18 +134,23 @@ export default {
         padding: $sectionPadding;
         display: flex;
         flex-direction: column;
-        gap: 1rem;
+        gap: 1.5rem;
 
-        & > label, div[class=checkbox-section] {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
+        input[type=text], input[type=date], input[type=datetime-local] {
+            box-sizing: border-box;
+            width: 100%;
         }
 
-        div[class=checkbox-section] div {
+        & > label, div[class=input-subsection] {
             display: flex;
             flex-direction: column;
-            gap: 0.2rem;
+            gap: 0.4rem;
+        }
+
+        div[class=input-subsection] div {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
         }
     }
     .calendar-area {
