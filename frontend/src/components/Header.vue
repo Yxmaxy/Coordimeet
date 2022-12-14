@@ -9,12 +9,14 @@
 </template>
 
 <style lang="scss" scoped>
+@import "../styles/colors";
+
 .header-component {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background-color: lightgray;
+    background-color: $color-top-bottom;
 
     img {
         height: 200%;
