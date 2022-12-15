@@ -1,5 +1,8 @@
+@import "colors";
+
 * {
-    font-family: Verdana, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
+    color: $color-text;
 }
 html, body {
     margin: 0;
@@ -10,6 +13,69 @@ h1, h2, h3, h4 {
 button, input[type=checkbox] {
     cursor: pointer;
 }
+button {
+    color: $color-background;
+    background-color: $color-main;
+    border: 0.15rem solid $color-main;
+    font-weight: bold;
+    border-radius: 0.5rem;
+    $p-t-b: 0.2rem;
+    $p-l-r: 0.7rem;
+    padding: {
+        left: $p-l-r;
+        right: $p-l-r;
+        top: $p-t-b;
+        bottom: $p-t-b;
+    }
+    transition: 100ms;
+    &:active {
+        color: $color-main;
+        background-color: $color-top-bottom;
+    }
+}
+button.small {
+    $p-t-b: 0.1rem;
+    $p-l-r: 0.5rem;
+    padding: {
+        left: $p-l-r;
+        right: $p-l-r;
+        top: $p-t-b;
+        bottom: $p-t-b;
+    }
+}
+input[type=checkbox], input[type=radio] {
+    accent-color: $color-details;
+}
 input:invalid {
-    background-color: lightcoral;
+    background-color: $color-invalid;
+}
+input[type=text], input[type=date], input[type=datetime], input[type=number], textarea {
+    padding: 0.3rem;
+    border: 2px solid $color-main;
+    border-radius: 10px;
+}
+textarea {
+    resize: vertical;
+}
+a {
+    text-decoration: none;
+    color: $color-text;
+    transition: 200ms;
+    cursor: pointer;
+}
+a:hover {
+    color: $color-details;
+}
+// scrollbar
+::-webkit-scrollbar {
+    width: 0.5rem;
+}  
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: $color-main-lighter;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: $color-main;
 }

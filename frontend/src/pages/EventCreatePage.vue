@@ -1,17 +1,19 @@
 <template>
     <div class="event-create-page">
         <div class="input-area">
-            <h1>Event data</h1>
+            <h1>Create new event</h1>
             <label>
-                Event name
+                <b>Event name</b>
                 <input
                     type="text"
                     placeholder="Enter a name for your event"
                     v-model="name"
+                    @focusout="() => nameInputRequired = true"
+                    :required="nameInputRequired"
                 />
             </label>
             <div class="input-subsection">
-                Select calendar type
+                <b>Select calendar type</b>
                 <div>
                     <label>
                         <input
@@ -32,7 +34,7 @@
                 </div>
             </div>
             <label>
-                Event length in {{ calendarTypeDisplay }}
+                <b>Event length in {{ calendarTypeDisplay }}</b>
                 <input
                     type="number"
                     v-model="length"
@@ -40,7 +42,7 @@
                 />
             </label>
             <div class="input-subsection">
-                Rough event duration
+                <b>Rough event duration</b>
                 <div>
                     <label>
                         From
@@ -58,6 +60,18 @@
                     </label>
                 </div>
             </div>
+            <label>
+                <b>Additional values</b>
+                <textarea
+                    v-model="customFields"
+                    placeholder="Enter custom fields eg.
+Formal attire: Yes
+Ticket price: 5€"
+                ></textarea>
+            </label>
+            <button id="create-button" @click="onCreateEvent">
+                Create new event
+            </button>
         </div>
         <main class="calendar-area">
             <calendar
@@ -80,13 +94,17 @@ export default {
     },
     data() {
         return {
-            name: "",
             calendarType: 1,
             length: 1,
             selectedDates: []  as ICalendarDate[],
             fromDate: "",
             toDate: "",
             selectedDateRanges: [] as IDateRange[],
+            customFields: "",
+
+            // name input
+            name: "",
+            nameInputRequired: false,
         }
     },
     computed: {
@@ -112,8 +130,59 @@ export default {
                 to: to,
             }];
         },
-        onSubmitEvent() {
+        onCreateEvent() {
+            if (this.name.length === 0) {
+                alert("You must enter a name for the event")
+                return;
+            }
+            if (this.length < 0) {
+                alert("Event length must me bigger or equal to 1")
+                return;
+            }
             
+            // calculate config
+            const config: any = {}
+            if (this.customFields.length > 0) {
+                for (const line of this.customFields.split("\n")) {
+                    const splitted = line.split(":");
+                    if (splitted.length === 2) {
+                        config[splitted[0].trim()] = splitted[1].trim();
+                    }
+                }
+            }
+
+            // calculate dates
+            const dates: any = [];
+            let currentStart: Date|undefined = undefined;
+            for (let i = 0; i < this.selectedDates.length; i++) {
+                const date = this.selectedDates[i];
+                if (currentStart === undefined && date.isAvailable)  // set currentStart
+                    currentStart = date.date;
+                else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
+                    const prevDate = this.selectedDates[i - 1];
+                    dates.push({
+                        StartDate: new Date(currentStart),
+                        EndDate: new Date(prevDate.date),
+                    })
+                    currentStart = undefined;
+                }
+            }
+            if (dates.length === 0) {
+                alert(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
+                return;
+            }
+
+            console.log({
+                Event: {
+                    IDOrganizer: 1,
+                    Name: this.name,
+                    Length: this.length,
+                    UrlJoinLink: "https://coordimeet.eu/joinEvent?id=123",
+                    CalendarType: this.calendarType,
+                    Config: config
+                },
+                EventRanges: dates,
+            });
         }
     },
     watch: {
@@ -134,6 +203,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../styles/colors";
 .event-create-page {
     $sectionPadding: 0.5rem;
 
@@ -146,16 +216,21 @@ export default {
 
     .input-area {
         grid-area: input;
-        background-color: lightcoral;
+        background-color: $color-background-3;
         overflow: auto;
         padding: $sectionPadding;
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
+        position: relative;
 
-        input[type=text], input[type=date], input[type=datetime-local] {
+        input[type=text], input[type=date], input[type=datetime-local], textarea {
             box-sizing: border-box;
             width: 100%;
+        }
+
+        textarea {
+            min-height: 10ch;
         }
 
         & > label, div[class=input-subsection] {
@@ -172,7 +247,7 @@ export default {
     }
     .calendar-area {
         grid-area: calendar;
-        background-color: lightcyan;
+        background-color: $color-background;
         display: flex;
         flex-direction: column;
         padding: $sectionPadding;
@@ -182,17 +257,11 @@ export default {
             top: 0;
         }
     }
-    .details-area {
-        grid-area: details;
-        background-color: lightsalmon;
-        padding: $sectionPadding;
-        position: relative;
-
-        #submit-response {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-        }
+    #create-button {
+        position: sticky;
+        bottom: $sectionPadding;
+        left: $sectionPadding;
+        right: $sectionPadding;
     }
 }
 </style>

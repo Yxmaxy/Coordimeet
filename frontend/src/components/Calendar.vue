@@ -1,30 +1,27 @@
 <template>
-    <div v-if="!insertMode" class="controls">
-        <label>
-            Select unavailable dates
-            <input v-model="selectUnavailable" type="checkbox" />
-        </label>
-        <label>
-            <button @click="invertDates">Invert dates</button>
-        </label>
-        <label>
-            <button @click="resetDates">Reset dates</button>
-        </label>
-        <label v-if="(type === 0)">
+    <div class="calendar-controls">
+        <div>
+            <label>
+                <button class="small" @click="resetDates">Reset selection</button>
+            </label>
+            <label v-if="!insertMode">
+                <button class="small" @click="invertDates">Invert selection</button>
+            </label>
+            <label v-if="!insertMode">
+                Select unavailable dates
+                <input v-model="selectUnavailable" type="checkbox" />
+            </label>
+        </div>
+        <div v-if="(type === 0)">
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
-            <button @click="changeSelectedWeek(false)">Prev</button>
-            <button @click="changeSelectedWeek(true)">Next</button>
-        </label>
+            <button class="small" @click="changeSelectedWeek(false)">Prev</button>
+            <button class="small" @click="changeSelectedWeek(true)">Next</button>
+        </div>
     </div>
-    <div v-if="insertMode" class="controls">
-        <label>
-            <button @click="resetDates">Reset dates</button>
-        </label>
-        <label v-if="(type === 0)">
-            Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
-            <button @click="changeSelectedWeek(false)">Prev</button>
-            <button @click="changeSelectedWeek(true)">Next</button>
-        </label>
+    <div class="calendar-header">
+        <div v-for="day in calendarHeader">
+            {{ day }}
+        </div>
     </div>
     <div :class="['calendar-component', {'type-datetime': type === 0}]">
         <template v-for="(day, index) in days">
@@ -51,7 +48,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { formatDateDayMonth, formatDateHourDayMonth } from "../common/helpers";
+import { formatDateDayMonth, formatDateHour } from "../common/helpers";
 import { IDateRange, ICalendarDate, CalendarType } from '../common/interfaces';
 const longpressTimeout = 475;
 
@@ -86,6 +83,15 @@ export default {
     computed: {
         numOfWeeks(): number {
             return this.days.length / 24 / 7 - 1;
+        },
+        calendarHeader(): string[] {
+            const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+            if (this.type === CalendarType.Date)
+                return days;
+            for (let i = 0; i < days.length; i++) {
+                days[i] = `${days[i]} ${formatDateDayMonth(this.days[i * 24 + this.selectedWeek * 24 * 7].date)}`;
+            }
+            return days;
         }
     },
     methods: {
@@ -140,7 +146,7 @@ export default {
                 }
                 this.days.push({
                     display: (this.type === CalendarType.Date) ?
-                        formatDateDayMonth(d) : formatDateHourDayMonth(d),
+                        formatDateDayMonth(d) : formatDateHour(d),
                     date: new Date(d),
                     isInRange: isInRange,
                 });
@@ -224,6 +230,13 @@ export default {
     watch: {
         dateRanges() {
             this.calculateShownDates();
+        },
+        selectUnavailable(n) {
+            for (const day of this.days) {
+                if (day.isAvailable === n)
+                    return;
+            }
+            this.invertDates();
         }
     },
     mounted() {
@@ -232,6 +245,8 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+@import "../styles/colors";
+
 .calendar-component {
     box-sizing: border-box;
     flex: 1;
@@ -252,19 +267,42 @@ export default {
         align-items: center;
         box-sizing: border-box;
         user-select: none;
+        background-color: $calendar-color-non-selected;
     }
     .in-range {
-        background-color: lightgoldenrodyellow;
+        background-color: $calendar-color-in-range;
         cursor: pointer;
     }
     .in-range-insert {
         cursor: pointer;
     }
     .available {
-        background-color: lightgreen;
+        background-color: $calendar-color-available;
     }
     .unavailable {
-        background-color: lightcoral;
+        background-color: $calendar-color-unavailable;
+    }
+}
+.calendar-header {
+    display: flex;
+    div {
+        font-weight: bold;
+        color: $color-background;
+        background-color: $color-main;
+
+        text-align: center;
+        flex: 1;
+    }
+}
+.calendar-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0.4rem;
+
+    & > div {
+        display: flex;
+        gap: 0.5rem;
     }
 }
 </style>
