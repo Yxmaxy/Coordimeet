@@ -14,9 +14,26 @@ button, input[type=checkbox] {
     cursor: pointer;
 }
 button {
-    background-color: $color-background-2;
-    border: 0.15rem solid $color-background-2;
+    color: $color-background;
+    background-color: $color-main;
+    border: 0.15rem solid $color-main;
+    font-weight: bold;
     border-radius: 0.5rem;
+    $p-t-b: 0.2rem;
+    $p-l-r: 0.7rem;
+    padding: {
+        left: $p-l-r;
+        right: $p-l-r;
+        top: $p-t-b;
+        bottom: $p-t-b;
+    }
+    transition: 100ms;
+    &:active {
+        color: $color-main;
+        background-color: $color-top-bottom;
+    }
+}
+button.small {
     $p-t-b: 0.1rem;
     $p-l-r: 0.5rem;
     padding: {
@@ -25,10 +42,6 @@ button {
         top: $p-t-b;
         bottom: $p-t-b;
     }
-    transition: 75ms;
-}
-button:active {
-    background-color: $color-aside;
 }
 input[type=checkbox] {
     accent-color: $color-details;

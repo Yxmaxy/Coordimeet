@@ -1,29 +1,31 @@
 <template>
-    <div v-if="!insertMode" class="controls">
-        <label>
-            Select unavailable dates
-            <input v-model="selectUnavailable" type="checkbox" />
-        </label>
-        <label>
-            <button @click="invertDates">Invert dates</button>
-        </label>
-        <label>
-            <button @click="resetDates">Reset dates</button>
-        </label>
-        <label v-if="(type === 0)">
+    <div v-if="!insertMode" class="calendar-controls">
+        <div>
+            <label>
+                <button  class="small" @click="resetDates">Reset dates</button>
+            </label>
+            <label>
+                <button  class="small" @click="invertDates">Invert dates</button>
+            </label>
+            <label>
+                Select unavailable dates
+                <input v-model="selectUnavailable" type="checkbox" />
+            </label>
+        </div>
+        <div v-if="(type === 0)">
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
-            <button @click="changeSelectedWeek(false)">Prev</button>
-            <button @click="changeSelectedWeek(true)">Next</button>
-        </label>
+            <button  class="small" @click="changeSelectedWeek(false)">Prev</button>
+            <button  class="small" @click="changeSelectedWeek(true)">Next</button>
+        </div>
     </div>
     <div v-if="insertMode" class="controls">
         <label>
-            <button @click="resetDates">Reset dates</button>
+            <button  class="small" @click="resetDates">Reset dates</button>
         </label>
         <label v-if="(type === 0)">
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
-            <button @click="changeSelectedWeek(false)">Prev</button>
-            <button @click="changeSelectedWeek(true)">Next</button>
+            <button  class="small" @click="changeSelectedWeek(false)">Prev</button>
+            <button  class="small" @click="changeSelectedWeek(true)">Next</button>
         </label>
     </div>
     <div class="calendar-header">
@@ -299,6 +301,17 @@ export default {
 
         text-align: center;
         flex: 1;
+    }
+}
+.calendar-controls {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 0.4rem;
+
+    & > div {
+        display: flex;
+        gap: 0.5rem;
     }
 }
 </style>
