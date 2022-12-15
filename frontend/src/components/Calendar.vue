@@ -26,6 +26,11 @@
             <button @click="changeSelectedWeek(true)">Next</button>
         </label>
     </div>
+    <div class="calendar-header">
+        <div v-for="day in calendarHeader">
+            {{ day }}
+        </div>
+    </div>
     <div :class="['calendar-component', {'type-datetime': type === 0}]">
         <template v-for="(day, index) in days">
             <div
@@ -51,7 +56,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { formatDateDayMonth, formatDateHourDayMonth } from "../common/helpers";
+import { formatDateDayMonth, formatDateHour } from "../common/helpers";
 import { IDateRange, ICalendarDate, CalendarType } from '../common/interfaces';
 const longpressTimeout = 475;
 
@@ -86,6 +91,15 @@ export default {
     computed: {
         numOfWeeks(): number {
             return this.days.length / 24 / 7 - 1;
+        },
+        calendarHeader(): string[] {
+            const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+            if (this.type === CalendarType.Date)
+                return days;
+            for (let i = 0; i < days.length; i++) {
+                days[i] = `${days[i]} ${formatDateDayMonth(this.days[i * 24 + this.selectedWeek * 24 * 7].date)}`;
+            }
+            return days;
         }
     },
     methods: {
@@ -140,7 +154,7 @@ export default {
                 }
                 this.days.push({
                     display: (this.type === CalendarType.Date) ?
-                        formatDateDayMonth(d) : formatDateHourDayMonth(d),
+                        formatDateDayMonth(d) : formatDateHour(d),
                     date: new Date(d),
                     isInRange: isInRange,
                 });
@@ -232,6 +246,8 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+@import "../styles/colors";
+
 .calendar-component {
     box-sizing: border-box;
     flex: 1;
@@ -265,6 +281,17 @@ export default {
     }
     .unavailable {
         background-color: lightcoral;
+    }
+}
+.calendar-header {
+    display: flex;
+    div {
+        font-weight: bold;
+        color: $color-background;
+        background-color: $color-main;
+
+        text-align: center;
+        flex: 1;
     }
 }
 </style>
