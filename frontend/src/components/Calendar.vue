@@ -2,10 +2,10 @@
     <div class="calendar-controls">
         <div>
             <label>
-                <button  class="small" @click="resetDates">Reset dates</button>
+                <button class="small" @click="resetDates">Reset selection</button>
             </label>
             <label v-if="!insertMode">
-                <button  class="small" @click="invertDates">Invert dates</button>
+                <button class="small" @click="invertDates">Invert selection</button>
             </label>
             <label v-if="!insertMode">
                 Select unavailable dates
@@ -14,8 +14,8 @@
         </div>
         <div v-if="(type === 0)">
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
-            <button  class="small" @click="changeSelectedWeek(false)">Prev</button>
-            <button  class="small" @click="changeSelectedWeek(true)">Next</button>
+            <button class="small" @click="changeSelectedWeek(false)">Prev</button>
+            <button class="small" @click="changeSelectedWeek(true)">Next</button>
         </div>
     </div>
     <div class="calendar-header">
