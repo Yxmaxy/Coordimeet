@@ -238,6 +238,13 @@ export default {
     watch: {
         dateRanges() {
             this.calculateShownDates();
+        },
+        selectUnavailable(n) {
+            for (const day of this.days) {
+                if (day.isAvailable === n)
+                    return;
+            }
+            this.invertDates();
         }
     },
     mounted() {
@@ -270,17 +277,17 @@ export default {
         user-select: none;
     }
     .in-range {
-        background-color: lightgoldenrodyellow;
+        background-color: $calendar-color-in-range;
         cursor: pointer;
     }
     .in-range-insert {
         cursor: pointer;
     }
     .available {
-        background-color: lightgreen;
+        background-color: $calendar-color-available;
     }
     .unavailable {
-        background-color: lightcoral;
+        background-color: $calendar-color-unavailable;
     }
 }
 .calendar-header {

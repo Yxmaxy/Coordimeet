@@ -15,17 +15,17 @@ button, input[type=checkbox] {
 }
 button {
     background-color: $color-background-2;
-    border: 0;
+    border: 0.15rem solid $color-background-2;
     border-radius: 0.5rem;
-    $p-t-b: 0.2rem;
-    $p-l-r: 0.6rem;
+    $p-t-b: 0.1rem;
+    $p-l-r: 0.5rem;
     padding: {
         left: $p-l-r;
         right: $p-l-r;
         top: $p-t-b;
         bottom: $p-t-b;
     }
-    transition: 100ms;
+    transition: 75ms;
 }
 button:active {
     background-color: $color-aside;
