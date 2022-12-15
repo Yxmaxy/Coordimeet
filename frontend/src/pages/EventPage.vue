@@ -10,8 +10,7 @@
         </aside>
         <div class="details-area">
             <h1>{{ eventData.Name }}</h1>
-            <div>Deadline: 3. 12. 2022</div>
-            <div>From 11. 12. 2022 to 19. 12. 2022</div>
+            <div>Deadline: xxxx</div>
             <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
             <div v-for="key, value in eventData.Config">
                 {{ key }}
@@ -147,11 +146,11 @@ export default {
 
     .responses-area {
         grid-area: responses;
-        background-color: $color-background-2;
+        background-color: $color-background-3;
         overflow: auto;
 
         h1 {
-            background-color: $color-background-2;
+            background-color: $color-background-3;
             padding: $sectionPadding;
             position: sticky;
             top: 0;

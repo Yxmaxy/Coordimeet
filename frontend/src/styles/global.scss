@@ -25,7 +25,7 @@ button {
         top: $p-t-b;
         bottom: $p-t-b;
     }
-    transition: 200ms;
+    transition: 100ms;
 }
 button:active {
     background-color: $color-aside;
@@ -46,5 +46,5 @@ a:hover {
     color: $color-details;
 }
 .shadow {
-    box-shadow: 0 3px 15px 2px #00000069;
+    box-shadow: 0 3px 15px 0px #00000069;
 }
