@@ -1,9 +1,9 @@
 <template>
     <div class="event-create-page">
         <div class="input-area">
-            <h1>Event data</h1>
+            <h1>Create new event</h1>
             <label>
-                Event name
+                <b>Event name</b>
                 <input
                     type="text"
                     placeholder="Enter a name for your event"
@@ -13,7 +13,7 @@
                 />
             </label>
             <div class="input-subsection">
-                Select calendar type
+                <b>Select calendar type</b>
                 <div>
                     <label>
                         <input
@@ -34,7 +34,7 @@
                 </div>
             </div>
             <label>
-                Event length in {{ calendarTypeDisplay }}
+                <b>Event length in {{ calendarTypeDisplay }}</b>
                 <input
                     type="number"
                     v-model="length"
@@ -42,7 +42,7 @@
                 />
             </label>
             <div class="input-subsection">
-                Rough event duration
+                <b>Rough event duration</b>
                 <div>
                     <label>
                         From
@@ -61,7 +61,7 @@
                 </div>
             </div>
             <label>
-                Additional values
+                <b>Additional values</b>
                 <textarea
                     v-model="customFields"
                     placeholder="Enter custom fields eg.
@@ -69,7 +69,7 @@ Formal attire: Yes
 Ticket price: 5€"
                 ></textarea>
             </label>
-            <button @click="onCreateEvent">
+            <button id="create-button" @click="onCreateEvent">
                 Create new event
             </button>
         </div>
@@ -203,6 +203,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import "../styles/colors";
 .event-create-page {
     $sectionPadding: 0.5rem;
 
@@ -215,12 +216,13 @@ export default {
 
     .input-area {
         grid-area: input;
-        background-color: lightcoral;
+        background-color: $color-background-3;
         overflow: auto;
         padding: $sectionPadding;
         display: flex;
         flex-direction: column;
         gap: 1.5rem;
+        position: relative;
 
         input[type=text], input[type=date], input[type=datetime-local], textarea {
             box-sizing: border-box;
@@ -245,7 +247,7 @@ export default {
     }
     .calendar-area {
         grid-area: calendar;
-        background-color: lightcyan;
+        background-color: $color-background;
         display: flex;
         flex-direction: column;
         padding: $sectionPadding;
@@ -255,17 +257,11 @@ export default {
             top: 0;
         }
     }
-    .details-area {
-        grid-area: details;
-        background-color: lightsalmon;
-        padding: $sectionPadding;
-        position: relative;
-
-        #submit-response {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-        }
+    #create-button {
+        position: sticky;
+        bottom: $sectionPadding;
+        left: $sectionPadding;
+        right: $sectionPadding;
     }
 }
 </style>

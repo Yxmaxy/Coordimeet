@@ -1,13 +1,13 @@
 <template>
-    <div v-if="!insertMode" class="calendar-controls">
+    <div class="calendar-controls">
         <div>
             <label>
                 <button  class="small" @click="resetDates">Reset dates</button>
             </label>
-            <label>
+            <label v-if="!insertMode">
                 <button  class="small" @click="invertDates">Invert dates</button>
             </label>
-            <label>
+            <label v-if="!insertMode">
                 Select unavailable dates
                 <input v-model="selectUnavailable" type="checkbox" />
             </label>
@@ -17,16 +17,6 @@
             <button  class="small" @click="changeSelectedWeek(false)">Prev</button>
             <button  class="small" @click="changeSelectedWeek(true)">Next</button>
         </div>
-    </div>
-    <div v-if="insertMode" class="controls">
-        <label>
-            <button  class="small" @click="resetDates">Reset dates</button>
-        </label>
-        <label v-if="(type === 0)">
-            Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
-            <button  class="small" @click="changeSelectedWeek(false)">Prev</button>
-            <button  class="small" @click="changeSelectedWeek(true)">Next</button>
-        </label>
     </div>
     <div class="calendar-header">
         <div v-for="day in calendarHeader">
@@ -277,6 +267,7 @@ export default {
         align-items: center;
         box-sizing: border-box;
         user-select: none;
+        background-color: $calendar-color-non-selected;
     }
     .in-range {
         background-color: $calendar-color-in-range;
