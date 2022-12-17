@@ -34,7 +34,7 @@ export default {
 <style lang="scss" scoped>
 @import "../styles/colors.scss";
 .event-list-page {
-    $sectionPadding: 0.5rem;
+    $sectionPadding: 1rem;
 
     display: grid;
     grid-template-columns: 1fr 1fr;
