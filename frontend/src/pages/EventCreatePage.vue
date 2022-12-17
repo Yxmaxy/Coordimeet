@@ -49,6 +49,7 @@
                         <input
                             :type="selectedDateInputType"
                             v-model="fromDate"
+                            :class="{'invalid': invalidDates}"
                         />
                     </label>
                     <label>
@@ -56,6 +57,7 @@
                         <input
                             :type="selectedDateInputType"
                             v-model="toDate"
+                            :class="{'invalid': invalidDates}"
                         />
                     </label>
                 </div>
@@ -99,6 +101,7 @@ export default {
             selectedDates: []  as ICalendarDate[],
             fromDate: "",
             toDate: "",
+            invalidDates: false,
             selectedDateRanges: [] as IDateRange[],
             customFields: "",
 
@@ -121,10 +124,16 @@ export default {
     },
     methods: {
         getDateRanges() {
+            this.invalidDates = false;
             const now = new Date();
             const from = this.fromDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.fromDate)) : new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const to = this.toDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.toDate)) :  new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23);
             
+            if (from > to) {
+                this.invalidDates = true;
+                return;
+            }
+
             this.selectedDateRanges = [{
                 from: from,
                 to: to,
