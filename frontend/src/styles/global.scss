@@ -32,6 +32,15 @@ button {
         color: $color-main;
         background-color: $color-top-bottom;
     }
+    &.negative {
+        background-color: $color-invalid;
+        border-color: $color-invalid;
+
+        &:active {
+            color: $color-background;
+            background-color: $color-top-bottom;
+        }
+    }
 }
 button.small {
     $p-t-b: 0.1rem;
