@@ -1,6 +1,9 @@
 <template>
-    <div class="event-page">
-        <aside class="responses-area">
+    <div :class="['event-page', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
+        <aside
+            v-if="eventPageType !== EventPageType.NonConfirmed"
+            class="responses-area"
+        >
             <h1>Responses</h1>
             <div>
                 <div v-for="participant in eventParticipants" class="response">
@@ -8,24 +11,46 @@
                 </div>
             </div>
         </aside>
-        <div class="details-area">
-            <!-- <h1>{{ eventData.Name }}</h1> -->
-            <h1>Kopanje v Laškem</h1>
-            <div>Deadline: xxxx</div>
-            <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
-            <div v-for="key, value in eventData.Config">
-                {{ key }}
-                {{ value }}
+        <div :class="['details-area', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
+            <div class="container">
+                <h2 v-if="eventPageType === EventPageType.NonConfirmed">
+                    You've been invited to:
+                </h2>
+                <h1>{{ eventData.Name }}</h1>
+                <div class="data">
+                    <div>Organiser: xxxx</div>
+                    <div>Deadline: xxxx</div>
+                    <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
+                    <div v-for="key, value in eventData.Config">
+                        {{ key }}
+                        {{ value }}
+                    </div>
+                </div>
+                <div
+                    v-if="eventPageType === EventPageType.NonConfirmed"
+                    class="accept-decline-buttons"
+                >
+                    <button class="negative">
+                        Decline
+                    </button>
+                    <button>
+                        Accept
+                    </button>
+                </div>
             </div>
 
             <button
+                v-if="eventPageType !== EventPageType.NonConfirmed"
                 id="submit-response"
                 @click="onSubmitEvent"
             >
                 Submit response
             </button>
         </div>
-        <main class="calendar-area">
+        <main
+            v-if="eventPageType !== EventPageType.NonConfirmed"   
+            class="calendar-area"
+        >
             <calendar
                 :type="eventData.CalendarType"
                 :dateRanges="eventData.EventDates"
@@ -146,7 +171,12 @@ export default {
     grid-template-areas:
         "responses details"
         "responses calendar";
-
+    &.non-confirmed {
+        grid-template-rows: 1fr;
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "details";
+    }
     .responses-area {
         grid-area: responses;
         background-color: $color-background-3;
@@ -158,7 +188,6 @@ export default {
             position: sticky;
             top: 0;
         }
-
         .response {
             display: flex;
             justify-content: space-between;
@@ -183,6 +212,36 @@ export default {
             position: absolute;
             right: 0.5rem;
             bottom: 0.5rem;
+        }
+
+        &.non-confirmed {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: $color-background;
+            h1, h2 {
+                text-align: center;
+            }
+            .container {
+                max-width: 25rem;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                .data {
+                    margin: {
+                        top: 1rem;
+                        bottom: 1.5rem;
+                    };
+                    max-width: 20rem;
+                    width: 100%;
+                }
+            }
+            .accept-decline-buttons {
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+            }
         }
     }
 }

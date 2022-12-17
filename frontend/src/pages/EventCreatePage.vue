@@ -39,6 +39,7 @@
                     type="number"
                     v-model="length"
                     min="1"
+                    required
                 />
             </label>
             <div class="input-subsection">
