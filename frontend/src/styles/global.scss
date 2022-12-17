@@ -46,10 +46,10 @@ button.small {
 input[type=checkbox], input[type=radio] {
     accent-color: $color-details;
 }
-input:invalid {
+input:invalid, .invalid {
     background-color: $color-invalid;
 }
-input[type=text], input[type=date], input[type=datetime], input[type=number], textarea {
+input[type=text], input[type=date], input[type=datetime-local], input[type=number], textarea {
     padding: 0.3rem;
     border: 2px solid $color-main;
     border-radius: 10px;
