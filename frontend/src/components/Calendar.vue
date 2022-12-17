@@ -12,7 +12,7 @@
                 <input v-model="selectUnavailable" type="checkbox" />
             </label>
         </div>
-        <div v-if="(type === 0)">
+        <div v-if="(type === CalendarType.DateTime)">
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
             <button class="small" @click="changeSelectedWeek(false)">Prev</button>
             <button class="small" @click="changeSelectedWeek(true)">Next</button>
@@ -23,10 +23,10 @@
             {{ day }}
         </div>
     </div>
-    <div :class="['calendar-component', {'type-datetime': type === 0}]">
+    <div :class="['calendar-component', {'type-datetime': type === CalendarType.DateTime}]">
         <template v-for="(day, index) in days">
             <div
-                v-if="type === 1 || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
+                v-if="type === CalendarType.Date || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
                 :class="{
                     'in-range': day.isInRange && !insertMode,
                     'in-range-insert': insertMode,
@@ -82,6 +82,7 @@ export default {
             timeoutObj: undefined as number|undefined,
             selectedWeek: 0,
             selectUnavailable: false,
+            CalendarType,
         }
     },
     computed: {

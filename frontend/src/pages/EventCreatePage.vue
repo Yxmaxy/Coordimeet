@@ -19,7 +19,7 @@
                         <input
                             type="radio"
                             v-model="calendarType"
-                            :value="1"
+                            :value="CalendarType.Date"
                         />
                         Date
                     </label>
@@ -27,7 +27,7 @@
                         <input
                             type="radio"
                             v-model="calendarType"
-                            :value="0"
+                            :value="CalendarType.DateTime"
                         />
                         Date and time
                     </label>
@@ -108,6 +108,8 @@ export default {
             // name input
             name: "",
             nameInputRequired: false,
+
+            CalendarType,
         }
     },
     computed: {
@@ -214,7 +216,7 @@ export default {
 <style lang="scss" scoped>
 @import "../styles/colors";
 .event-create-page {
-    $sectionPadding: 0.5rem;
+    $sectionPadding: 1rem;
 
     flex: 1;
     display: grid;

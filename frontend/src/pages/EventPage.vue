@@ -9,7 +9,8 @@
             </div>
         </aside>
         <div class="details-area">
-            <h1>{{ eventData.Name }}</h1>
+            <!-- <h1>{{ eventData.Name }}</h1> -->
+            <h1>Kopanje v Laškem</h1>
             <div>Deadline: xxxx</div>
             <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
             <div v-for="key, value in eventData.Config">
@@ -36,7 +37,7 @@
 
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
-import { CalendarType, ICalendarDate, IEvent } from '../common/interfaces';
+import { CalendarType, ICalendarDate, IEvent, EventPageType } from '../common/interfaces';
 import { apiServer } from '../common/globals';
 import axios from "axios";
 
@@ -49,6 +50,8 @@ export default {
             selectedDates: [] as ICalendarDate[],
             eventData: {} as IEvent,
             eventParticipants: [] as string[],
+            eventPageType: EventPageType.NonConfirmed as EventPageType,
+            EventPageType,
         }
     },
     computed: {
@@ -134,7 +137,7 @@ export default {
 @import "../styles/colors.scss";
 
 .event-page {
-    $sectionPadding: 0.5rem;
+    $sectionPadding: 1rem;
 
     flex: 1;
     display: grid;
