@@ -55,3 +55,10 @@ export interface IEvent {
     },
     UrlJoinLink: string,
 }
+
+// Event page type
+export enum EventPageType {
+    Invitee = 0,        // calendar and all event data
+    Organiser = 1,      // data about user responses, ending data
+    NonConfirmed = 2,   // invitee sees just basic event data, confirm decline button
+}
