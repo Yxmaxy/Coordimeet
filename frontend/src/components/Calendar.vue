@@ -1,5 +1,5 @@
 <template>
-    <div class="calendar-controls">
+    <div v-if="!disabledMode" class="calendar-controls">
         <div>
             <label>
                 <button class="small" @click="resetDates">Reset selection</button>
@@ -68,6 +68,10 @@ export default {
             default: [],
         },
         insertMode: {  // if all selected are in range
+            type: Boolean,
+            default: false,
+        },
+        disabledMode: {  // non interactive calendar
             type: Boolean,
             default: false,
         }
@@ -185,13 +189,13 @@ export default {
         },
         // methods for selecting available
         onMouseDown(event: MouseEvent, day: ICalendarDate) {
-            if (!day.isInRange)
+            if (!day.isInRange || this.disabledMode)
                 return;
             this.touchStart = day;
             day.isAvailable = !day.isAvailable;
         },
         onMouseEnter(event: MouseEvent, day: ICalendarDate) {
-            if (event.buttons === 1 && this.touchStart !== undefined) {
+            if (event.buttons === 1 && this.touchStart !== undefined && !this.disabledMode) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
@@ -199,13 +203,15 @@ export default {
             this.touchStart = undefined;
         },
         onMouseLeave(event: MouseEvent, day: ICalendarDate) {
-            if (event.buttons === 1 && this.touchStart !== undefined) {
+            if (event.buttons === 1 && this.touchStart !== undefined && !this.disabledMode) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
         // methods for mobile devices
         onTouchStart(event: TouchEvent, day: ICalendarDate) {
             event.preventDefault();
+            if (this.disabledMode)
+                return;
             if (this.touchStart === undefined) {  // press on first date
                 this.timeoutObj = setTimeout(() => {  // if event is longpress select multiple
                     // Longpress event
@@ -219,6 +225,8 @@ export default {
             }
         },
         onTouchEnd(event: TouchEvent, day: ICalendarDate) {
+            if (this.disabledMode)
+                return;
             if (this.timeoutObj !== undefined) {
                 // Normal event
                 day.isAvailable = !day.isAvailable;
