@@ -19,7 +19,7 @@
                         <input
                             type="radio"
                             v-model="calendarType"
-                            :value="1"
+                            :value="CalendarType.Date"
                         />
                         Date
                     </label>
@@ -27,7 +27,7 @@
                         <input
                             type="radio"
                             v-model="calendarType"
-                            :value="0"
+                            :value="CalendarType.DateTime"
                         />
                         Date and time
                     </label>
@@ -39,6 +39,7 @@
                     type="number"
                     v-model="length"
                     min="1"
+                    required
                 />
             </label>
             <div class="input-subsection">
@@ -49,6 +50,7 @@
                         <input
                             :type="selectedDateInputType"
                             v-model="fromDate"
+                            :class="{'invalid': invalidDates}"
                         />
                     </label>
                     <label>
@@ -56,6 +58,7 @@
                         <input
                             :type="selectedDateInputType"
                             v-model="toDate"
+                            :class="{'invalid': invalidDates}"
                         />
                     </label>
                 </div>
@@ -99,12 +102,15 @@ export default {
             selectedDates: []  as ICalendarDate[],
             fromDate: "",
             toDate: "",
+            invalidDates: false,
             selectedDateRanges: [] as IDateRange[],
             customFields: "",
 
             // name input
             name: "",
             nameInputRequired: false,
+
+            CalendarType,
         }
     },
     computed: {
@@ -121,10 +127,16 @@ export default {
     },
     methods: {
         getDateRanges() {
+            this.invalidDates = false;
             const now = new Date();
             const from = this.fromDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.fromDate)) : new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const to = this.toDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.toDate)) :  new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23);
             
+            if (from > to) {
+                this.invalidDates = true;
+                return;
+            }
+
             this.selectedDateRanges = [{
                 from: from,
                 to: to,
@@ -205,7 +217,7 @@ export default {
 <style lang="scss" scoped>
 @import "../styles/colors";
 .event-create-page {
-    $sectionPadding: 0.5rem;
+    $sectionPadding: 1rem;
 
     flex: 1;
     display: grid;

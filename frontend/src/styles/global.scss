@@ -32,6 +32,15 @@ button {
         color: $color-main;
         background-color: $color-top-bottom;
     }
+    &.negative {
+        background-color: $color-invalid;
+        border-color: $color-invalid;
+
+        &:active {
+            color: $color-background;
+            background-color: $color-top-bottom;
+        }
+    }
 }
 button.small {
     $p-t-b: 0.1rem;
@@ -46,10 +55,10 @@ button.small {
 input[type=checkbox], input[type=radio] {
     accent-color: $color-details;
 }
-input:invalid {
+input:invalid, .invalid {
     background-color: $color-invalid;
 }
-input[type=text], input[type=date], input[type=datetime], input[type=number], textarea {
+input[type=text], input[type=date], input[type=datetime-local], input[type=number], textarea {
     padding: 0.3rem;
     border: 2px solid $color-main;
     border-radius: 10px;

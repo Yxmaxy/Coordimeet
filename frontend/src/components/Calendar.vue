@@ -1,5 +1,5 @@
 <template>
-    <div class="calendar-controls">
+    <div v-if="!disabledMode" class="calendar-controls">
         <div>
             <label>
                 <button class="small" @click="resetDates">Reset selection</button>
@@ -12,7 +12,7 @@
                 <input v-model="selectUnavailable" type="checkbox" />
             </label>
         </div>
-        <div v-if="(type === 0)">
+        <div v-if="(type === CalendarType.DateTime)">
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
             <button class="small" @click="changeSelectedWeek(false)">Prev</button>
             <button class="small" @click="changeSelectedWeek(true)">Next</button>
@@ -23,10 +23,10 @@
             {{ day }}
         </div>
     </div>
-    <div :class="['calendar-component', {'type-datetime': type === 0}]">
+    <div :class="['calendar-component', {'type-datetime': type === CalendarType.DateTime}]">
         <template v-for="(day, index) in days">
             <div
-                v-if="type === 1 || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
+                v-if="type === CalendarType.Date || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
                 :class="{
                     'in-range': day.isInRange && !insertMode,
                     'in-range-insert': insertMode,
@@ -70,6 +70,10 @@ export default {
         insertMode: {  // if all selected are in range
             type: Boolean,
             default: false,
+        },
+        disabledMode: {  // non interactive calendar
+            type: Boolean,
+            default: false,
         }
     },
     data() {
@@ -78,6 +82,7 @@ export default {
             timeoutObj: undefined as number|undefined,
             selectedWeek: 0,
             selectUnavailable: false,
+            CalendarType,
         }
     },
     computed: {
@@ -185,13 +190,13 @@ export default {
         },
         // methods for selecting available
         onMouseDown(event: MouseEvent, day: ICalendarDate) {
-            if (!day.isInRange)
+            if (!day.isInRange || this.disabledMode)
                 return;
             this.touchStart = day;
             day.isAvailable = !day.isAvailable;
         },
         onMouseEnter(event: MouseEvent, day: ICalendarDate) {
-            if (event.buttons === 1 && this.touchStart !== undefined) {
+            if (event.buttons === 1 && this.touchStart !== undefined && !this.disabledMode) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
@@ -199,13 +204,15 @@ export default {
             this.touchStart = undefined;
         },
         onMouseLeave(event: MouseEvent, day: ICalendarDate) {
-            if (event.buttons === 1 && this.touchStart !== undefined) {
+            if (event.buttons === 1 && this.touchStart !== undefined && !this.disabledMode) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
         // methods for mobile devices
         onTouchStart(event: TouchEvent, day: ICalendarDate) {
             event.preventDefault();
+            if (this.disabledMode)
+                return;
             if (this.touchStart === undefined) {  // press on first date
                 this.timeoutObj = setTimeout(() => {  // if event is longpress select multiple
                     // Longpress event
@@ -219,6 +226,8 @@ export default {
             }
         },
         onTouchEnd(event: TouchEvent, day: ICalendarDate) {
+            if (this.disabledMode)
+                return;
             if (this.timeoutObj !== undefined) {
                 // Normal event
                 day.isAvailable = !day.isAvailable;
