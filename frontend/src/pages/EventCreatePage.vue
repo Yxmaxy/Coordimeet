@@ -72,6 +72,13 @@ Formal attire: Yes
 Ticket price: 5€"
                 ></textarea>
             </label>
+            <label>
+                <b>Deadline</b>
+                <input
+                    type="datetime-local"
+                    v-model="deadline"
+                />
+            </label>
             <button id="create-button" @click="onCreateEvent">
                 Create new event
             </button>
@@ -90,7 +97,7 @@ Ticket price: 5€"
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
 import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
-import { removeHoursMinutesFromDate } from '../common/helpers';
+import { removeHoursMinutesFromDate, initializeDateInput } from '../common/helpers';
 export default {
     components: {
         "calendar": Calendar,
@@ -100,11 +107,12 @@ export default {
             calendarType: 1,
             length: 1,
             selectedDates: []  as ICalendarDate[],
-            fromDate: "",
-            toDate: "",
+            fromDate: initializeDateInput(1),
+            toDate: initializeDateInput(1),
             invalidDates: false,
             selectedDateRanges: [] as IDateRange[],
             customFields: "",
+            deadline: initializeDateInput(CalendarType.DateTime),
 
             // name input
             name: "",
@@ -191,11 +199,12 @@ export default {
                     Length: this.length,
                     UrlJoinLink: "https://coordimeet.eu/joinEvent?id=123",
                     CalendarType: this.calendarType,
-                    Config: config
+                    Config: config,
+                    Deadline: this.deadline,
                 },
                 EventRanges: dates,
             });
-        }
+        },
     },
     watch: {
         fromDate() {
