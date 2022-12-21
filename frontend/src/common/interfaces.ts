@@ -25,6 +25,7 @@ export interface IEvent {
     EventDates: IDateRange[],
     Length: number,
     Name: string,
+    Deadline: string,
     Organiser: {
         FirstName: string,
         LastName: string,

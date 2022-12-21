@@ -30,10 +30,10 @@
                     v-if="eventPageType === EventPageType.NonConfirmed"
                     class="accept-decline-buttons"
                 >
-                    <button class="negative">
+                    <button class="negative" @click="$router.push('/event/list')">
                         Decline
                     </button>
-                    <button>
+                    <button @click="eventPageType = EventPageType.Invitee">
                         Accept
                     </button>
                 </div>
@@ -228,6 +228,14 @@ export default {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                padding: 2rem;
+                background-color: $color-background;
+                border: {
+                    radius: 20px;
+                    color: $color-main;
+                    style: solid;
+                    width: 2px;
+                }
                 .data {
                     margin: {
                         top: 1rem;
