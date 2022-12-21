@@ -88,8 +88,10 @@ export default {
     },
     methods: {
         getEventData() {
-            axios.get(`${apiServer}/event.php?IDEvent=${1}`, {
-
+            axios.get(`${apiServer}/event.php?`, {
+                params: {
+                    IDEvent: 1,
+                }
             }).then(res => {
                 if (res.data.error) {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
@@ -120,7 +122,10 @@ export default {
             });
         },
         getEventParticipants() {
-            axios.get(`${apiServer}/eventUser.php?IDEvent=${1}`, {
+            axios.get(`${apiServer}/usersOnEvent.php`, {
+                params: {
+                    IDEvent: 1,
+                }
             }).then(res => {
                 if (res.data.error) {
                    console.log(res.data.error);
