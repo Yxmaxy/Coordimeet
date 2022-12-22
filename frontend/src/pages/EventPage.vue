@@ -48,7 +48,7 @@
             </button>
         </div>
         <main
-            v-if="eventPageType !== EventPageType.NonConfirmed"   
+            v-if="eventPageType !== EventPageType.NonConfirmed"
             class="calendar-area"
         >
             <calendar
@@ -88,8 +88,8 @@ export default {
     },
     methods: {
         getEventData() {
-            axios.post(`${apiServer}/event.php`, {
-                IDEvent: 1,
+            axios.get(`${apiServer}/event.php?IDEvent=${1}`, {
+
             }).then(res => {
                 if (res.data.error) {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
@@ -113,15 +113,14 @@ export default {
                                 eventDate.EndDate.Day,
                                 eventDate.EndDate.Hour,
                                 eventDate.EndDate.Minute,
-                            )   
+                            )
                         }
                     })
                 } as IEvent
             });
         },
         getEventParticipants() {
-            axios.post(`${apiServer}/usersOnEvent.php`, {
-                IDEvent: 1,
+            axios.get(`${apiServer}/eventUser.php?IDEvent=${1}`, {
             }).then(res => {
                 if (res.data.error) {
                    console.log(res.data.error);
