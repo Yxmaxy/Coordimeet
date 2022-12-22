@@ -10,7 +10,7 @@ export default createRouter({
     history: createWebHistory(),
     routes: [
         { path: "/", component: HomePage },
-        { path: "/event", component: EventPage },
+        { path: "/event/:id", component: EventPage },
         { path: "/event/new", component: EventCreatePage },
         { path: "/event/list", component: EventListPage },
         { path: "/:catchAll(.*)", redirect: () => "" },

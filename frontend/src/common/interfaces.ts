@@ -26,10 +26,12 @@ export interface IEvent {
     Length: number,
     Name: string,
     Deadline: string,
-    Organiser: {
+    Organizer: {
         FirstName: string,
         LastName: string,
         Email: string,
+        GoogleID: string,
+        ProfilePhoto: string,
     },
     UrlJoinLink: string,
 }

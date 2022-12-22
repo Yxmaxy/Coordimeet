@@ -4,6 +4,10 @@ function padNumber(number: number, places: number = 2): string {
     return number.toString().padStart(places, '0');
 }
 
+export function formatDateDayMonthYear(date: Date) {
+    return `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()}`;
+}
+
 export function formatDateDayMonth(date: Date) {
     return `${date.getDate()}. ${date.getMonth() + 1}.`;
 }
