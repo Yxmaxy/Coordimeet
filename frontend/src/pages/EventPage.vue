@@ -122,7 +122,7 @@ export default {
             });
         },
         getEventParticipants() {
-            axios.get(`${apiServer}/usersOnEvent.php`, {
+            axios.get(`${apiServer}/eventUser.php`, {
                 params: {
                     IDEvent: 1,
                 }
