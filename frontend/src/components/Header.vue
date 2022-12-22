@@ -34,7 +34,7 @@ export default {
                     this.userStore.isLoggedIn = true;
                     this.userStore.user = res.data;
                 }
-                
+                console.log(res.data);
             })
         },
     },
