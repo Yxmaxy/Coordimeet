@@ -10,8 +10,15 @@
 
 <script lang="ts">
 import axios from 'axios'
+import { useUserStore } from '../common/stores/UserStore'
 
 export default {
+    setup() {
+        const userStore = useUserStore();
+        return {
+            userStore,
+        }
+    },
     data() {
         return {
             loginLink: ""
@@ -23,7 +30,10 @@ export default {
             .then(res => {
                 if ("googleLoginURL" in res.data)
                     this.loginLink = res.data.googleLoginURL;
-                console.log(res.data);
+                else {
+                    this.userStore.isLoggedIn = true;
+                    this.userStore.user = res.data;
+                }
                 
             })
         },
