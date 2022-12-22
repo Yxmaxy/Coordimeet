@@ -17,8 +17,8 @@ export function removeHoursMinutesFromDate(date: Date): Date {
     return date;
 }
 
-export function initializeDateInput(type: CalendarType): string {
-    const now = removeHoursMinutesFromDate(new Date());
+export function initializeDateInput(type: CalendarType, date?: string): string {    
+    const now = date === undefined ? removeHoursMinutesFromDate(new Date()) : new Date(date);
     if (type === CalendarType.Date)
         return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}`;
     return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}T${padNumber(now.getHours())}:00`;

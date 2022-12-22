@@ -49,7 +49,8 @@
                         From
                         <input
                             :type="selectedDateInputType"
-                            v-model="fromDate"
+                            :value="fromDateComp"
+                            @input="event => handleDateInput(event.target, 'from')"
                             :class="{'invalid': invalidDates}"
                         />
                     </label>
@@ -57,7 +58,8 @@
                         To
                         <input
                             :type="selectedDateInputType"
-                            v-model="toDate"
+                            :value="toDateComp"
+                            @input="event => handleDateInput(event.target, 'to')"
                             :class="{'invalid': invalidDates}"
                         />
                     </label>
@@ -132,6 +134,12 @@ export default {
                 return "date";
             return "datetime-local";
         },
+        fromDateComp() {
+            return initializeDateInput(this.calendarType, this.fromDate);
+        },
+        toDateComp() {
+            return initializeDateInput(this.calendarType, this.toDate);
+        },
     },
     methods: {
         getDateRanges() {
@@ -152,11 +160,12 @@ export default {
         },
         onCreateEvent() {
             if (this.name.length === 0) {
-                alert("You must enter a name for the event")
+                this.nameInputRequired = true;
+                alert("You must enter a name for the event");
                 return;
             }
             if (this.length < 0) {
-                alert("Event length must me bigger or equal to 1")
+                alert("Event length must me bigger or equal to 1");
                 return;
             }
             
@@ -205,6 +214,13 @@ export default {
                 EventRanges: dates,
             });
         },
+        handleDateInput(target: EventTarget|null, type: 'from'|'to') {
+            const input = target as HTMLInputElement;
+            if (type === 'from')
+                this.fromDate = input.value;
+            else
+                this.toDate = input.value;
+        }
     },
     watch: {
         fromDate() {
