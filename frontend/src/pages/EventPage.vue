@@ -89,7 +89,7 @@ export default {
     },
     methods: {
         getEventData() {
-            axios.get(`${apiServer}/event.php?`, {
+            axios.get(`${apiServer}/event.php`, {
                 params: {
                     IDEvent: this.$route.params.id,
                 }
