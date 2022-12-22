@@ -26,14 +26,17 @@ export interface IEvent {
     Length: number,
     Name: string,
     Deadline: string,
-    Organizer: {
-        FirstName: string,
-        LastName: string,
-        Email: string,
-        GoogleID: string,
-        ProfilePhoto: string,
-    },
+    Organizer: IUser,
     UrlJoinLink: string,
+}
+
+// User
+export interface IUser {
+    FirstName: string,
+    LastName: string,
+    Email: string,
+    GoogleID: string,
+    ProfilePhoto: string,
 }
 
 // Event page type
