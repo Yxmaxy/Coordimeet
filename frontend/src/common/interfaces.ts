@@ -26,26 +26,12 @@ export interface IEvent {
     Length: number,
     Name: string,
     Deadline: string,
-    Organiser: {
+    Organizer: {
         FirstName: string,
         LastName: string,
         Email: string,
-    },
-    UrlJoinLink: string,
-}
-
-
-// Event data
-export interface IEvent {
-    CalendarType: CalendarType,
-    Config: Object,
-    EventDates: IDateRange[],
-    Length: number,
-    Name: string,
-    Organiser: {
-        FirstName: string,
-        LastName: string,
-        Email: string,
+        GoogleID: string,
+        ProfilePhoto: string,
     },
     UrlJoinLink: string,
 }

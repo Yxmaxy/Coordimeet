@@ -91,6 +91,8 @@ export default {
         },
         calendarHeader(): string[] {
             const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+            if (this.days.length === 0)
+                return days;
             if (this.type === CalendarType.Date)
                 return days;
             for (let i = 0; i < days.length; i++) {

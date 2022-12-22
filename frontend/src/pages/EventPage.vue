@@ -18,8 +18,8 @@
                 </h2>
                 <h1>{{ eventData.Name }}</h1>
                 <div class="data">
-                    <div>Organiser: xxxx</div>
-                    <div>Deadline: xxxx</div>
+                    <div>Organiser: {{ eventData.Organizer?.FirstName }} {{ eventData.Organizer?.LastName }}</div>
+                    <div>Deadline: {{ formatDateDayMonthYear(new Date(eventData.Deadline)) }}</div>
                     <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
                     <div v-for="key, value in eventData.Config">
                         {{ key }}
@@ -64,6 +64,7 @@
 import Calendar from '../components/Calendar.vue';
 import { CalendarType, ICalendarDate, IEvent, EventPageType } from '../common/interfaces';
 import { apiServer } from '../common/globals';
+import { formatDateDayMonthYear } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -88,8 +89,10 @@ export default {
     },
     methods: {
         getEventData() {
-            axios.get(`${apiServer}/event.php?IDEvent=${1}`, {
-
+            axios.get(`${apiServer}/event.php`, {
+                params: {
+                    IDEvent: this.$route.params.id,
+                }
             }).then(res => {
                 if (res.data.error) {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
@@ -100,32 +103,25 @@ export default {
                     ...res.data,
                     EventDates: res.data.EventDates.map((eventDate: any) => {
                         return {
-                            from: new Date(
-                                eventDate.StartDate.Year,
-                                eventDate.StartDate.Month - 1,
-                                eventDate.StartDate.Day,
-                                eventDate.StartDate.Hour,
-                                eventDate.StartDate.Minute,
-                            ),
-                            to: new Date(
-                                eventDate.EndDate.Year,
-                                eventDate.EndDate.Month - 1,
-                                eventDate.EndDate.Day,
-                                eventDate.EndDate.Hour,
-                                eventDate.EndDate.Minute,
-                            )
+                            from: new Date(eventDate.StartDate),
+                            to: new Date(eventDate.EndDate)
                         }
                     })
                 } as IEvent
             });
         },
         getEventParticipants() {
-            axios.get(`${apiServer}/eventUser.php?IDEvent=${1}`, {
+            axios.get(`${apiServer}/eventUser.php`, {
+                params: {
+                    IDEvent: this.$route.params.id,
+                }
             }).then(res => {
                 if (res.data.error) {
                    console.log(res.data.error);
                     return;
                 }
+                if (res.data.length === 0)
+                    return;
                 this.eventParticipants = res.data.map((participant: any) => {
                     return `${participant.FirstName} ${participant.LastName}`;
                 })
@@ -148,7 +144,8 @@ export default {
                 }
             }
             console.log(dates);
-        }
+        },
+        formatDateDayMonthYear,
     },
     mounted() {
         this.getEventData();

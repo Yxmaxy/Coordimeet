@@ -49,7 +49,8 @@
                         From
                         <input
                             :type="selectedDateInputType"
-                            v-model="fromDate"
+                            :value="fromDateComp"
+                            @input="event => handleDateInput(event.target, 'from')"
                             :class="{'invalid': invalidDates}"
                         />
                     </label>
@@ -57,7 +58,8 @@
                         To
                         <input
                             :type="selectedDateInputType"
-                            v-model="toDate"
+                            :value="toDateComp"
+                            @input="event => handleDateInput(event.target, 'to')"
                             :class="{'invalid': invalidDates}"
                         />
                     </label>
@@ -95,9 +97,12 @@ Ticket price: 5€"
 </template>
 
 <script lang="ts">
+import axios from 'axios';
 import Calendar from '../components/Calendar.vue';
 import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
 import { removeHoursMinutesFromDate, initializeDateInput } from '../common/helpers';
+import { apiServer } from '../common/globals';
+
 export default {
     components: {
         "calendar": Calendar,
@@ -132,6 +137,12 @@ export default {
                 return "date";
             return "datetime-local";
         },
+        fromDateComp() {
+            return initializeDateInput(this.calendarType, this.fromDate);
+        },
+        toDateComp() {
+            return initializeDateInput(this.calendarType, this.toDate);
+        },
     },
     methods: {
         getDateRanges() {
@@ -152,11 +163,12 @@ export default {
         },
         onCreateEvent() {
             if (this.name.length === 0) {
-                alert("You must enter a name for the event")
+                this.nameInputRequired = true;
+                alert("You must enter a name for the event");
                 return;
             }
             if (this.length < 0) {
-                alert("Event length must me bigger or equal to 1")
+                alert("Event length must me bigger or equal to 1");
                 return;
             }
             
@@ -191,20 +203,30 @@ export default {
                 alert(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
                 return;
             }
-
-            console.log({
+            
+            axios.post(`${apiServer}/event.php?`, {
                 Event: {
                     IDOrganizer: 1,
                     Name: this.name,
                     Length: this.length,
                     UrlJoinLink: "https://coordimeet.eu/joinEvent?id=123",
                     CalendarType: this.calendarType,
-                    Config: config,
                     Deadline: this.deadline,
+                    Config: config,
                 },
                 EventRanges: dates,
-            });
+            })
+            .then(res => {
+                
+            })
         },
+        handleDateInput(target: EventTarget|null, type: 'from'|'to') {
+            const input = target as HTMLInputElement;
+            if (type === 'from')
+                this.fromDate = input.value;
+            else
+                this.toDate = input.value;
+        }
     },
     watch: {
         fromDate() {
