@@ -26,7 +26,7 @@ export default {
     },
     methods: {
         getLoginData() {
-            axios.get("https://coordimeet.eu/googleLogin.php")
+            axios.get("https://coordimeet.eu/backend/googleLogin.php")
             .then(res => {
                 if ("googleLoginURL" in res.data)
                     this.loginLink = res.data.googleLoginURL;
