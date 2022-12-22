@@ -34,22 +34,6 @@ export interface IEvent {
     UrlJoinLink: string,
 }
 
-
-// Event data
-export interface IEvent {
-    CalendarType: CalendarType,
-    Config: Object,
-    EventDates: IDateRange[],
-    Length: number,
-    Name: string,
-    Organiser: {
-        FirstName: string,
-        LastName: string,
-        Email: string,
-    },
-    UrlJoinLink: string,
-}
-
 // Event page type
 export enum EventPageType {
     Invitee = 0,        // calendar and all event data
