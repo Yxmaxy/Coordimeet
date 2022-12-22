@@ -97,9 +97,12 @@ Ticket price: 5€"
 </template>
 
 <script lang="ts">
+import axios from 'axios';
 import Calendar from '../components/Calendar.vue';
 import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
 import { removeHoursMinutesFromDate, initializeDateInput } from '../common/helpers';
+import { apiServer } from '../common/globals';
+
 export default {
     components: {
         "calendar": Calendar,
@@ -200,19 +203,22 @@ export default {
                 alert(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
                 return;
             }
-
-            console.log({
+            
+            axios.post(`${apiServer}/event.php?`, {
                 Event: {
                     IDOrganizer: 1,
                     Name: this.name,
                     Length: this.length,
                     UrlJoinLink: "https://coordimeet.eu/joinEvent?id=123",
                     CalendarType: this.calendarType,
-                    Config: config,
                     Deadline: this.deadline,
+                    Config: config,
                 },
                 EventRanges: dates,
-            });
+            })
+            .then(res => {
+                
+            })
         },
         handleDateInput(target: EventTarget|null, type: 'from'|'to') {
             const input = target as HTMLInputElement;
