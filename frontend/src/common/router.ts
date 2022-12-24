@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory } from "vue-router";
+import { developmentMode } from "./globals";
 import { useUserStore } from "./stores/UserStore";
 import HomePage from "../pages/HomePage.vue";
 import EventPage from "../pages/EventPage.vue";
@@ -18,13 +19,14 @@ const router = createRouter({
     ]
 });
 
-router.beforeEach((to, from, next) => {
-    const userStore = useUserStore();
-    if (to.name === "home" && userStore.isLoggedIn)
-        return next("/event/list");
-    if (to.name !== "home" && !userStore.isLoggedIn)
-        return next("/");
-    next();
-});
+if (!developmentMode)
+    router.beforeEach((to, from, next) => {
+        const userStore = useUserStore();
+        if (to.name === "home" && userStore.isLoggedIn)
+            return next("/event/list");
+        if (to.name !== "home" && !userStore.isLoggedIn)
+            return next("/");
+        next();
+    });
 
 export default router;
