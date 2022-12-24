@@ -1,15 +1,22 @@
 <template>
-    <div :class="['event-page', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
+    <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
+        'non-confirmed': eventPageType === EventPageType.NonConfirmed,
+        'organizer': eventPageType === EventPageType.Organizer,
+    }]">
         <aside
             v-if="eventPageType !== EventPageType.NonConfirmed"
             class="responses-area"
         >
             <h1>Responses</h1>
             <div>
-                <div v-for="participant in eventParticipants" class="response">
+                <div v-for="participant in eventParticipants" class="list-element">
                     <div>{{ participant }}</div>
                 </div>
             </div>
+        </aside>
+        <aside v-if="eventPageType === EventPageType.Organizer" class="selectable-area">
+            <h1>Selectable dates</h1>
+            <button>Select date and finish event</button>
         </aside>
         <div :class="['details-area', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
             <div class="container">
@@ -138,6 +145,19 @@ export default {
                 })
             }).catch(() => this.$router.push("/"))
         },
+        getSelectedDates() {
+            axios.get(`${apiServer}/eventUserRanges.php`, {
+                params: {
+                    IDEvent: this.$route.params.id,
+                }
+            }).then(res => {
+                if (res.data.error) {
+                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+                    return;
+                }
+                
+            });
+        },
         onSubmitEvent() {
             const dates: any = [];
             let currentStart: Date|undefined = undefined;
@@ -166,6 +186,7 @@ export default {
     mounted() {
         this.getEventData();
         this.getEventParticipants();
+        this.getSelectedDates();
     },
 }
 </script>
@@ -173,9 +194,27 @@ export default {
 <style lang="scss" scoped>
 @import "../styles/colors.scss";
 
-.event-page {
-    $sectionPadding: 1rem;
+$sectionPadding: 1rem;
 
+@mixin aside-mixin {
+    background-color: $color-background-3;
+    overflow: auto;
+    border-right: 2px solid $color-top-bottom;
+
+    h1 {
+        background-color: $color-background-3;
+        padding: $sectionPadding;
+        position: sticky;
+        top: 0;
+    }
+    .list-element {
+        display: flex;
+        justify-content: space-between;
+        padding: $sectionPadding;
+    }
+}
+
+.event-page {
     flex: 1;
     display: grid;
     grid-template-rows: min(15rem, 30vh) 1fr;
@@ -189,23 +228,19 @@ export default {
         grid-template-areas:
             "details";
     }
+    &.organizer {
+        grid-template-columns: min(20rem, 30vw) min(20rem, 30vw) 1fr;
+        grid-template-areas:
+            "responses selectable details"
+            "responses selectable calendar";
+    }
     .responses-area {
         grid-area: responses;
-        background-color: $color-background-3;
-        overflow: auto;
-        border-right: 2px solid $color-top-bottom;
-
-        h1 {
-            background-color: $color-background-3;
-            padding: $sectionPadding;
-            position: sticky;
-            top: 0;
-        }
-        .response {
-            display: flex;
-            justify-content: space-between;
-            padding: $sectionPadding;
-        }
+        @include aside-mixin;
+    }
+    .selectable-area {
+        grid-area: selectable;
+        @include aside-mixin;
     }
     .calendar-area {
         grid-area: calendar;
