@@ -18,7 +18,7 @@
                 </h2>
                 <h1>{{ eventData.Name }}</h1>
                 <div class="data">
-                    <div>Organiser: {{ eventData.Organizer?.FirstName }} {{ eventData.Organizer?.LastName }}</div>
+                    <div>Organizer: {{ eventData.Organizer?.FirstName }} {{ eventData.Organizer?.LastName }}</div>
                     <div>Deadline: {{ formatDateDayMonthYear(new Date(eventData.Deadline)) }}</div>
                     <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
                     <div v-for="key, value in eventData.Config">
@@ -177,6 +177,7 @@ export default {
         grid-area: responses;
         background-color: $color-background-3;
         overflow: auto;
+        border-right: 2px solid $color-top-bottom;
 
         h1 {
             background-color: $color-background-3;
