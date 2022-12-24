@@ -119,7 +119,7 @@ export default {
 
                 this.eventData = eventData;
                 this.userIsOrganizer = this.user.GoogleID === eventData.Organizer.GoogleID;
-            });
+            }).catch(() => this.$router.push("/"))
         },
         getEventParticipants() {
             axios.get(`${apiServer}/eventUser.php`, {
@@ -128,7 +128,7 @@ export default {
                 }
             }).then(res => {
                 if (res.data.error) {
-                   console.log(res.data.error);
+                    console.log(res.data.error);
                     return;
                 }
                 if (res.data.length === 0)
@@ -136,7 +136,7 @@ export default {
                 this.eventParticipants = res.data.map((participant: any) => {
                     return `${participant.FirstName} ${participant.LastName}`;
                 })
-            });
+            }).catch(() => this.$router.push("/"))
         },
         onSubmitEvent() {
             const dates: any = [];
