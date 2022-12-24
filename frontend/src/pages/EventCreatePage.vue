@@ -99,11 +99,18 @@ Ticket price: 5€"
 <script lang="ts">
 import axios from 'axios';
 import Calendar from '../components/Calendar.vue';
+import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
-import { removeHoursMinutesFromDate, initializeDateInput } from '../common/helpers';
+import { removeHoursMinutesFromDate, initializeDateInput, formatDateForBackend } from '../common/helpers';
 import { apiServer } from '../common/globals';
 
 export default {
+    setup() {
+        const { user } = useUserStore();
+        return {
+            user,
+        }
+    },
     components: {
         "calendar": Calendar,
     },
@@ -193,8 +200,8 @@ export default {
                 else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
                     const prevDate = this.selectedDates[i - 1];
                     dates.push({
-                        StartDate: new Date(currentStart),
-                        EndDate: new Date(prevDate.date),
+                        StartDate: formatDateForBackend(new Date(currentStart)),
+                        EndDate: formatDateForBackend(new Date(prevDate.date)),
                     })
                     currentStart = undefined;
                 }
@@ -206,18 +213,17 @@ export default {
             
             axios.post(`${apiServer}/event.php?`, {
                 Event: {
-                    IDOrganizer: 1,
+                    IDOrganizer: this.user.GoogleID,
                     Name: this.name,
                     Length: this.length,
-                    UrlJoinLink: "https://coordimeet.eu/joinEvent?id=123",
                     CalendarType: this.calendarType,
-                    Deadline: this.deadline,
+                    Deadline: formatDateForBackend(new Date(this.deadline)),
                     Config: config,
                 },
                 EventRanges: dates,
             })
             .then(res => {
-                
+                console.log(res.data);
             })
         },
         handleDateInput(target: EventTarget|null, type: 'from'|'to') {
