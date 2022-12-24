@@ -80,6 +80,10 @@ a.btn {
         color: $color-background;
     }
 }
+abbr {
+    -webkit-text-decoration-line: none;
+    text-decoration-line: none;
+}
 // scrollbar
 ::-webkit-scrollbar {
     width: 0.5rem;

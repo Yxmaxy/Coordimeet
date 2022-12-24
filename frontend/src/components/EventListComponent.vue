@@ -1,11 +1,11 @@
 <template>
     <div class="event" v-for="event in events" @click="$router.push(`/event/${event.IDEvent}`)">
         <div>
-            <b>{{ event.Name }}</b>
-            <div>{{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}</div>
+            <b>{{ event.Name }}</b> - 
+            <abbr title="Organizer">{{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}</abbr>
         </div>
         <div>
-            <div>{{ formatDateDayMonthYear(new Date(event.Deadline)) }}</div>
+            <abbr title="Event deadline">{{ formatDateDayMonthYear(new Date(event.Deadline)) }}</abbr>
         </div>
     </div>
 </template>
@@ -19,7 +19,8 @@ export default {
     props: {
         events: {
             type: Array as PropType<IEvent[]>,
-            required: true
+            default: [],
+            required: true,
         }
     },
     methods: {
@@ -43,11 +44,6 @@ export default {
     &:hover {
         background-color: $color-top-bottom;
         transform: translateY(-0.1rem);
-    }
-
-    & > div {
-        display: flex;
-        gap: 0.75rem;
     }
 }
 </style>
