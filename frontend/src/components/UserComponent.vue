@@ -18,16 +18,15 @@
             referrerpolicy="no-referrer"
         />
     </div>
-    <button 
+    <a 
         v-if="userStore.isLoggedIn && showLogout"
-        :href="loginLink"
-        @click="logout"
-    >Log out</button>
+        class="btn"
+        href="https://coordimeet.eu/backend/googleLogout.php"
+    >Log out</a>
 </template>
 
 <script lang="ts">
 import axios from 'axios'
-import { IUser } from '../common/interfaces';
 import { useUserStore } from '../common/stores/UserStore'
 
 export default {
@@ -50,19 +49,11 @@ export default {
                 if ("googleLoginURL" in res.data)
                     this.loginLink = res.data.googleLoginURL;
                 else {
-                    console.log(res.data);
-                    
                     this.userStore.isLoggedIn = true;
                     this.userStore.user = res.data;
                     this.$router.push("/event/list");
                 }
             })
-        },
-        logout() {
-            this.userStore.isLoggedIn = false;
-            this.userStore.user = {} as IUser;
-            this.$router.push("/");
-            // TODO add backend logout
         },
     },
     mounted() {
