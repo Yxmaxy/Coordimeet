@@ -19,10 +19,12 @@
             </h1>
         <div>
             <div class="event" v-for="event in eventsCreated">
-                <div><b>{{ event.Name }}</b></div>
+                    <div>
+                    <b>{{ event.Name }}</b>
+                    <div>{{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}</div>
+                </div>
                     <div>
                         <div>{{ formatDateDayMonthYear(new Date(event.Deadline)) }}</div>
-                        <div>{{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}</div>
                     </div>
                 </div>
             </div>
@@ -32,11 +34,18 @@
 
 <script lang="ts">
 import axios from "axios";
+import { useUserStore } from "../common/stores/UserStore";
 import { IEvent } from "../common/interfaces";
 import { formatDateDayMonthYear } from '../common/helpers';
 import { apiServer } from "../common/globals";
 
 export default {
+    setup() {
+        const { user } = useUserStore();
+        return {
+            user,
+        }
+    },
     data() {
         return {
             eventsInvited: [] as IEvent[],
@@ -47,7 +56,8 @@ export default {
         getEventsInvited() {
             axios.get(`${apiServer}/eventUser.php`, {
                 params: {
-                    IDUser: 1234, // TODO: Change static user id to GoogleID of logged in user (returned in googleLogin.php call)
+                    IDUser: 1234,
+                    // IDUser: this.user.GoogleID,
                 }
             }).then(res => {
                 if (res.data.error) {
@@ -55,13 +65,16 @@ export default {
                     this.$router.push("/");
                     return;
                 }
+                console.log(res.data);
                 this.eventsInvited = res.data;
+                
             });
         },
         getEventsCreated() {
             axios.get(`${apiServer}/eventUser.php`, {
                 params: {
-                    IDOrganizer: 1234, // TODO: Change static organizer id to GoogleID of logged in user (returned in googleLogin.php call)
+                    IDOrganizer: 1234,
+                    // IDOrganizer: this.user.GoogleID,
                 }
             }).then(res => {
                 if (res.data.error) {

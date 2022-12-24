@@ -2,16 +2,16 @@
 <template>
     <header class="header-component">
         <img src="/images/logo.png" alt="logo" @click="$router.push('/')"/>
-        <login-button />
+        <user-component />
     </header>
 </template>
 
 <script lang="ts">
-import LoginButton from './LoginButton.vue';
+import UserComponent from './UserComponent.vue';
 
 export default {
     components: {
-        LoginButton,
+        UserComponent,
     }
 }
 </script>
