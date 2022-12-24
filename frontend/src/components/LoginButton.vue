@@ -4,7 +4,11 @@
         class="btn"
         :href="loginLink"
     >Log in</a>
-    <div v-else class="profile">
+    <div
+        v-if="userStore.isLoggedIn && !showLogout"
+        class="profile"
+        @click="showLogout = true"
+    >
         <div>
             {{ userStore.user.FirstName }}
         </div>
@@ -14,10 +18,16 @@
             referrerpolicy="no-referrer"
         />
     </div>
+    <button 
+        v-if="userStore.isLoggedIn && showLogout"
+        :href="loginLink"
+        @click="logout"
+    >Log out</button>
 </template>
 
 <script lang="ts">
 import axios from 'axios'
+import { IUser } from '../common/interfaces';
 import { useUserStore } from '../common/stores/UserStore'
 
 export default {
@@ -29,7 +39,8 @@ export default {
     },
     data() {
         return {
-            loginLink: ""
+            loginLink: "",
+            showLogout: false,
         }
     },
     methods: {
@@ -44,6 +55,12 @@ export default {
                     this.$router.push("/event/list");
                 }
             })
+        },
+        logout() {
+            this.userStore.isLoggedIn = false;
+            this.userStore.user = {} as IUser;
+            this.$router.push("/");
+            // TODO add backend logout
         },
     },
     mounted() {
@@ -62,6 +79,7 @@ export default {
     height: 150%;
     gap: 8px;
     user-select: none;
+    cursor: pointer;
     & > div {
         font-weight: bold;
     }

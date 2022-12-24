@@ -6,4 +6,4 @@ import './styles/global.scss'
 
 const pinia = createPinia();
 
-createApp(App).use(Router).use(pinia).mount('#app');
+createApp(App).use(pinia).use(Router).mount('#app');
