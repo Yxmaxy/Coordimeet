@@ -20,6 +20,7 @@ export enum CalendarType {
 
 // Event data
 export interface IEvent {
+    IDEvent: number,
     CalendarType: CalendarType,
     Config: Object,
     EventDates: IDateRange[],

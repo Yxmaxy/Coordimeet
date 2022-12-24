@@ -3,13 +3,7 @@
         <div>
             <h1>Events I'm invited to</h1>
             <div>
-                <div class="event" v-for="event in eventsInvited">
-                    <div><b>{{ event.Name }}</b></div>
-                    <div>
-                        <div>{{ formatDateDayMonthYear(new Date(event.Deadline)) }}</div>
-                        <div>{{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}</div>
-                    </div>
-                </div>
+                <list-component :events="eventsInvited" />
             </div>
         </div>
         <div>
@@ -17,16 +11,8 @@
                 <div>Events I've created</div>
                 <button @click="$router.push('/event/new')">New event</button>
             </h1>
-        <div>
-            <div class="event" v-for="event in eventsCreated">
-                    <div>
-                    <b>{{ event.Name }}</b>
-                    <div>{{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}</div>
-                </div>
-                    <div>
-                        <div>{{ formatDateDayMonthYear(new Date(event.Deadline)) }}</div>
-                    </div>
-                </div>
+            <div>
+                <list-component :events="eventsCreated" />
             </div>
         </div>
     </div>
@@ -36,10 +22,13 @@
 import axios from "axios";
 import { useUserStore } from "../common/stores/UserStore";
 import { IEvent } from "../common/interfaces";
-import { formatDateDayMonthYear } from '../common/helpers';
 import { apiServer } from "../common/globals";
+import EventListComponent from "../components/EventListComponent.vue";
 
 export default {
+    components: {
+        "list-component": EventListComponent,
+    },
     setup() {
         const { user } = useUserStore();
         return {
@@ -53,11 +42,10 @@ export default {
         }
     },
     methods: {
-        getEventsInvited() {
+        getEvents() {
             axios.get(`${apiServer}/eventUser.php`, {
                 params: {
-                    IDUser: 1234,
-                    // IDUser: this.user.GoogleID,
+                    IDUser: this.user.GoogleID,
                 }
             }).then(res => {
                 if (res.data.error) {
@@ -65,31 +53,13 @@ export default {
                     this.$router.push("/");
                     return;
                 }
-                console.log(res.data);
-                this.eventsInvited = res.data;
-                
+                this.eventsInvited = res.data.Invited;
+                this.eventsCreated = res.data.Created;
             });
         },
-        getEventsCreated() {
-            axios.get(`${apiServer}/eventUser.php`, {
-                params: {
-                    IDOrganizer: 1234,
-                    // IDOrganizer: this.user.GoogleID,
-                }
-            }).then(res => {
-                if (res.data.error) {
-                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
-                    this.$router.push("/");
-                    return;
-                }
-                this.eventsCreated = res.data;
-            });
-        },
-        formatDateDayMonthYear,
     },
     mounted() {
-        this.getEventsInvited();
-        this.getEventsCreated();
+        this.getEvents();
     },
 }
 </script>
@@ -120,27 +90,6 @@ export default {
 
             background-color: $color-background-3;
             padding: $sectionPadding;
-        }
-
-        .event {
-            background-color: $color-background-3;
-            margin: 0.75rem;
-            padding: 1.25rem;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            cursor: pointer;
-            transition: 200ms;
-
-            &:hover {
-                background-color: $color-top-bottom;
-                transform: translateY(-0.1rem);
-            }
-
-            & > div {
-                display: flex;
-                gap: 0.75rem;
-            }
         }
     }
 }
