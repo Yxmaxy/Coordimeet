@@ -62,6 +62,7 @@
 
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
+import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType } from '../common/interfaces';
 import { apiServer } from '../common/globals';
 import { formatDateDayMonthYear } from '../common/helpers';
@@ -71,6 +72,12 @@ export default {
     components: {
         "calendar": Calendar,
     },
+    setup() {
+        const { user } = useUserStore();
+        return {
+            user,
+        }
+    },
     data() {
         return {
             selectedDates: [] as ICalendarDate[],
@@ -78,6 +85,7 @@ export default {
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
             EventPageType,
+            userIsOrganizer: false,
         }
     },
     computed: {
@@ -99,7 +107,7 @@ export default {
                     this.$router.push("/");
                     return;
                 }
-                this.eventData = {
+                const eventData = {
                     ...res.data,
                     EventDates: res.data.EventDates.map((eventDate: any) => {
                         return {
@@ -108,6 +116,9 @@ export default {
                         }
                     })
                 } as IEvent
+
+                this.eventData = eventData;
+                this.userIsOrganizer = this.user.GoogleID === eventData.Organizer.GoogleID;
             });
         },
         getEventParticipants() {
@@ -146,6 +157,11 @@ export default {
             console.log(dates);
         },
         formatDateDayMonthYear,
+    },
+    watch: {
+        userIsOrganizer() {
+            this.eventPageType = EventPageType.Organizer;
+        }
     },
     mounted() {
         this.getEventData();

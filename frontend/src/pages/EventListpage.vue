@@ -12,7 +12,7 @@
                 <button @click="$router.push('/event/new')">New event</button>
             </h1>
             <div>
-                <list-component :events="eventsCreated" />
+                <list-component :events="eventsCreated" :userIsOrganiser="true" />
             </div>
         </div>
     </div>

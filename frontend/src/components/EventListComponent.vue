@@ -1,11 +1,24 @@
 <template>
     <div class="event" v-for="event in events" @click="$router.push(`/event/${event.IDEvent}`)">
         <div>
-            <b>{{ event.Name }}</b> - 
-            <abbr title="Organizer">{{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}</abbr>
+            <b>{{ event.Name }}</b>
+            <abbr v-if="!userIsOrganiser" title="Organizer">
+                - {{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}
+            </abbr>
         </div>
         <div>
-            <abbr title="Event deadline">{{ formatDateDayMonthYear(new Date(event.Deadline)) }}</abbr>
+            <abbr
+                v-if="userIsOrganiser"
+                title="Event deadline">{{ formatDateDayMonthYear(new Date(event.Deadline)) }}
+            </abbr>
+            <abbr
+                v-else
+                class="selected-date"
+                title="Selected date"
+            >
+                <!-- TODO: Tuki bo datum, ki ga je izbral Organizer -->
+                1. 1. 2023
+            </abbr>
         </div>
     </div>
 </template>
@@ -21,6 +34,10 @@ export default {
             type: Array as PropType<IEvent[]>,
             default: [],
             required: true,
+        },
+        userIsOrganiser: {
+            type: Boolean,
+            default: false,
         }
     },
     methods: {
@@ -44,6 +61,9 @@ export default {
     &:hover {
         background-color: $color-top-bottom;
         transform: translateY(-0.1rem);
+    }
+    .selected-date {
+        font-weight: bold;
     }
 }
 </style>
