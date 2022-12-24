@@ -79,7 +79,7 @@ export default {
     data() {
         return {
             touchStart: undefined as ICalendarDate|undefined,
-            timeoutObj: undefined as number|undefined,
+            timeoutObj: undefined as NodeJS.Timeout|undefined,
             selectedWeek: 0,
             selectUnavailable: false,
             CalendarType,
