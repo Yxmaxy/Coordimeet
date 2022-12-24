@@ -1,0 +1,75 @@
+<template>
+    <a 
+        v-if="!userStore.isLoggedIn"
+        class="btn"
+        :href="loginLink"
+    >Log in</a>
+    <div v-else class="profile">
+        <div>
+            {{ userStore.user.FirstName }}
+        </div>
+        <img
+            :src="userStore.user.ProfilePhoto"
+            alt="profile"
+            referrerpolicy="no-referrer"
+        />
+    </div>
+</template>
+
+<script lang="ts">
+import axios from 'axios'
+import { useUserStore } from '../common/stores/UserStore'
+
+export default {
+    setup() {
+        const userStore = useUserStore();
+        return {
+            userStore,
+        }
+    },
+    data() {
+        return {
+            loginLink: ""
+        }
+    },
+    methods: {
+        getLoginData() {
+            axios.get("https://coordimeet.eu/backend/googleLogin.php")
+            .then(res => {
+                if ("googleLoginURL" in res.data)
+                    this.loginLink = res.data.googleLoginURL;
+                else {
+                    this.userStore.isLoggedIn = true;
+                    this.userStore.user = res.data;
+                    this.$router.push("/event/list");
+                }
+            })
+        },
+    },
+    mounted() {
+        this.getLoginData();
+    }
+}
+</script>
+
+<style lang="scss">
+@import "../styles/colors.scss";
+
+.profile {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 150%;
+    gap: 8px;
+    user-select: none;
+    & > div {
+        font-weight: bold;
+    }
+    img {
+        height: 100%;
+        border: {
+            radius: 100%;
+        }
+    }
+}
+</style>

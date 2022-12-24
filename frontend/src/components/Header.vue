@@ -2,44 +2,16 @@
 <template>
     <header class="header-component">
         <img src="/images/logo.png" alt="logo" @click="$router.push('/')"/>
-        <div>
-            <a class="btn" :href="loginLink">Log in</a>
-        </div>
+        <login-button />
     </header>
 </template>
 
 <script lang="ts">
-import axios from 'axios'
-import { useUserStore } from '../common/stores/UserStore'
+import LoginButton from './LoginButton.vue';
 
 export default {
-    setup() {
-        const userStore = useUserStore();
-        return {
-            userStore,
-        }
-    },
-    data() {
-        return {
-            loginLink: ""
-        }
-    },
-    methods: {
-        getLoginData() {
-            axios.get("https://coordimeet.eu/backend/googleLogin.php")
-            .then(res => {
-                if ("googleLoginURL" in res.data)
-                    this.loginLink = res.data.googleLoginURL;
-                else {
-                    this.userStore.isLoggedIn = true;
-                    this.userStore.user = res.data;
-                }
-                console.log(res.data);
-            })
-        },
-    },
-    mounted() {
-        this.getLoginData();
+    components: {
+        LoginButton,
     }
 }
 </script>
@@ -54,7 +26,7 @@ export default {
     padding: 1rem;
     background-color: $color-top-bottom;
 
-    img {
+    & > img {
         height: 200%;
         cursor: pointer;
     }
