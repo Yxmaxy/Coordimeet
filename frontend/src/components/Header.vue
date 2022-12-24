@@ -1,7 +1,7 @@
 <!-- Header on top of the page -->
 <template>
     <header class="header-component">
-        <img src="/images/logo.png" alt="logo" @click="developmentMode ? $router.push('/') : $router.push('/event/list')"/>
+        <img src="/images/logo.png" alt="logo" @click="developmentMode ? $router.push('/event/list') : $router.push('/')"/>
         <user-component />
     </header>
 </template>
