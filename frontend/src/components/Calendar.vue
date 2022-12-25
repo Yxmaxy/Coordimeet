@@ -74,6 +74,10 @@ export default {
         disabledMode: {  // non interactive calendar
             type: Boolean,
             default: false,
+        },
+        initialIsAvailable: {  // array of days which are initially selected
+            type: Array as PropType<IDateRange[]>,
+            default: [],
         }
     },
     data() {
@@ -116,6 +120,16 @@ export default {
                 new Date(new Date(d.setDate(d.getDate() + dayOfWeek)).setHours(23)) :
                 new Date(d.setDate(d.getDate() - dayOfWeek));
         },
+        // check if date is in date ranges
+        isDayInDateRanges(dateRanges: IDateRange[], date: Date): boolean {
+            for (const range of dateRanges) {
+                console.log(range.from, date, range.to, range.from <= date, date <= range.to);
+                
+                if (range.from <= date && date <= range.to)
+                    return true;
+            }
+            return false;
+        },
         // increment date by hour or day
         incrementDate(date: Date): Date {
             if (this.type === CalendarType.Date)
@@ -156,6 +170,7 @@ export default {
                         formatDateDayMonth(d) : formatDateHour(d),
                     date: new Date(d),
                     isInRange: isInRange,
+                    isAvailable: isInRange && this.isDayInDateRanges(this.initialIsAvailable, new Date(d)),
                 });
             }
         },
@@ -240,6 +255,9 @@ export default {
     },
     watch: {
         dateRanges() {
+            this.calculateShownDates();
+        },
+        initialIsAvailable() {
             this.calculateShownDates();
         },
         selectUnavailable(n) {

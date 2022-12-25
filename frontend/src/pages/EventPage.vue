@@ -1,15 +1,22 @@
 <template>
-    <div :class="['event-page', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
+    <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
+        'non-confirmed': eventPageType === EventPageType.NonConfirmed,
+        'organizer': eventPageType === EventPageType.Organizer,
+    }]">
         <aside
             v-if="eventPageType !== EventPageType.NonConfirmed"
             class="responses-area"
         >
             <h1>Responses</h1>
             <div>
-                <div v-for="participant in eventParticipants" class="response">
+                <div v-for="participant in eventParticipants" class="list-element">
                     <div>{{ participant }}</div>
                 </div>
             </div>
+        </aside>
+        <aside v-if="eventPageType === EventPageType.Organizer" class="selectable-area">
+            <h1>Selectable dates</h1>
+            <button class="disabled">Select date and finish event</button>
         </aside>
         <div :class="['details-area', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
             <div class="container">
@@ -55,6 +62,7 @@
                 :type="eventData.CalendarType"
                 :dateRanges="eventData.EventDates"
                 :days="selectedDates"
+                :initialIsAvailable="initialIsAvailable"
             />
         </main>
     </div>
@@ -63,9 +71,9 @@
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
-import { CalendarType, ICalendarDate, IEvent, EventPageType } from '../common/interfaces';
+import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { apiServer } from '../common/globals';
-import { formatDateDayMonthYear } from '../common/helpers';
+import { formatDateDayMonthYear, formatDateForBackend } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -86,6 +94,7 @@ export default {
             eventPageType: EventPageType.NonConfirmed as EventPageType,
             EventPageType,
             userIsOrganizer: false,
+            initialIsAvailable: [] as IDateRange[],
         }
     },
     computed: {
@@ -119,7 +128,7 @@ export default {
 
                 this.eventData = eventData;
                 this.userIsOrganizer = this.user.GoogleID === eventData.Organizer.GoogleID;
-            });
+            }).catch(() => this.$router.push("/"))
         },
         getEventParticipants() {
             axios.get(`${apiServer}/eventUser.php`, {
@@ -128,7 +137,7 @@ export default {
                 }
             }).then(res => {
                 if (res.data.error) {
-                   console.log(res.data.error);
+                    console.log(res.data.error);
                     return;
                 }
                 if (res.data.length === 0)
@@ -136,6 +145,25 @@ export default {
                 this.eventParticipants = res.data.map((participant: any) => {
                     return `${participant.FirstName} ${participant.LastName}`;
                 })
+            }).catch(() => this.$router.push("/"))
+        },
+        getSelectedDates() {
+            axios.get(`${apiServer}/eventUser.php`, {
+                params: {
+                    IDEvent: this.$route.params.id,
+                    IDUser: this.user.GoogleID,
+                }
+            }).then(res => {
+                if (res.data.error) {
+                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+                    return;
+                }
+                this.initialIsAvailable = res.data.Dates.map((range: any) => {
+                    return {
+                        from: new Date(range.StartDate),
+                        to: new Date(range.StartDate),
+                    }
+                });
             });
         },
         onSubmitEvent() {
@@ -148,13 +176,26 @@ export default {
                 else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
                     const prevDate = this.selectedDates[i - 1];
                     dates.push({
-                        StartDate: new Date(currentStart),
-                        EndDate: new Date(prevDate.date),
+                        StartDate: formatDateForBackend(new Date(currentStart)),
+                        EndDate: formatDateForBackend(new Date(prevDate.date)),
                     })
                     currentStart = undefined;
                 }
             }
-            console.log(dates);
+            console.log(JSON.stringify({
+                IDEvent: this.$route.params.id,
+                IDUser: this.user.GoogleID,
+                AvailabilityDates: dates,
+            }));
+            const apiFunc = this.initialIsAvailable.length === 0 ? axios.post : axios.put;
+            apiFunc(`${apiServer}/eventUser.php`, {
+                IDEvent: this.$route.params.id,
+                IDUser: this.user.GoogleID,
+                AvailabilityDates: dates,
+            })
+            .then(res => {
+                console.log(res.data);
+            })
         },
         formatDateDayMonthYear,
     },
@@ -166,6 +207,7 @@ export default {
     mounted() {
         this.getEventData();
         this.getEventParticipants();
+        this.getSelectedDates();
     },
 }
 </script>
@@ -173,9 +215,27 @@ export default {
 <style lang="scss" scoped>
 @import "../styles/colors.scss";
 
-.event-page {
-    $sectionPadding: 1rem;
+$sectionPadding: 1rem;
 
+@mixin aside-mixin {
+    background-color: $color-background-3;
+    overflow: auto;
+    border-right: 2px solid $color-top-bottom;
+
+    h1 {
+        background-color: $color-background-3;
+        padding: $sectionPadding;
+        position: sticky;
+        top: 0;
+    }
+    .list-element {
+        display: flex;
+        justify-content: space-between;
+        padding: $sectionPadding;
+    }
+}
+
+.event-page {
     flex: 1;
     display: grid;
     grid-template-rows: min(15rem, 30vh) 1fr;
@@ -189,22 +249,26 @@ export default {
         grid-template-areas:
             "details";
     }
+    &.organizer {
+        grid-template-columns: min(20rem, 30vw) min(20rem, 30vw) 1fr;
+        grid-template-areas:
+            "responses selectable details"
+            "responses selectable calendar";
+    }
     .responses-area {
         grid-area: responses;
-        background-color: $color-background-3;
-        overflow: auto;
-        border-right: 2px solid $color-top-bottom;
+        @include aside-mixin;
+    }
+    .selectable-area {
+        grid-area: selectable;
+        @include aside-mixin;
+        position: relative;
 
-        h1 {
-            background-color: $color-background-3;
-            padding: $sectionPadding;
-            position: sticky;
-            top: 0;
-        }
-        .response {
-            display: flex;
-            justify-content: space-between;
-            padding: $sectionPadding;
+        button {
+            position: absolute;
+            bottom: $sectionPadding;
+            left: $sectionPadding;
+            right: $sectionPadding;
         }
     }
     .calendar-area {

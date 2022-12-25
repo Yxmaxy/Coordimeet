@@ -29,6 +29,7 @@ export interface IEvent {
     Deadline: string,
     Organizer: IUser,
     UrlJoinLink: string,
+    SelectedDate: string|null,
 }
 
 // User
