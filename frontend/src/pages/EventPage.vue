@@ -62,6 +62,7 @@
                 :type="eventData.CalendarType"
                 :dateRanges="eventData.EventDates"
                 :days="selectedDates"
+                :initialIsAvailable="initialIsAvailable"
             />
         </main>
     </div>
@@ -70,7 +71,7 @@
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
-import { CalendarType, ICalendarDate, IEvent, EventPageType } from '../common/interfaces';
+import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { apiServer } from '../common/globals';
 import { formatDateDayMonthYear, formatDateForBackend } from '../common/helpers';
 import axios from "axios";
@@ -93,6 +94,7 @@ export default {
             eventPageType: EventPageType.NonConfirmed as EventPageType,
             EventPageType,
             userIsOrganizer: false,
+            initialIsAvailable: [] as IDateRange[],
         }
     },
     computed: {
@@ -156,7 +158,12 @@ export default {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
-                console.log(res.data);
+                this.initialIsAvailable = res.data.Dates.map((range: any) => {
+                    return {
+                        from: new Date(range.StartDate),
+                        to: new Date(range.StartDate),
+                    }
+                });
             });
         },
         onSubmitEvent() {
@@ -180,8 +187,8 @@ export default {
                 IDUser: this.user.GoogleID,
                 AvailabilityDates: dates,
             }));
-            
-            axios.post(`${apiServer}/eventUser.php?`, {
+            const apiFunc = this.initialIsAvailable.length === 0 ? axios.post : axios.put;
+            apiFunc(`${apiServer}/eventUser.php`, {
                 IDEvent: this.$route.params.id,
                 IDUser: this.user.GoogleID,
                 AvailabilityDates: dates,
