@@ -41,6 +41,14 @@ button, .btn {
             background-color: $color-top-bottom;
         }
     }
+    &.disabled {
+        background-color: $color-background-2;
+        
+        &:active {
+            color: $color-background;
+            background-color: $color-top-bottom;
+        }
+    }
 }
 button.small {
     $p-t-b: 0.1rem;

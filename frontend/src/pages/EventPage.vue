@@ -16,7 +16,7 @@
         </aside>
         <aside v-if="eventPageType === EventPageType.Organizer" class="selectable-area">
             <h1>Selectable dates</h1>
-            <button>Select date and finish event</button>
+            <button class="disabled">Select date and finish event</button>
         </aside>
         <div :class="['details-area', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
             <div class="container">
@@ -72,7 +72,7 @@ import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType } from '../common/interfaces';
 import { apiServer } from '../common/globals';
-import { formatDateDayMonthYear } from '../common/helpers';
+import { formatDateDayMonthYear, formatDateForBackend } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -146,16 +146,17 @@ export default {
             }).catch(() => this.$router.push("/"))
         },
         getSelectedDates() {
-            axios.get(`${apiServer}/eventUserRanges.php`, {
+            axios.get(`${apiServer}/eventUser.php`, {
                 params: {
                     IDEvent: this.$route.params.id,
+                    IDUser: this.user.GoogleID,
                 }
             }).then(res => {
                 if (res.data.error) {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
-                
+                console.log(res.data);
             });
         },
         onSubmitEvent() {
@@ -168,13 +169,26 @@ export default {
                 else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
                     const prevDate = this.selectedDates[i - 1];
                     dates.push({
-                        StartDate: new Date(currentStart),
-                        EndDate: new Date(prevDate.date),
+                        StartDate: formatDateForBackend(new Date(currentStart)),
+                        EndDate: formatDateForBackend(new Date(prevDate.date)),
                     })
                     currentStart = undefined;
                 }
             }
-            console.log(dates);
+            console.log(JSON.stringify({
+                IDEvent: this.$route.params.id,
+                IDUser: this.user.GoogleID,
+                AvailabilityDates: dates,
+            }));
+            
+            axios.post(`${apiServer}/eventUser.php?`, {
+                IDEvent: this.$route.params.id,
+                IDUser: this.user.GoogleID,
+                AvailabilityDates: dates,
+            })
+            .then(res => {
+                console.log(res.data);
+            })
         },
         formatDateDayMonthYear,
     },
@@ -241,6 +255,14 @@ $sectionPadding: 1rem;
     .selectable-area {
         grid-area: selectable;
         @include aside-mixin;
+        position: relative;
+
+        button {
+            position: absolute;
+            bottom: $sectionPadding;
+            left: $sectionPadding;
+            right: $sectionPadding;
+        }
     }
     .calendar-area {
         grid-area: calendar;
