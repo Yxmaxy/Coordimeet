@@ -211,7 +211,7 @@ export default {
                 return;
             }
             
-            axios.post(`${apiServer}/event.php?`, {
+            axios.post(`${apiServer}/event.php`, {
                 Event: {
                     IDOrganizer: this.user.GoogleID,
                     Name: this.name,

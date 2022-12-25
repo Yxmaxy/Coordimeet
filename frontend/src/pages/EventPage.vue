@@ -187,8 +187,7 @@ export default {
                 IDUser: this.user.GoogleID,
                 AvailabilityDates: dates,
             }));
-            const apiFunc = this.initialIsAvailable.length === 0 ? axios.post : axios.put;
-            apiFunc(`${apiServer}/eventUser.php`, {
+            axios.post(`${apiServer}/eventUser.php`, {
                 IDEvent: this.$route.params.id,
                 IDUser: this.user.GoogleID,
                 AvailabilityDates: dates,
