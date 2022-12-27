@@ -48,7 +48,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { formatDateDayMonth, formatDateHour } from "../common/helpers";
+import { formatDateDayMonth, formatDateHour, formatDateForBackend } from "../common/helpers";
 import { IDateRange, ICalendarDate, CalendarType } from '../common/interfaces';
 const longpressTimeout = 475;
 
@@ -122,12 +122,9 @@ export default {
         },
         // check if date is in date ranges
         isDayInDateRanges(dateRanges: IDateRange[], date: Date): boolean {
-            for (const range of dateRanges) {
-                console.log(range.from, date, range.to, range.from <= date, date <= range.to);
-                
+            for (const range of dateRanges)
                 if (range.from <= date && date <= range.to)
                     return true;
-            }
             return false;
         },
         // increment date by hour or day
@@ -138,6 +135,9 @@ export default {
         },
         // calculate dates to display on calendar
         calculateShownDates() {
+            if (this.type === CalendarType.DateTime)
+                this.selectedWeek = 0;
+            
             // get from and to dates
             let from: undefined|Date = undefined
             let to: undefined|Date = undefined
@@ -149,10 +149,7 @@ export default {
             }
             if (from === undefined || to === undefined)  // setting failed
                 return;
-            if (this.type === CalendarType.DateTime) {  // set to full day
-                from.setHours(0);
-                to.setHours(23);
-            }
+            
             from = this.getBufferedDate(from, 0);
             to = this.getBufferedDate(to, 0, true);
             
@@ -160,7 +157,7 @@ export default {
             for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {  // loop through all dates
                 let isInRange = false || this.insertMode;
                 for (const range of (this.dateRanges as IDateRange[])) {  // loop through selection
-                    if (d >= range.from && d <= range.to) {
+                    if (formatDateForBackend(d) >= formatDateForBackend(range.from) && formatDateForBackend(d) <= formatDateForBackend(range.to)) {
                         isInRange = true;
                         break;
                     }

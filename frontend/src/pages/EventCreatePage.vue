@@ -101,7 +101,7 @@ import axios from 'axios';
 import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
-import { removeHoursMinutesFromDate, initializeDateInput, formatDateForBackend } from '../common/helpers';
+import { removeHoursMinutesFromDate, initializeDateInput, formatDateForBackend, getSelectedDatesOnCalendar } from '../common/helpers';
 import { apiServer } from '../common/globals';
 
 export default {
@@ -191,26 +191,13 @@ export default {
             }
 
             // calculate dates
-            const dates: any = [];
-            let currentStart: Date|undefined = undefined;
-            for (let i = 0; i < this.selectedDates.length; i++) {
-                const date = this.selectedDates[i];
-                if (currentStart === undefined && date.isAvailable)  // set currentStart
-                    currentStart = date.date;
-                else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
-                    const prevDate = this.selectedDates[i - 1];
-                    dates.push({
-                        StartDate: formatDateForBackend(new Date(currentStart)),
-                        EndDate: formatDateForBackend(new Date(prevDate.date)),
-                    })
-                    currentStart = undefined;
-                }
-            }
+            const dates = getSelectedDatesOnCalendar(this.selectedDates);
+
             if (dates.length === 0) {
                 alert(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
                 return;
             }
-            
+
             axios.post(`${apiServer}/event.php`, {
                 Event: {
                     IDOrganizer: this.user.GoogleID,

@@ -1,4 +1,4 @@
-import { CalendarType } from "./interfaces";
+import { CalendarType, ICalendarDate, IDateRange } from "./interfaces";
 
 function padNumber(number: number, places: number = 2): string {
     return number.toString().padStart(places, '0');
@@ -30,4 +30,36 @@ export function initializeDateInput(type: CalendarType, date?: string): string {
     if (type === CalendarType.Date)
         return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}`;
     return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}T${padNumber(now.getHours())}:00`;
+}
+
+export function getSelectedDatesOnCalendar(selectedDates: ICalendarDate[]): IDateRange[] {
+    const dates: any = [];
+    let currentStart: Date|undefined = undefined;
+    for (let i = 0; i < selectedDates.length; i++) {
+        const currDate = selectedDates[i];
+        if (currentStart === undefined && currDate.isAvailable)  // set currentStart
+            currentStart = currDate.date;
+        const prevDate = selectedDates[i - 1];
+        if (currentStart !== undefined && i === selectedDates.length - 1) {
+            if (currDate.isAvailable) {  // last one is available
+                dates.push({
+                    StartDate: formatDateForBackend(new Date(currentStart)),
+                    EndDate: formatDateForBackend(new Date(currDate.date)),
+                })
+            } else {
+                dates.push({
+                    StartDate: formatDateForBackend(new Date(currentStart)),
+                    EndDate: formatDateForBackend(new Date(prevDate.date)),
+                })
+            }
+        }
+        else if (currentStart !== undefined && !currDate.isAvailable) {  // add prevDate to dates
+            dates.push({
+                StartDate: formatDateForBackend(new Date(currentStart)),
+                EndDate: formatDateForBackend(new Date(prevDate.date)),
+            })
+            currentStart = undefined;
+        }
+    }
+    return dates;
 }

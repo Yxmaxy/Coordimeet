@@ -73,7 +73,7 @@ import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { apiServer } from '../common/globals';
-import { formatDateDayMonthYear, formatDateForBackend } from '../common/helpers';
+import { formatDateDayMonthYear, getSelectedDatesOnCalendar } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -167,26 +167,7 @@ export default {
             });
         },
         onSubmitEvent() {
-            const dates: any = [];
-            let currentStart: Date|undefined = undefined;
-            for (let i = 0; i < this.selectedDates.length; i++) {
-                const date = this.selectedDates[i];
-                if (currentStart === undefined && date.isAvailable)  // set currentStart
-                    currentStart = date.date;
-                else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
-                    const prevDate = this.selectedDates[i - 1];
-                    dates.push({
-                        StartDate: formatDateForBackend(new Date(currentStart)),
-                        EndDate: formatDateForBackend(new Date(prevDate.date)),
-                    })
-                    currentStart = undefined;
-                }
-            }
-            console.log(JSON.stringify({
-                IDEvent: this.$route.params.id,
-                IDUser: this.user.GoogleID,
-                AvailabilityDates: dates,
-            }));
+            const dates = getSelectedDatesOnCalendar(this.selectedDates);
             axios.post(`${apiServer}/eventUser.php`, {
                 IDEvent: this.$route.params.id,
                 IDUser: this.user.GoogleID,
