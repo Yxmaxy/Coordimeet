@@ -16,6 +16,20 @@
         </aside>
         <aside v-if="eventPageType === EventPageType.Organizer" class="selectable-area">
             <h1>Selectable dates</h1>
+            <div>
+                <div
+                    v-for="(selectableDate, index) in selectableDates"
+                    :class="['list-element', {'selected': index === selectedDate}]"
+                    @click="selectedDate = index"
+                >
+                    <template v-if="eventData.CalendarType === CalendarType.Date">
+                        {{ formatDateDayMonth(selectableDate.from) }} - {{ formatDateDayMonth(selectableDate.to) }}
+                    </template>
+                    <template v-else>
+                        {{ formatDateDayMonthHour(selectableDate.from) }} - {{ formatDateDayMonthHour(selectableDate.to) }}
+                    </template>
+                </div>
+            </div>
             <button class="disabled">Select date and finish event</button>
         </aside>
         <div :class="['details-area', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
@@ -83,7 +97,7 @@ import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { apiServer } from '../common/globals';
-import { formatDateDayMonthYear, getSelectedDatesOnCalendar } from '../common/helpers';
+import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -102,9 +116,12 @@ export default {
             eventData: {} as IEvent,
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
-            EventPageType,
             userIsOrganizer: false,
             initialIsAvailable: [] as IDateRange[],
+            selectableDates: [] as IDateRange[],
+            selectedDate: undefined as number|undefined,
+            EventPageType,
+            CalendarType,
         }
     },
     computed: {
@@ -180,6 +197,8 @@ export default {
             });
         },
         getSelectableDates() {
+            if (this.eventPageType !== EventPageType.Organizer)
+                return;
             axios.get(`${apiServer}/eventDate.php`, {
                 params: {
                     IDEvent: this.$route.params.id,
@@ -189,7 +208,12 @@ export default {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
-                console.log(res.data);
+                this.selectableDates = res.data === undefined ? [] : res.data.map((range: any) => {
+                    return {
+                        from: new Date(range.StartDate),
+                        to: new Date(range.EndDate),
+                    }
+                });
             });
         },
         onSubmitEvent() {
@@ -201,8 +225,8 @@ export default {
                     IDUser: this.user.GoogleID,
                     AvailabilityDates: this.selectedDates,
                 })
-                .then(res => {
-                    console.log(res);
+                .then(() => {
+                    
                 })
             } else {  // update date that was selected before
                 axios.put(`${apiServer}/eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
@@ -210,25 +234,28 @@ export default {
                     IDUser: this.user.GoogleID,
                     AvailabilityDates: this.selectedDates,
                 }).then(res => {
-                    console.log(res);
+                    if (res.status === 201)
+                        this.getSelectableDates();
                 })
             }
         },
         copyLink() {
             navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${this.$route.params.id}`);
         },
+        formatDateDayMonth,
         formatDateDayMonthYear,
+        formatDateDayMonthHour,
     },
     watch: {
         userIsOrganizer() {
             this.eventPageType = EventPageType.Organizer;
-        }
+            this.getSelectableDates();
+        },
     },
     mounted() {
         this.getEventData();
         this.getEventParticipants();
         this.getSelectedDates();
-        this.getSelectableDates();
     },
 }
 </script>
@@ -295,6 +322,19 @@ $sectionPadding: 1rem;
             bottom: $sectionPadding;
             left: $sectionPadding;
             right: $sectionPadding;
+        }
+
+        .list-element {
+            transition: 200ms;
+            user-select: none;
+            cursor: pointer;
+            &:hover {
+                background-color: $color-background-2;
+            }
+            &.selected {
+                color: $color-background;
+                background-color: $color-main;
+            }
         }
     }
     .calendar-area {

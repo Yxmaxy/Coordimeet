@@ -12,6 +12,10 @@ export function formatDateDayMonth(date: Date) {
     return `${date.getDate()}. ${date.getMonth() + 1}.`;
 }
 
+export function formatDateDayMonthHour(date: Date) {
+    return `${padNumber(date.getHours())}:${padNumber(date.getMinutes())} ${date.getDate()}. ${date.getMonth() + 1}.`;
+}
+
 export function formatDateHour(date: Date) {
     return `${padNumber(date.getHours())}:00`;
 }
