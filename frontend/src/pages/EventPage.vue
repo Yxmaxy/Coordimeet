@@ -23,13 +23,22 @@
                 <h2 v-if="eventPageType === EventPageType.NonConfirmed">
                     You've been invited to:
                 </h2>
-                <h1>{{ eventData.Name }}</h1>
+                <h1 class="space-between">
+                    {{ eventData.Name }}
+                    <button
+                        v-if="eventPageType === EventPageType.Organizer"    
+                        id="copy-link"
+                        @click="copyLink"
+                    >
+                        Copy invite link to clipboard
+                    </button>
+                </h1>
                 <div class="data">
                     <div>Organizer: {{ eventData.Organizer?.FirstName }} {{ eventData.Organizer?.LastName }}</div>
                     <div>Deadline: {{ formatDateDayMonthYear(new Date(eventData.Deadline)) }}</div>
                     <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
                     <div v-for="key, value in eventData.Config">
-                        {{ key }}
+                        {{ key }}:
                         {{ value }}
                     </div>
                 </div>
@@ -170,6 +179,19 @@ export default {
                 });
             });
         },
+        getSelectableDates() {
+            axios.get(`${apiServer}/eventDate.php`, {
+                params: {
+                    IDEvent: this.$route.params.id,
+                }
+            }).then(res => {
+                if (res.data.error) {
+                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+                    return;
+                }
+                console.log(res.data);
+            });
+        },
         onSubmitEvent() {
             if (this.selectedDates.length === 0)
                 return;
@@ -192,6 +214,9 @@ export default {
                 })
             }
         },
+        copyLink() {
+            navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${this.$route.params.id}`);
+        },
         formatDateDayMonthYear,
     },
     watch: {
@@ -203,6 +228,7 @@ export default {
         this.getEventData();
         this.getEventParticipants();
         this.getSelectedDates();
+        this.getSelectableDates();
     },
 }
 </script>
@@ -226,7 +252,12 @@ $sectionPadding: 1rem;
     .list-element {
         display: flex;
         justify-content: space-between;
-        padding: $sectionPadding;
+        padding: {
+            left: $sectionPadding;
+            right: $sectionPadding;
+            top: calc($sectionPadding / 2);
+            bottom: calc($sectionPadding / 2);
+        };
     }
 }
 
@@ -279,6 +310,7 @@ $sectionPadding: 1rem;
         background-color: $color-background-3;
         padding: $sectionPadding;
         position: relative;
+        overflow: auto;
 
         #submit-response {
             position: absolute;

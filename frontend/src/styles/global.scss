@@ -93,6 +93,11 @@ abbr {
     -webkit-text-decoration-line: none;
     text-decoration-line: none;
 }
+.space-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 // scrollbar
 ::-webkit-scrollbar {
     width: 0.5rem;

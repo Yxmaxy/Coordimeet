@@ -210,7 +210,10 @@ export default {
                 EventRanges: dates,
             })
             .then(res => {
-                console.log(res.data);
+                const IDEvent = res.data.IDEvent;
+                navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${IDEvent}`);
+                alert(`Event successfuly created. You will now be redirected to your event page.\nTo invite others use the following link, which was also copied to your clipboard:\nhttps://coordimeet.eu/#/event/${IDEvent}`)
+                this.$router.push(`/event/${IDEvent}`);
             })
         },
         handleDateInput(target: EventTarget|null, type: 'from'|'to') {
