@@ -50,6 +50,7 @@
                 v-if="eventPageType !== EventPageType.NonConfirmed"
                 id="submit-response"
                 @click="onSubmitEvent"
+                :class="{'disabled': selectedDates.length === 0}"
             >
                 Submit response
             </button>
@@ -61,7 +62,7 @@
             <calendar
                 :type="eventData.CalendarType"
                 :dateRanges="eventData.EventDates"
-                :days="selectedDates"
+                :days="dates"
                 :initialIsAvailable="initialIsAvailable"
             />
         </main>
@@ -88,7 +89,7 @@ export default {
     },
     data() {
         return {
-            selectedDates: [] as ICalendarDate[],
+            dates: [] as ICalendarDate[],
             eventData: {} as IEvent,
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
@@ -102,7 +103,10 @@ export default {
             if (this.eventData.CalendarType === CalendarType.Date)
                 return "days";
             return "hours";
-        }
+        },
+        selectedDates(): IDateRange[] {
+            return getSelectedDatesOnCalendar(this.dates)
+        },
     },
     methods: {
         getEventData() {
@@ -158,7 +162,8 @@ export default {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
-                this.initialIsAvailable = res.data.Dates.map((range: any) => {
+
+                this.initialIsAvailable = res.data.Dates === undefined ? [] : res.data.Dates.map((range: any) => {
                     return {
                         from: new Date(range.StartDate),
                         to: new Date(range.StartDate),
@@ -167,15 +172,27 @@ export default {
             });
         },
         onSubmitEvent() {
-            const dates = getSelectedDatesOnCalendar(this.selectedDates);
-            axios.post(`${apiServer}/eventUser.php`, {
-                IDEvent: this.$route.params.id,
-                IDUser: this.user.GoogleID,
-                AvailabilityDates: dates,
-            })
-            .then(res => {
-                console.log(res.data);
-            })
+            if (this.selectedDates.length === 0)
+                return;
+            
+            if (this.initialIsAvailable.length === 0) {  // a date didn't exist before
+                axios.post(`${apiServer}/eventUser.php`, {
+                    IDEvent: this.$route.params.id,
+                    IDUser: this.user.GoogleID,
+                    AvailabilityDates: this.selectedDates,
+                })
+                .then(res => {
+                    console.log(res);
+                })
+            } else {  // update date that was selected before
+                axios.put(`${apiServer}/eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
+                    IDEvent: this.$route.params.id,
+                    IDUser: this.user.GoogleID,
+                    AvailabilityDates: this.selectedDates,
+                }).then(res => {
+                    console.log(res);
+                })
+            }
         },
         formatDateDayMonthYear,
     },

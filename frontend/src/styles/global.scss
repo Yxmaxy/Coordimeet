@@ -43,10 +43,11 @@ button, .btn {
     }
     &.disabled {
         background-color: $color-background-2;
+        cursor: unset;
         
         &:active {
             color: $color-background;
-            background-color: $color-top-bottom;
+            background-color: $color-background-2;
         }
     }
 }
