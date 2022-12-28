@@ -22,15 +22,15 @@
                     :class="['list-element', {'selected': index === selectedDate}]"
                     @click="selectedDate = index"
                 >
-                    <template v-if="eventData.CalendarType === CalendarType.Date">
-                        {{ formatDateDayMonth(selectableDate.from) }} - {{ formatDateDayMonth(selectableDate.to) }}
-                    </template>
-                    <template v-else>
-                        {{ formatDateDayMonthHour(selectableDate.from) }} - {{ formatDateDayMonthHour(selectableDate.to) }}
-                    </template>
+                    {{ displayDateRange(selectableDate) }}
                 </div>
             </div>
-            <button class="disabled">Select date and finish event</button>
+            <button
+                :class="{'disabled': selectedDate === undefined}"
+                @click="finishEvent"
+            >
+                Select date and finish event
+            </button>
         </aside>
         <div :class="['details-area', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
             <div class="container">
@@ -217,6 +217,7 @@ export default {
             });
         },
         onSubmitEvent() {
+            this.selectedDate = undefined;
             if (this.selectedDates.length === 0)
                 return;
             if (this.initialIsAvailable.length === 0) {  // a date didn't exist before
@@ -239,8 +240,21 @@ export default {
                 })
             }
         },
+        finishEvent() {
+            axios.put(`${apiServer}/event.php?IDEvent=${this.$route.params.id}`, {
+                SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
+            }).then(res => {
+                console.log(res.data)
+            })
+        },
         copyLink() {
             navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${this.$route.params.id}`);
+        },
+        displayDateRange(range: IDateRange): string {
+            const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonth : formatDateDayMonthHour;
+            if (convertFunc(range.from) === convertFunc(range.to))
+                return convertFunc(range.from);
+            return `${convertFunc(range.from)} - ${convertFunc(range.to)}`;
         },
         formatDateDayMonth,
         formatDateDayMonthYear,
