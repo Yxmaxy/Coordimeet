@@ -162,11 +162,10 @@ export default {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
-
                 this.initialIsAvailable = res.data.Dates === undefined ? [] : res.data.Dates.map((range: any) => {
                     return {
                         from: new Date(range.StartDate),
-                        to: new Date(range.StartDate),
+                        to: new Date(range.EndDate),
                     }
                 });
             });
@@ -174,7 +173,6 @@ export default {
         onSubmitEvent() {
             if (this.selectedDates.length === 0)
                 return;
-            
             if (this.initialIsAvailable.length === 0) {  // a date didn't exist before
                 axios.post(`${apiServer}/eventUser.php`, {
                     IDEvent: this.$route.params.id,
