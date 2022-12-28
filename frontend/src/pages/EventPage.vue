@@ -97,7 +97,7 @@ import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { apiServer } from '../common/globals';
-import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from '../common/helpers';
+import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar, formatDateForBackend } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -242,7 +242,21 @@ export default {
         },
         finishEvent() {
             axios.put(`${apiServer}/event.php?IDEvent=${this.$route.params.id}`, {
-                SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
+                Event: {
+                    IDOrganizer: this.eventData.Organizer.GoogleID,
+                    Name: this.eventData.Name,
+                    Length: this.eventData.Length,
+                    CalendarType: this.eventData.CalendarType,
+                    Deadline: this.eventData.Deadline,
+                    Config: this.eventData.Config,
+                    SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
+                },
+                EventRanges: this.eventData.EventDates.map(range => {
+                    return {
+                        StartDate: formatDateForBackend(range.from),
+                        EndDate: formatDateForBackend(range.to),
+                    }
+                }),
             }).then(res => {
                 console.log(res.data)
             })
