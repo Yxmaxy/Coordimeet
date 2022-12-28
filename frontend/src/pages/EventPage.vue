@@ -23,13 +23,22 @@
                 <h2 v-if="eventPageType === EventPageType.NonConfirmed">
                     You've been invited to:
                 </h2>
-                <h1>{{ eventData.Name }}</h1>
+                <h1 class="space-between">
+                    {{ eventData.Name }}
+                    <button
+                        v-if="eventPageType === EventPageType.Organizer"    
+                        id="copy-link"
+                        @click="copyLink"
+                    >
+                        Copy invite link to clipboard
+                    </button>
+                </h1>
                 <div class="data">
                     <div>Organizer: {{ eventData.Organizer?.FirstName }} {{ eventData.Organizer?.LastName }}</div>
                     <div>Deadline: {{ formatDateDayMonthYear(new Date(eventData.Deadline)) }}</div>
                     <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
                     <div v-for="key, value in eventData.Config">
-                        {{ key }}
+                        {{ key }}:
                         {{ value }}
                     </div>
                 </div>
@@ -50,6 +59,7 @@
                 v-if="eventPageType !== EventPageType.NonConfirmed"
                 id="submit-response"
                 @click="onSubmitEvent"
+                :class="{'disabled': selectedDates.length === 0}"
             >
                 Submit response
             </button>
@@ -61,7 +71,7 @@
             <calendar
                 :type="eventData.CalendarType"
                 :dateRanges="eventData.EventDates"
-                :days="selectedDates"
+                :days="dates"
                 :initialIsAvailable="initialIsAvailable"
             />
         </main>
@@ -73,7 +83,7 @@ import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { apiServer } from '../common/globals';
-import { formatDateDayMonthYear, formatDateForBackend } from '../common/helpers';
+import { formatDateDayMonthYear, getSelectedDatesOnCalendar } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -88,7 +98,7 @@ export default {
     },
     data() {
         return {
-            selectedDates: [] as ICalendarDate[],
+            dates: [] as ICalendarDate[],
             eventData: {} as IEvent,
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
@@ -102,7 +112,10 @@ export default {
             if (this.eventData.CalendarType === CalendarType.Date)
                 return "days";
             return "hours";
-        }
+        },
+        selectedDates(): IDateRange[] {
+            return getSelectedDatesOnCalendar(this.dates)
+        },
     },
     methods: {
         getEventData() {
@@ -158,43 +171,51 @@ export default {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
-                this.initialIsAvailable = res.data.Dates.map((range: any) => {
+                this.initialIsAvailable = res.data.Dates === undefined ? [] : res.data.Dates.map((range: any) => {
                     return {
                         from: new Date(range.StartDate),
-                        to: new Date(range.StartDate),
+                        to: new Date(range.EndDate),
                     }
                 });
             });
         },
-        onSubmitEvent() {
-            const dates: any = [];
-            let currentStart: Date|undefined = undefined;
-            for (let i = 0; i < this.selectedDates.length; i++) {
-                const date = this.selectedDates[i];
-                if (currentStart === undefined && date.isAvailable)  // set currentStart
-                    currentStart = date.date;
-                else if (currentStart !== undefined && !date.isAvailable) {  // add prevDate to dates
-                    const prevDate = this.selectedDates[i - 1];
-                    dates.push({
-                        StartDate: formatDateForBackend(new Date(currentStart)),
-                        EndDate: formatDateForBackend(new Date(prevDate.date)),
-                    })
-                    currentStart = undefined;
+        getSelectableDates() {
+            axios.get(`${apiServer}/eventDate.php`, {
+                params: {
+                    IDEvent: this.$route.params.id,
                 }
-            }
-            console.log(JSON.stringify({
-                IDEvent: this.$route.params.id,
-                IDUser: this.user.GoogleID,
-                AvailabilityDates: dates,
-            }));
-            axios.post(`${apiServer}/eventUser.php`, {
-                IDEvent: this.$route.params.id,
-                IDUser: this.user.GoogleID,
-                AvailabilityDates: dates,
-            })
-            .then(res => {
+            }).then(res => {
+                if (res.data.error) {
+                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+                    return;
+                }
                 console.log(res.data);
-            })
+            });
+        },
+        onSubmitEvent() {
+            if (this.selectedDates.length === 0)
+                return;
+            if (this.initialIsAvailable.length === 0) {  // a date didn't exist before
+                axios.post(`${apiServer}/eventUser.php`, {
+                    IDEvent: this.$route.params.id,
+                    IDUser: this.user.GoogleID,
+                    AvailabilityDates: this.selectedDates,
+                })
+                .then(res => {
+                    console.log(res);
+                })
+            } else {  // update date that was selected before
+                axios.put(`${apiServer}/eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
+                    IDEvent: this.$route.params.id,
+                    IDUser: this.user.GoogleID,
+                    AvailabilityDates: this.selectedDates,
+                }).then(res => {
+                    console.log(res);
+                })
+            }
+        },
+        copyLink() {
+            navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${this.$route.params.id}`);
         },
         formatDateDayMonthYear,
     },
@@ -207,6 +228,7 @@ export default {
         this.getEventData();
         this.getEventParticipants();
         this.getSelectedDates();
+        this.getSelectableDates();
     },
 }
 </script>
@@ -230,7 +252,12 @@ $sectionPadding: 1rem;
     .list-element {
         display: flex;
         justify-content: space-between;
-        padding: $sectionPadding;
+        padding: {
+            left: $sectionPadding;
+            right: $sectionPadding;
+            top: calc($sectionPadding / 2);
+            bottom: calc($sectionPadding / 2);
+        };
     }
 }
 
@@ -283,6 +310,7 @@ $sectionPadding: 1rem;
         background-color: $color-background-3;
         padding: $sectionPadding;
         position: relative;
+        overflow: auto;
 
         #submit-response {
             position: absolute;
