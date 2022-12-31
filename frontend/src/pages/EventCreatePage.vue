@@ -206,13 +206,13 @@ export default {
                     CalendarType: this.calendarType,
                     Deadline: formatDateForBackend(new Date(this.deadline)),
                     Config: config,
+                    SelectedDate: null,
                 },
                 EventRanges: dates,
             })
             .then(res => {
                 const IDEvent = res.data.IDEvent;
-                navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${IDEvent}`);
-                alert(`Event successfuly created. You will now be redirected to your event page.\nTo invite others use the following link, which was also copied to your clipboard:\nhttps://coordimeet.eu/#/event/${IDEvent}`)
+                alert(`Event successfuly created. You will now be redirected to your event page.`)
                 this.$router.push(`/event/${IDEvent}`);
             })
         },

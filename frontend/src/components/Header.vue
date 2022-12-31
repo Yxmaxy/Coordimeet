@@ -26,14 +26,20 @@ export default {
 @import "../styles/colors";
 
 .header-component {
+    user-select: none;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
+    padding: {
+        left: 1rem;
+        right: 1rem;
+        top: 0.5rem;
+        bottom: 0.5rem;
+    };
     background-color: $color-top-bottom;
 
     & > img {
-        height: 200%;
+        height: 100%;
         cursor: pointer;
     }
 }

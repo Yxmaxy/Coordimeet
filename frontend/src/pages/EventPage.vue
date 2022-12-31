@@ -1,10 +1,10 @@
 <template>
     <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
-        'non-confirmed': eventPageType === EventPageType.NonConfirmed,
+        'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
         'organizer': eventPageType === EventPageType.Organizer,
     }]">
         <aside
-            v-if="eventPageType !== EventPageType.NonConfirmed"
+            v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
             class="responses-area"
         >
             <h1>Responses</h1>
@@ -32,10 +32,13 @@
                 Select date and finish event
             </button>
         </aside>
-        <div :class="['details-area', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
+        <div :class="['details-area', {'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)}]">
             <div class="container">
                 <h2 v-if="eventPageType === EventPageType.NonConfirmed">
                     You've been invited to:
+                </h2>
+                <h2 v-else-if="eventPageType === EventPageType.Finished">
+                    This event has finished!
                 </h2>
                 <h1 class="space-between">
                     {{ eventData.Name }}
@@ -51,7 +54,7 @@
                     <div>Organizer: {{ eventData.Organizer?.FirstName }} {{ eventData.Organizer?.LastName }}</div>
                     <div>Deadline: {{ formatDateDayMonthYear(new Date(eventData.Deadline)) }}</div>
                     <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
-                    <div v-for="key, value in eventData.Config">
+                    <div v-for="value, key in eventData.Config">
                         {{ key }}:
                         {{ value }}
                     </div>
@@ -67,10 +70,15 @@
                         Accept
                     </button>
                 </div>
+                <div
+                    v-if="eventPageType === EventPageType.Finished"
+                >
+                    <h3>The selected date is: {{ eventData.SelectedDate }}</h3>
+                </div>
             </div>
 
             <button
-                v-if="eventPageType !== EventPageType.NonConfirmed"
+                v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
                 id="submit-response"
                 @click="onSubmitEvent"
                 :class="{'disabled': selectedDates.length === 0}"
@@ -79,7 +87,7 @@
             </button>
         </div>
         <main
-            v-if="eventPageType !== EventPageType.NonConfirmed"
+            v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
             class="calendar-area"
         >
             <calendar
@@ -97,7 +105,7 @@ import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { apiServer } from '../common/globals';
-import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar, formatDateForBackend } from '../common/helpers';
+import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -105,9 +113,11 @@ export default {
         "calendar": Calendar,
     },
     setup() {
-        const { user } = useUserStore();
+        const { user, isLoggedIn } = useUserStore();
+        
         return {
             user,
+            isLoggedIn,
         }
     },
     data() {
@@ -116,7 +126,6 @@ export default {
             eventData: {} as IEvent,
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
-            userIsOrganizer: false,
             initialIsAvailable: [] as IDateRange[],
             selectableDates: [] as IDateRange[],
             selectedDate: undefined as number|undefined,
@@ -157,7 +166,12 @@ export default {
                 } as IEvent
 
                 this.eventData = eventData;
-                this.userIsOrganizer = this.user.GoogleID === eventData.Organizer.GoogleID;
+                if (res.data.SelectedDate !== null) {
+                    this.eventPageType = EventPageType.Finished;
+                } else if (this.user.GoogleID === eventData.Organizer.GoogleID) {
+                    this.eventPageType = EventPageType.Organizer;
+                    this.getSelectableDates();
+                }
             }).catch(() => this.$router.push("/"))
         },
         getEventParticipants() {
@@ -188,6 +202,10 @@ export default {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
+                if (res.data.length === 0)
+                    return;
+                if (res.data.Dates.length !== 0 && this.eventPageType === EventPageType.NonConfirmed)
+                    this.eventPageType = EventPageType.Invitee;
                 this.initialIsAvailable = res.data.Dates === undefined ? [] : res.data.Dates.map((range: any) => {
                     return {
                         from: new Date(range.StartDate),
@@ -226,8 +244,10 @@ export default {
                     IDUser: this.user.GoogleID,
                     AvailabilityDates: this.selectedDates,
                 })
-                .then(() => {
-                    
+                .then(res => {
+                    if (res.status !== 201)
+                        return
+                    this.getSelectableDates();
                 })
             } else {  // update date that was selected before
                 axios.put(`${apiServer}/eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
@@ -235,52 +255,42 @@ export default {
                     IDUser: this.user.GoogleID,
                     AvailabilityDates: this.selectedDates,
                 }).then(res => {
-                    if (res.status === 201)
-                        this.getSelectableDates();
+                    if (res.status !== 201)
+                        return
+                    this.getSelectableDates();
                 })
             }
         },
         finishEvent() {
-            axios.put(`${apiServer}/event.php?IDEvent=${this.$route.params.id}`, {
-                Event: {
-                    IDOrganizer: this.eventData.Organizer.GoogleID,
-                    Name: this.eventData.Name,
-                    Length: this.eventData.Length,
-                    CalendarType: this.eventData.CalendarType,
-                    Deadline: this.eventData.Deadline,
-                    Config: this.eventData.Config,
-                    SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
-                },
-                EventRanges: this.eventData.EventDates.map(range => {
-                    return {
-                        StartDate: formatDateForBackend(range.from),
-                        EndDate: formatDateForBackend(range.to),
-                    }
-                }),
+            axios.put(`${apiServer}/eventDate.php?IDEvent=${this.$route.params.id}`, {
+                SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
             }).then(res => {
                 console.log(res.data)
             })
+        },
+        pageTypeIn(...types: EventPageType[]): boolean {
+            for (const type of types)
+                if (this.eventPageType === type)
+                    return true;
+            return false;
         },
         copyLink() {
             navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${this.$route.params.id}`);
         },
         displayDateRange(range: IDateRange): string {
-            const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonth : formatDateDayMonthHour;
+            const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;
             if (convertFunc(range.from) === convertFunc(range.to))
                 return convertFunc(range.from);
             return `${convertFunc(range.from)} - ${convertFunc(range.to)}`;
         },
         formatDateDayMonth,
         formatDateDayMonthYear,
-        formatDateDayMonthHour,
-    },
-    watch: {
-        userIsOrganizer() {
-            this.eventPageType = EventPageType.Organizer;
-            this.getSelectableDates();
-        },
     },
     mounted() {
+        if (!this.isLoggedIn) {
+            alert("Please log in and re-visit this link");
+            this.$router.push("/");
+        }
         this.getEventData();
         this.getEventParticipants();
         this.getSelectedDates();
@@ -324,7 +334,7 @@ $sectionPadding: 1rem;
     grid-template-areas:
         "responses details"
         "responses calendar";
-    &.non-confirmed {
+    &.basic-view {
         grid-template-rows: 1fr;
         grid-template-columns: 1fr;
         grid-template-areas:
@@ -343,13 +353,12 @@ $sectionPadding: 1rem;
     .selectable-area {
         grid-area: selectable;
         @include aside-mixin;
-        position: relative;
 
         button {
-            position: absolute;
-            bottom: $sectionPadding;
-            left: $sectionPadding;
-            right: $sectionPadding;
+            position: fixed;
+            bottom: $sectionPadding + 2rem;
+            margin: $sectionPadding;
+            width: calc(min(20rem, 30vw) - 2 * $sectionPadding);
         }
 
         .list-element {
@@ -386,7 +395,7 @@ $sectionPadding: 1rem;
             bottom: 0.5rem;
         }
 
-        &.non-confirmed {
+        &.basic-view {
             display: flex;
             flex-direction: column;
             align-items: center;

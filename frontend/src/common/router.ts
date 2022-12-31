@@ -12,7 +12,7 @@ const router = createRouter({
     history: createWebHashHistory(),
     routes: [
         { path: "/", component: HomePage, name: "home" },
-        { path: "/event/:id", component: EventPage },
+        { path: "/event/:id", component: EventPage, name: "event"},
         { path: "/event/new", component: EventCreatePage },
         { path: "/event/list", component: EventListPage },
         { path: "/:catchAll(.*)", redirect: () => "/" },
@@ -22,6 +22,8 @@ const router = createRouter({
 if (!developmentMode)
     router.beforeEach((to, from, next) => {
         const userStore = useUserStore();
+        if (to.name === "event")
+            next();
         if (to.name === "home" && userStore.isLoggedIn)
             return next("/event/list");
         if (to.name !== "home" && !userStore.isLoggedIn)

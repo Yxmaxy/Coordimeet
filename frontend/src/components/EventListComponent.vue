@@ -1,5 +1,9 @@
 <template>
-    <div class="event" v-for="event in events" @click="$router.push(`/event/${event.IDEvent}`)">
+    <div
+        v-for="event in events"
+        class="event"
+        @click="$router.push(`/event/${event.IDEvent}`)"
+    >
         <div>
             <b>{{ event.Name }}</b>
             <abbr v-if="!userIsOrganiser" title="Organizer">
@@ -7,17 +11,15 @@
             </abbr>
         </div>
         <div>
-            <abbr
-                v-if="userIsOrganiser"
-                title="Event deadline">{{ formatDateDayMonthYear(new Date(event.Deadline)) }}
+            <abbr v-if="userIsOrganiser && event.SelectedDate === null" title="Event deadline">
+                {{ formatDateDayMonthYear(new Date(event.Deadline)) }}
             </abbr>
             <abbr
                 v-else
                 class="selected-date"
                 title="Selected date"
             >
-                <!-- TODO: Tuki bo datum, ki ga je izbral Organizer -->
-                1. 1. 2023
+                {{ event.SelectedDate }}
             </abbr>
         </div>
     </div>
