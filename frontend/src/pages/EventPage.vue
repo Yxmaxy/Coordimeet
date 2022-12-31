@@ -146,6 +146,10 @@ export default {
                     this.$router.push("/");
                     return;
                 }
+                if (res.data.SelectedDate !== null) {
+                    this.$router.push("/");
+                    return;
+                }
                 const eventData = {
                     ...res.data,
                     EventDates: res.data.EventDates.map((eventDate: any) => {

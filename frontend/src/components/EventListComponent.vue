@@ -1,5 +1,9 @@
 <template>
-    <div class="event" v-for="event in events" @click="$router.push(`/event/${event.IDEvent}`)">
+    <div
+        v-for="event in events"
+        :class="['event', {'finished': event.SelectedDate !== null}]"
+        @click="() => eventClick(event)"
+    >
         <div>
             <b>{{ event.Name }}</b>
             <abbr v-if="!userIsOrganiser" title="Organizer">
@@ -7,17 +11,15 @@
             </abbr>
         </div>
         <div>
-            <abbr
-                v-if="userIsOrganiser"
-                title="Event deadline">{{ formatDateDayMonthYear(new Date(event.Deadline)) }}
+            <abbr v-if="userIsOrganiser && event.SelectedDate === null" title="Event deadline">
+                {{ formatDateDayMonthYear(new Date(event.Deadline)) }}
             </abbr>
             <abbr
                 v-else
                 class="selected-date"
                 title="Selected date"
             >
-                <!-- TODO: Tuki bo datum, ki ga je izbral Organizer -->
-                1. 1. 2023
+                {{ event.SelectedDate }}
             </abbr>
         </div>
     </div>
@@ -41,6 +43,12 @@ export default {
         }
     },
     methods: {
+        eventClick(event: IEvent) {
+            if (event.SelectedDate === null)
+                this.$router.push(`/event/${event.IDEvent}`)
+            else
+                alert(`The organizer had already finished this event. It will take place at: ${event.SelectedDate}`);
+        },
         formatDateDayMonthYear,
     },
 }
@@ -57,6 +65,14 @@ export default {
     justify-content: space-between;
     cursor: pointer;
     transition: 200ms;
+
+    &.finished {
+        &:hover{
+            background-color: $color-background-3;
+            transform: none;
+            transition: 100ms;
+        }
+    }
 
     &:hover {
         background-color: $color-top-bottom;
