@@ -264,8 +264,9 @@ export default {
         finishEvent() {
             axios.put(`${apiServer}/eventDate.php?IDEvent=${this.$route.params.id}`, {
                 SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
-            }).then(res => {
-                console.log(res.data)
+            }).then(() => {
+                alert("Event date successfully selected!\nYou will now be returned to the event list");
+                this.$router.push("/event/list");
             })
         },
         pageTypeIn(...types: EventPageType[]): boolean {
