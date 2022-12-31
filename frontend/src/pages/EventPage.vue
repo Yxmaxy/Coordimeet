@@ -1,6 +1,6 @@
 <template>
     <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
-        'non-confirmed': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
+        'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
         'organizer': eventPageType === EventPageType.Organizer,
     }]">
         <aside
@@ -32,10 +32,13 @@
                 Select date and finish event
             </button>
         </aside>
-        <div :class="['details-area', {'non-confirmed': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)}]">
+        <div :class="['details-area', {'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)}]">
             <div class="container">
                 <h2 v-if="eventPageType === EventPageType.NonConfirmed">
                     You've been invited to:
+                </h2>
+                <h2 v-else-if="eventPageType === EventPageType.Finished">
+                    This event has finished!
                 </h2>
                 <h1 class="space-between">
                     {{ eventData.Name }}
@@ -66,6 +69,11 @@
                     <button @click="eventPageType = EventPageType.Invitee">
                         Accept
                     </button>
+                </div>
+                <div
+                    v-if="eventPageType === EventPageType.Finished"
+                >
+                    <h3>The selected date is: {{ eventData.SelectedDate }}</h3>
                 </div>
             </div>
 
@@ -276,11 +284,6 @@ export default {
         formatDateDayMonth,
         formatDateDayMonthYear,
     },
-    watch: {
-        eventPageType(n) {
-            console.log(n)
-        }
-    },
     mounted() {
         this.getEventData();
         this.getEventParticipants();
@@ -325,7 +328,7 @@ $sectionPadding: 1rem;
     grid-template-areas:
         "responses details"
         "responses calendar";
-    &.non-confirmed {
+    &.basic-view {
         grid-template-rows: 1fr;
         grid-template-columns: 1fr;
         grid-template-areas:
@@ -344,13 +347,12 @@ $sectionPadding: 1rem;
     .selectable-area {
         grid-area: selectable;
         @include aside-mixin;
-        position: relative;
 
         button {
-            position: sticky;
-            bottom: $sectionPadding;
+            position: fixed;
+            bottom: $sectionPadding + 2rem;
             margin: $sectionPadding;
-            width: calc(100% - 2 * $sectionPadding);
+            width: calc(min(20rem, 30vw) - 2 * $sectionPadding);
         }
 
         .list-element {
@@ -387,7 +389,7 @@ $sectionPadding: 1rem;
             bottom: 0.5rem;
         }
 
-        &.non-confirmed {
+        &.basic-view {
             display: flex;
             flex-direction: column;
             align-items: center;

@@ -27,7 +27,8 @@ button, .btn {
         top: $p-t-b;
         bottom: $p-t-b;
     }
-    transition: 100ms;
+    transition: color 100ms;
+    transition: background-color 100ms;
     &:active {
         color: $color-main;
         background-color: $color-top-bottom;
