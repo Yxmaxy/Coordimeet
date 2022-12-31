@@ -113,9 +113,11 @@ export default {
         "calendar": Calendar,
     },
     setup() {
-        const { user } = useUserStore();
+        const { user, isLoggedIn } = useUserStore();
+        
         return {
             user,
+            isLoggedIn,
         }
     },
     data() {
@@ -285,6 +287,10 @@ export default {
         formatDateDayMonthYear,
     },
     mounted() {
+        if (!this.isLoggedIn) {
+            alert("Please log in and re-visit this link");
+            this.$router.push("/");
+        }
         this.getEventData();
         this.getEventParticipants();
         this.getSelectedDates();
