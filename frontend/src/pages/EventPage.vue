@@ -51,7 +51,7 @@
                     <div>Organizer: {{ eventData.Organizer?.FirstName }} {{ eventData.Organizer?.LastName }}</div>
                     <div>Deadline: {{ formatDateDayMonthYear(new Date(eventData.Deadline)) }}</div>
                     <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
-                    <div v-for="key, value in eventData.Config">
+                    <div v-for="value, key in eventData.Config">
                         {{ key }}:
                         {{ value }}
                     </div>
@@ -97,7 +97,7 @@ import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { apiServer } from '../common/globals';
-import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar, formatDateForBackend } from '../common/helpers';
+import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from '../common/helpers';
 import axios from "axios";
 
 export default {
@@ -226,8 +226,10 @@ export default {
                     IDUser: this.user.GoogleID,
                     AvailabilityDates: this.selectedDates,
                 })
-                .then(() => {
-                    
+                .then(res => {
+                    if (res.status !== 201)
+                        return
+                    this.getSelectableDates();
                 })
             } else {  // update date that was selected before
                 axios.put(`${apiServer}/eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
@@ -235,28 +237,15 @@ export default {
                     IDUser: this.user.GoogleID,
                     AvailabilityDates: this.selectedDates,
                 }).then(res => {
-                    if (res.status === 201)
-                        this.getSelectableDates();
+                    if (res.status !== 201)
+                        return
+                    this.getSelectableDates();
                 })
             }
         },
         finishEvent() {
-            axios.put(`${apiServer}/event.php?IDEvent=${this.$route.params.id}`, {
-                Event: {
-                    IDOrganizer: this.eventData.Organizer.GoogleID,
-                    Name: this.eventData.Name,
-                    Length: this.eventData.Length,
-                    CalendarType: this.eventData.CalendarType,
-                    Deadline: this.eventData.Deadline,
-                    Config: this.eventData.Config,
-                    SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
-                },
-                EventRanges: this.eventData.EventDates.map(range => {
-                    return {
-                        StartDate: formatDateForBackend(range.from),
-                        EndDate: formatDateForBackend(range.to),
-                    }
-                }),
+            axios.put(`${apiServer}/eventDate.php?IDEvent=${this.$route.params.id}`, {
+                SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
             }).then(res => {
                 console.log(res.data)
             })
@@ -265,14 +254,13 @@ export default {
             navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${this.$route.params.id}`);
         },
         displayDateRange(range: IDateRange): string {
-            const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonth : formatDateDayMonthHour;
+            const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;
             if (convertFunc(range.from) === convertFunc(range.to))
                 return convertFunc(range.from);
             return `${convertFunc(range.from)} - ${convertFunc(range.to)}`;
         },
         formatDateDayMonth,
         formatDateDayMonthYear,
-        formatDateDayMonthHour,
     },
     watch: {
         userIsOrganizer() {
