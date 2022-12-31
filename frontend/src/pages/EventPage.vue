@@ -192,6 +192,8 @@ export default {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
+                if (res.data.Dates.length !== 0 && this.eventPageType !== EventPageType.Organizer)
+                    this.eventPageType = EventPageType.Invitee;
                 this.initialIsAvailable = res.data.Dates === undefined ? [] : res.data.Dates.map((range: any) => {
                     return {
                         from: new Date(range.StartDate),

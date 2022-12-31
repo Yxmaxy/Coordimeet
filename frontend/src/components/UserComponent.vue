@@ -69,7 +69,7 @@ export default {
     display: flex;
     flex-direction: row;
     align-items: center;
-    height: 150%;
+    height: 90%;
     gap: 8px;
     user-select: none;
     cursor: pointer;
