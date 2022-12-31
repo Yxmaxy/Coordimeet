@@ -1,10 +1,10 @@
 <template>
     <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
-        'non-confirmed': eventPageType === EventPageType.NonConfirmed,
+        'non-confirmed': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
         'organizer': eventPageType === EventPageType.Organizer,
     }]">
         <aside
-            v-if="eventPageType !== EventPageType.NonConfirmed"
+            v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
             class="responses-area"
         >
             <h1>Responses</h1>
@@ -32,7 +32,7 @@
                 Select date and finish event
             </button>
         </aside>
-        <div :class="['details-area', {'non-confirmed': eventPageType === EventPageType.NonConfirmed}]">
+        <div :class="['details-area', {'non-confirmed': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)}]">
             <div class="container">
                 <h2 v-if="eventPageType === EventPageType.NonConfirmed">
                     You've been invited to:
@@ -70,7 +70,7 @@
             </div>
 
             <button
-                v-if="eventPageType !== EventPageType.NonConfirmed"
+                v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
                 id="submit-response"
                 @click="onSubmitEvent"
                 :class="{'disabled': selectedDates.length === 0}"
@@ -79,7 +79,7 @@
             </button>
         </div>
         <main
-            v-if="eventPageType !== EventPageType.NonConfirmed"
+            v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
             class="calendar-area"
         >
             <calendar
@@ -116,7 +116,6 @@ export default {
             eventData: {} as IEvent,
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
-            userIsOrganizer: false,
             initialIsAvailable: [] as IDateRange[],
             selectableDates: [] as IDateRange[],
             selectedDate: undefined as number|undefined,
@@ -146,10 +145,6 @@ export default {
                     this.$router.push("/");
                     return;
                 }
-                if (res.data.SelectedDate !== null) {
-                    this.$router.push("/");
-                    return;
-                }
                 const eventData = {
                     ...res.data,
                     EventDates: res.data.EventDates.map((eventDate: any) => {
@@ -161,7 +156,12 @@ export default {
                 } as IEvent
 
                 this.eventData = eventData;
-                this.userIsOrganizer = this.user.GoogleID === eventData.Organizer.GoogleID;
+                if (res.data.SelectedDate !== null) {
+                    this.eventPageType = EventPageType.Finished;
+                } else if (this.user.GoogleID === eventData.Organizer.GoogleID) {
+                    this.eventPageType = EventPageType.Organizer;
+                    this.getSelectableDates();
+                }
             }).catch(() => this.$router.push("/"))
         },
         getEventParticipants() {
@@ -192,7 +192,9 @@ export default {
                     alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
                     return;
                 }
-                if (res.data.Dates.length !== 0 && this.eventPageType !== EventPageType.Organizer)
+                if (res.data.length === 0)
+                    return;
+                if (res.data.Dates.length !== 0 && this.eventPageType === EventPageType.NonConfirmed)
                     this.eventPageType = EventPageType.Invitee;
                 this.initialIsAvailable = res.data.Dates === undefined ? [] : res.data.Dates.map((range: any) => {
                     return {
@@ -256,6 +258,12 @@ export default {
                 console.log(res.data)
             })
         },
+        pageTypeIn(...types: EventPageType[]): boolean {
+            for (const type of types)
+                if (this.eventPageType === type)
+                    return true;
+            return false;
+        },
         copyLink() {
             navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${this.$route.params.id}`);
         },
@@ -269,10 +277,9 @@ export default {
         formatDateDayMonthYear,
     },
     watch: {
-        userIsOrganizer() {
-            this.eventPageType = EventPageType.Organizer;
-            this.getSelectableDates();
-        },
+        eventPageType(n) {
+            console.log(n)
+        }
     },
     mounted() {
         this.getEventData();
@@ -340,10 +347,10 @@ $sectionPadding: 1rem;
         position: relative;
 
         button {
-            position: absolute;
+            position: sticky;
             bottom: $sectionPadding;
-            left: $sectionPadding;
-            right: $sectionPadding;
+            margin: $sectionPadding;
+            width: calc(100% - 2 * $sectionPadding);
         }
 
         .list-element {
