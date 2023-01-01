@@ -283,10 +283,6 @@ export default {
         formatDateDayMonthYear,
     },
     mounted() {
-        if (!this.isLoggedIn) {
-            alert("Please log in and re-visit this link");
-            this.$router.push("/");
-        }
         this.getEventData();
         this.getEventParticipants();
         this.getSelectedDates();

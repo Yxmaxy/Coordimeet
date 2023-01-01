@@ -23,7 +23,11 @@ if (!developmentMode)
     router.beforeEach((to, from, next) => {
         const userStore = useUserStore();
         if (to.name === "event")
-            next();
+            if (!userStore.isLoggedIn) {
+                alert("Please log in and re-visit this link");
+                next("/");
+            } else
+                next();
         if (to.name === "home" && userStore.isLoggedIn)
             return next("/event/list");
         if (to.name !== "home" && !userStore.isLoggedIn)
