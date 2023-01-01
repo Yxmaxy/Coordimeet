@@ -150,11 +150,6 @@ export default {
                     IDEvent: this.$route.params.id,
                 }
             }).then(res => {
-                if (res.data.error) {
-                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
-                    this.$router.push("/");
-                    return;
-                }
                 const eventData = {
                     ...res.data,
                     EventDates: res.data.EventDates.map((eventDate: any) => {
@@ -172,7 +167,7 @@ export default {
                     this.eventPageType = EventPageType.Organizer;
                     this.getSelectableDates();
                 }
-            }).catch(() => this.$router.push("/"))
+            })
         },
         getEventParticipants() {
             axios.get(`${apiServer}/eventUser.php`, {
@@ -189,7 +184,7 @@ export default {
                 this.eventParticipants = res.data.map((participant: any) => {
                     return `${participant.FirstName} ${participant.LastName}`;
                 })
-            }).catch(() => this.$router.push("/"))
+            })
         },
         getSelectedDates() {
             axios.get(`${apiServer}/eventUser.php`, {
