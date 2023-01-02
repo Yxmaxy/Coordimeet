@@ -22,7 +22,7 @@ const router = createRouter({
 
 router.beforeEach(async (to, from) => {
     const userStore = useUserStore();
-    console.log("started login check")
+    console.log("started login")
     const isLoggedIn = await userStore.loginUser();
     console.log(isLoggedIn);
     console.log(from, to);
@@ -40,10 +40,10 @@ router.beforeEach(async (to, from) => {
     //     console.log("home -> list");
     //     return "/event/list";
     // }
-    if (to.name !== "home" && !isLoggedIn) {
-        console.log("* -> home");
-        return "/";
-    }
+    // if (to.name !== "home" && !isLoggedIn) {
+    //     console.log("* -> home");
+    //     return "/";
+    // }
     return true;
 });
 
