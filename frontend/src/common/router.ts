@@ -20,22 +20,21 @@ const router = createRouter({
     ]
 });
 
-if (developmentMode)
-    router.beforeEach(async (to, from) => {
-        const userStore = useUserStore();
-        await userStore.loginUser();
-        if (to.name === "event") {
-            if (!userStore.isLoggedIn) {
-                alert("Please log in and re-visit this link");
-                return "/";
-            }
-            return true;
-        }
-        if (to.name === "home" && userStore.isLoggedIn)
-            return "/event/list";
-        if (to.name !== "home" && !userStore.isLoggedIn)
+router.beforeEach(async (to, from) => {
+    const userStore = useUserStore();
+    await userStore.loginUser();
+    if (to.name === "event") {
+        if (!userStore.isLoggedIn) {
+            alert("Please log in and re-visit this link");
             return "/";
+        }
         return true;
-    });
+    }
+    if (to.name === "home" && userStore.isLoggedIn)
+        return "/event/list";
+    if (to.name !== "home" && !userStore.isLoggedIn)
+        return "/";
+    return true;
+});
 
 export default router;

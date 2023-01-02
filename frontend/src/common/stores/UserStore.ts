@@ -5,7 +5,7 @@ import { IUser } from '../interfaces';
 
 export const useUserStore = defineStore("UserStore", {
     state: () => {
-        if (!developmentMode)
+        if (developmentMode)
             return {
                 isLoggedIn: true,
                 user: {
