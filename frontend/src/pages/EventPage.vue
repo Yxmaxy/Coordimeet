@@ -104,7 +104,7 @@
 import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
-import { apiServer } from '../common/globals';
+import { apiServer, eventServer } from '../common/globals';
 import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from '../common/helpers';
 import axios from "axios";
 
@@ -271,7 +271,7 @@ export default {
             return false;
         },
         copyLink() {
-            navigator.clipboard.writeText(`https://coordimeet.eu/#/event/${this.$route.params.id}`);
+            navigator.clipboard.writeText(`${eventServer}/${this.$route.params.id}`);
         },
         displayDateRange(range: IDateRange): string {
             const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;

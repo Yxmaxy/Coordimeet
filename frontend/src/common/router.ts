@@ -16,34 +16,26 @@ const router = createRouter({
         { path: "/event/:id", component: EventPage, name: "event"},
         { path: "/event/new", component: EventCreatePage, name: "new" },
         { path: "/event/list", component: EventListPage, name: "list" },
-        // { path: "/:catchAll(.*)", redirect: () => "/" },
+        { path: "/:catchAll(.*)", redirect: () => "/" },
     ]
 });
 
 router.beforeEach(async (to, from) => {
     const userStore = useUserStore();
-    console.log("started login")
     const isLoggedIn = await userStore.loginUser();
-    console.log(isLoggedIn);
-    console.log(from, to);
     if (from.name === to.name)
         return false;
     if (to.name === "event") {
-        console.log("event redirect");
         if (!isLoggedIn) {
             alert("Please log in and re-visit this link");
             return "/";
         }
         return true;
     }
-    // if (to.name === "home" && isLoggedIn) {
-    //     console.log("home -> list");
-    //     return "/event/list";
-    // }
-    // if (to.name !== "home" && !isLoggedIn) {
-    //     console.log("* -> home");
-    //     return "/";
-    // }
+    if (to.name === "home" && isLoggedIn)
+        return "/event/list";
+    if (to.name !== "home" && !isLoggedIn)
+        return "/";
     return true;
 });
 

@@ -21,12 +21,13 @@
     <a 
         v-if="userStore.isLoggedIn && showLogout"
         class="btn"
-        href="https://coordimeet.eu/backend/googleLogout.php"
+        :href="logoutLink"
     >Log out</a>
 </template>
 
 <script lang="ts">
 import axios from 'axios'
+import { apiServer } from '../common/globals';
 import { useUserStore } from '../common/stores/UserStore'
 
 export default {
@@ -38,13 +39,14 @@ export default {
     },
     data() {
         return {
+            logoutLink: `${apiServer}/googleLogout.php`,
             loginLink: "",
             showLogout: false,
         }
     },
     methods: {
         getLoginData() {
-            axios.get("https://coordimeet.eu/backend/googleLogin.php")
+            axios.get(`${apiServer}/googleLogin.php`)
             .then(res => {
                 if ("googleLoginURL" in res.data)
                     this.loginLink = res.data.googleLoginURL;
