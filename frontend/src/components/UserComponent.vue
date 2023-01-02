@@ -51,7 +51,6 @@ export default {
                 else {
                     this.userStore.isLoggedIn = true;
                     this.userStore.user = res.data;
-                    this.$router.push("/event/list");
                 }
             })
         },
