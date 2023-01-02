@@ -16,7 +16,7 @@ const router = createRouter({
         { path: "/event/:id", component: EventPage, name: "event"},
         { path: "/event/new", component: EventCreatePage, name: "new" },
         { path: "/event/list", component: EventListPage, name: "list" },
-        { path: "/:catchAll(.*)", redirect: () => "/" },
+        // { path: "/:catchAll(.*)", redirect: () => "/" },
     ]
 });
 
@@ -26,6 +26,8 @@ router.beforeEach(async (to, from) => {
     const isLoggedIn = await userStore.loginUser();
     console.log(isLoggedIn);
     console.log(from, to);
+    if (from.name === to.name)
+        return false;
     if (to.name === "event") {
         console.log("event redirect");
         if (!isLoggedIn) {
