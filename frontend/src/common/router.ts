@@ -36,10 +36,10 @@ router.beforeEach(async (to, from) => {
         }
         return true;
     }
-    if (to.name === "home" && isLoggedIn) {
-        console.log("home -> list");
-        return "/event/list";
-    }
+    // if (to.name === "home" && isLoggedIn) {
+    //     console.log("home -> list");
+    //     return "/event/list";
+    // }
     if (to.name !== "home" && !isLoggedIn) {
         console.log("* -> home");
         return "/";
