@@ -23,14 +23,15 @@ export const useUserStore = defineStore("UserStore", {
             }
     },
     actions: {
-        async loginUser() {
+        async loginUser(): Promise<boolean> {
             if (this.isLoggedIn)
-                return;
+                return true;
             const res = await axios.get("https://coordimeet.eu/backend/googleLogin.php");
             if ("googleLoginURL" in res.data)
-                return;
+                return false;
             this.isLoggedIn = true;
             this.user = res.data;
+            return true;
         }
     }
 })
