@@ -1,10 +1,11 @@
 import { defineStore } from 'pinia';
+import axios from 'axios';
 import { developmentMode } from '../globals';
 import { IUser } from '../interfaces';
 
 export const useUserStore = defineStore("UserStore", {
     state: () => {
-        if (developmentMode)
+        if (!developmentMode)
             return {
                 isLoggedIn: true,
                 user: {
@@ -16,9 +17,20 @@ export const useUserStore = defineStore("UserStore", {
                 } as IUser,
             }
         else
-        return {
-            isLoggedIn: false,
-            user: {} as IUser,
+            return {
+                isLoggedIn: false,
+                user: {} as IUser,
+            }
+    },
+    actions: {
+        async loginUser() {
+            if (this.isLoggedIn)
+                return;
+            const res = await axios.get("https://coordimeet.eu/backend/googleLogin.php");
+            if ("googleLoginURL" in res.data)
+                return;
+            this.isLoggedIn = true;
+            this.user = res.data;
         }
     }
 })
