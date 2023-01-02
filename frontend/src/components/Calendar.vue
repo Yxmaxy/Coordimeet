@@ -14,8 +14,14 @@
         </div>
         <div v-if="(type === CalendarType.DateTime)">
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
-            <button class="small" @click="changeSelectedWeek(false)">Prev</button>
-            <button class="small" @click="changeSelectedWeek(true)">Next</button>
+            <button
+                :class="['small', {'disabled': selectedWeek === 0}]"
+                @click="changeSelectedWeek(false)"
+            >Prev</button>
+            <button
+                :class="['small', {'disabled': selectedWeek === numOfWeeks}]"
+                @click="changeSelectedWeek(true)"
+            >Next</button>
         </div>
     </div>
     <div class="calendar-header">

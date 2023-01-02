@@ -243,6 +243,7 @@ export default {
                     if (res.status !== 201)
                         return
                     this.getSelectableDates();
+                    alert("Your response has been submitted");
                 })
             } else {  // update date that was selected before
                 axios.put(`${apiServer}/eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
@@ -253,6 +254,7 @@ export default {
                     if (res.status !== 201)
                         return
                     this.getSelectableDates();
+                    alert("Your response has been submitted");
                 })
             }
         },
