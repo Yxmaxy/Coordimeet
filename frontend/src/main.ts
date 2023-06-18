@@ -1,8 +1,11 @@
 import { createPinia } from 'pinia';
 import { createApp } from 'vue'
-import router from './common/router';
-import App from './pages/App.vue'
-import './styles/global.scss'
+
+import router from '@/common/router';
+import App from '@/pages/App.vue'
+
+import '@/styles/global.scss'
+import '@/styles/index.css'
 
 const pinia = createPinia();
 

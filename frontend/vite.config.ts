@@ -15,11 +15,13 @@ export default defineConfig({
   },
   base: "/",
   server: {
+    host: "0.0.0.0",
+    hmr: {
+      clientPort: 3000,  // TODO: read FRONTEND_PORT from .env
+    },
+    port: 3000,
     watch: {
       usePolling: true,
     },
-    host: true,
-    strictPort: true,
-    port: 3000,
-  }
+  },
 })
