@@ -20,7 +20,7 @@
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
-import { useUserStore } from "../common/stores/UserStore";
+import { useUserStore } from "@/stores/UserStore";
 import { IEvent } from "../common/interfaces";
 import EventListComponent from "../components/EventListComponent.vue";
 

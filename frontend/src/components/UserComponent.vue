@@ -27,7 +27,7 @@
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
-import { useUserStore } from '../common/stores/UserStore'
+import { useUserStore } from "@/stores/UserStore";
 
 export default {
     setup() {

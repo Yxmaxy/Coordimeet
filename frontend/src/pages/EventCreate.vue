@@ -99,7 +99,7 @@ Ticket price: 5€"
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
 import Calendar from '../components/Calendar.vue';
-import { useUserStore } from '../common/stores/UserStore';
+import { useUserStore } from "@/stores/UserStore";
 import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
 import { removeHoursMinutesFromDate, initializeDateInput, formatDateForBackend, getSelectedDatesOnCalendar } from '../common/helpers';
 

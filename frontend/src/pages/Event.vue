@@ -103,7 +103,7 @@
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
 import ApiService from "@/utils/ApiService";
-import { useUserStore } from '../common/stores/UserStore';
+import { useUserStore } from "@/stores/UserStore";
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
 import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from '../common/helpers';
 

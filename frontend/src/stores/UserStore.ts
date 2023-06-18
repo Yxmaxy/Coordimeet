@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import ApiService from "@/utils/ApiService";
-import { IUser } from '../interfaces';
+import { IUser } from '@/common/interfaces';
 
 export const useUserStore = defineStore("UserStore", {
     state: () => {

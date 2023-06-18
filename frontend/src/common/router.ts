@@ -1,19 +1,19 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-import { useUserStore } from "./stores/UserStore";
-import HomePage from "../pages/HomePage.vue";
-import EventPage from "../pages/EventPage.vue";
-import EventCreatePage from "../pages/EventCreatePage.vue";
-import EventListPage from "../pages/EventListPage.vue";
 
-// Register all appliaction paths here
+import { useUserStore } from "@/stores/UserStore";
+
+import Home from "@/pages/Home.vue";
+import Event from "@/pages/Event.vue";
+import EventCreate from "@/pages/EventCreate.vue";
+import EventList from "@/pages/EventList.vue";
 
 const router = createRouter({
     history: createWebHashHistory(),
     routes: [
-        { path: "/", component: HomePage, name: "home" },
-        { path: "/event/:id", component: EventPage, name: "event"},
-        { path: "/event/new", component: EventCreatePage, name: "new" },
-        { path: "/event/list", component: EventListPage, name: "list" },
+        { path: "/", component: Home, name: "home" },
+        { path: "/event/:id", component: Event, name: "event"},
+        { path: "/event/new", component: EventCreate, name: "new" },
+        { path: "/event/list", component: EventList, name: "list" },
         { path: "/:catchAll(.*)", redirect: () => "/" },
     ]
 });
