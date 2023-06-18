@@ -1,6 +1,4 @@
-import axios from "axios";
 import { createRouter, createWebHashHistory } from "vue-router";
-import { developmentMode } from "./globals";
 import { useUserStore } from "./stores/UserStore";
 import HomePage from "../pages/HomePage.vue";
 import EventPage from "../pages/EventPage.vue";

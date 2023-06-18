@@ -102,11 +102,10 @@
 
 <script lang="ts">
 import Calendar from '../components/Calendar.vue';
+import ApiService from "@/utils/ApiService";
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
-import { apiServer, eventServer } from '../common/globals';
 import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from '../common/helpers';
-import axios from "axios";
 
 export default {
     components: {
@@ -145,7 +144,7 @@ export default {
     },
     methods: {
         getEventData() {
-            axios.get(`${apiServer}/event.php`, {
+            ApiService.get("event.php", {
                 params: {
                     IDEvent: this.$route.params.id,
                 }
@@ -170,7 +169,7 @@ export default {
             })
         },
         getEventParticipants() {
-            axios.get(`${apiServer}/eventUser.php`, {
+            ApiService.get("eventUser.php", {
                 params: {
                     IDEvent: this.$route.params.id,
                 }
@@ -187,7 +186,7 @@ export default {
             })
         },
         getSelectedDates() {
-            axios.get(`${apiServer}/eventUser.php`, {
+            ApiService.get("eventUser.php", {
                 params: {
                     IDEvent: this.$route.params.id,
                     IDUser: this.user.GoogleID,
@@ -212,7 +211,7 @@ export default {
         getSelectableDates() {
             if (this.eventPageType !== EventPageType.Organizer)
                 return;
-            axios.get(`${apiServer}/eventDate.php`, {
+            ApiService.get("eventDate.php", {
                 params: {
                     IDEvent: this.$route.params.id,
                 }
@@ -234,7 +233,7 @@ export default {
             if (this.selectedDates.length === 0)
                 return;
             if (this.initialIsAvailable.length === 0) {  // a date didn't exist before
-                axios.post(`${apiServer}/eventUser.php`, {
+                ApiService.post("eventUser.php", {
                     IDEvent: this.$route.params.id,
                     IDUser: this.user.GoogleID,
                     AvailabilityDates: this.selectedDates,
@@ -246,7 +245,7 @@ export default {
                     alert("Your response has been submitted");
                 })
             } else {  // update date that was selected before
-                axios.put(`${apiServer}/eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
+                ApiService.put(`eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
                     IDEvent: this.$route.params.id,
                     IDUser: this.user.GoogleID,
                     AvailabilityDates: this.selectedDates,
@@ -259,7 +258,7 @@ export default {
             }
         },
         finishEvent() {
-            axios.put(`${apiServer}/eventDate.php?IDEvent=${this.$route.params.id}`, {
+            ApiService.put(`eventDate.php?IDEvent=${this.$route.params.id}`, {
                 SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
             }).then(() => {
                 alert("Event date successfully selected!\nYou will now be returned to the event list");
@@ -273,7 +272,7 @@ export default {
             return false;
         },
         copyLink() {
-            navigator.clipboard.writeText(`${eventServer}/${this.$route.params.id}`);
+            navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/${this.$route.params.id}`);
         },
         displayDateRange(range: IDateRange): string {
             const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;
