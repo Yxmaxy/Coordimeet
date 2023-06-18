@@ -97,12 +97,11 @@ Ticket price: 5€"
 </template>
 
 <script lang="ts">
-import axios from 'axios';
+import ApiService from "@/utils/ApiService";
 import Calendar from '../components/Calendar.vue';
 import { useUserStore } from '../common/stores/UserStore';
 import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
 import { removeHoursMinutesFromDate, initializeDateInput, formatDateForBackend, getSelectedDatesOnCalendar } from '../common/helpers';
-import { apiServer } from '../common/globals';
 
 export default {
     setup() {
@@ -198,7 +197,7 @@ export default {
                 return;
             }
 
-            axios.post(`${apiServer}/event.php`, {
+            ApiService.post("event.php", {
                 Event: {
                     IDOrganizer: this.user.GoogleID,
                     Name: this.name,

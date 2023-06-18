@@ -19,10 +19,9 @@
 </template>
 
 <script lang="ts">
-import axios from "axios";
+import ApiService from "@/utils/ApiService";
 import { useUserStore } from "../common/stores/UserStore";
 import { IEvent } from "../common/interfaces";
-import { apiServer } from "../common/globals";
 import EventListComponent from "../components/EventListComponent.vue";
 
 export default {
@@ -43,7 +42,7 @@ export default {
     },
     methods: {
         getEvents() {
-            axios.get(`${apiServer}/eventUser.php`, {
+            ApiService.get("eventUser.php", {
                 params: {
                     IDUser: this.user.GoogleID,
                 }

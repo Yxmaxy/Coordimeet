@@ -26,8 +26,7 @@
 </template>
 
 <script lang="ts">
-import axios from 'axios'
-import { apiServer } from '../common/globals';
+import ApiService from "@/utils/ApiService";
 import { useUserStore } from '../common/stores/UserStore'
 
 export default {
@@ -35,18 +34,18 @@ export default {
         const userStore = useUserStore();
         return {
             userStore,
+            logoutLink: `${import.meta.env.VITE_BACKEND_URL}/googleLogout.php`,
         }
     },
     data() {
         return {
-            logoutLink: `${apiServer}/googleLogout.php`,
             loginLink: "",
             showLogout: false,
         }
     },
     methods: {
         getLoginData() {
-            axios.get(`${apiServer}/googleLogin.php`)
+            ApiService.get("googleLogin.php")
             .then(res => {
                 if ("googleLoginURL" in res.data)
                     this.loginLink = res.data.googleLoginURL;

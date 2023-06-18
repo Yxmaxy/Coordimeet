@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
-import { apiServer } from '../globals';
+import ApiService from "@/utils/ApiService";
 import { IUser } from '../interfaces';
 
 export const useUserStore = defineStore("UserStore", {
@@ -14,7 +13,7 @@ export const useUserStore = defineStore("UserStore", {
         async loginUser(): Promise<boolean> {
             if (this.isLoggedIn)
                 return true;
-            const res = await axios.get(`${apiServer}/googleLogin.php`);
+            const res = await ApiService.get("googleLogin.php");
             if ("googleLoginURL" in res.data)
                 return false;
             this.isLoggedIn = true;
