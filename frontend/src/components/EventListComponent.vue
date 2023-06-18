@@ -26,14 +26,14 @@
 </template>
 
 <script lang="ts">
-import { PropType } from 'vue';
-import { formatDateDayMonthYear } from '../common/helpers';
-import { IEvent } from '../common/interfaces';
+import { PropType } from "vue";
+import { formatDateDayMonthYear } from "@/utils/dates";
+import { Event } from "@/types/event";
 
 export default {
     props: {
         events: {
-            type: Array as PropType<IEvent[]>,
+            type: Array as PropType<Event[]>,
             default: [],
             required: true,
         },

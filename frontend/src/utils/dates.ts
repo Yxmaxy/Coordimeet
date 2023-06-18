@@ -1,4 +1,4 @@
-import { CalendarType, ICalendarDate, IDateRange } from "./interfaces";
+import { DateRange, CalendarType, CalendarDate } from "@/types/calendar";
 
 function padNumber(number: number, places: number = 2): string {
     return number.toString().padStart(places, '0');
@@ -36,7 +36,7 @@ export function initializeDateInput(type: CalendarType, date?: string): string {
     return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}T${padNumber(now.getHours())}:00`;
 }
 
-export function getSelectedDatesOnCalendar(selectedDates: ICalendarDate[]): IDateRange[] {
+export function getSelectedDatesOnCalendar(selectedDates: CalendarDate[]): DateRange[] {
     const dates: any = [];
     let currentStart: Date|undefined = undefined;
     for (let i = 0; i < selectedDates.length; i++) {

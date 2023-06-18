@@ -54,15 +54,16 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { formatDateDayMonth, formatDateHour, formatDateForBackend } from "../common/helpers";
-import { IDateRange, ICalendarDate, CalendarType } from '../common/interfaces';
+import { formatDateDayMonth, formatDateHour, formatDateForBackend } from "@/utils/dates";
+import { CalendarType, CalendarDate, DateRange } from "@/types/calendar";
+
 const longpressTimeout = 475;
 
 export default {
     name: "calendar",
     props: {
         dateRanges: {
-            type: Array as PropType<IDateRange[]>,
+            type: Array as PropType<DateRange[]>,
             default: [],
         },
         type: {
@@ -70,7 +71,7 @@ export default {
             default: CalendarType.Date,
         },
         days: {
-            type: Array as PropType<ICalendarDate[]>,
+            type: Array as PropType<CalendarDate[]>,
             default: [],
         },
         insertMode: {  // if all selected are in range
@@ -82,13 +83,13 @@ export default {
             default: false,
         },
         initialIsAvailable: {  // array of days which are initially selected
-            type: Array as PropType<IDateRange[]>,
+            type: Array as PropType<DateRange[]>,
             default: [],
         }
     },
     data() {
         return {
-            touchStart: undefined as ICalendarDate|undefined,
+            touchStart: undefined as CalendarDate|undefined,
             timeoutObj: undefined as NodeJS.Timeout|undefined,
             selectedWeek: 0,
             selectUnavailable: false,
@@ -127,7 +128,7 @@ export default {
                 new Date(d.setDate(d.getDate() - dayOfWeek));
         },
         // check if date is in date ranges
-        isDayInDateRanges(dateRanges: IDateRange[], date: Date): boolean {
+        isDayInDateRanges(dateRanges: DateRange[], date: Date): boolean {
             for (const range of dateRanges)
                 if (range.from <= date && date <= range.to)
                     return true;
@@ -147,7 +148,7 @@ export default {
             // get from and to dates
             let from: undefined|Date = undefined
             let to: undefined|Date = undefined
-            for (const range of (this.dateRanges as IDateRange[])) {
+            for (const range of (this.dateRanges as DateRange[])) {
                 if (from === undefined || range.from < from)
                     from = new Date(new Date(range.from).setHours(0));
                 if (to === undefined || range.to > to)
@@ -177,7 +178,7 @@ export default {
                 });
             }
         },
-        selectDateFromTo(start: ICalendarDate, end: ICalendarDate, setAvailable: boolean = true) {
+        selectDateFromTo(start: CalendarDate, end: CalendarDate, setAvailable: boolean = true) {
             const from = start.date < end.date ? start : end;
             const to = start.date < end.date ? end : start;
             for (const day of this.days) {
@@ -209,13 +210,13 @@ export default {
             }
         },
         // methods for selecting available
-        onMouseDown(event: MouseEvent, day: ICalendarDate) {
+        onMouseDown(event: MouseEvent, day: CalendarDate) {
             if (!day.isInRange || this.disabledMode)
                 return;
             this.touchStart = day;
             day.isAvailable = !day.isAvailable;
         },
-        onMouseEnter(event: MouseEvent, day: ICalendarDate) {
+        onMouseEnter(event: MouseEvent, day: CalendarDate) {
             if (event.buttons === 1 && this.touchStart !== undefined && !this.disabledMode) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
@@ -223,13 +224,13 @@ export default {
         onMouseUp() {
             this.touchStart = undefined;
         },
-        onMouseLeave(event: MouseEvent, day: ICalendarDate) {
+        onMouseLeave(event: MouseEvent, day: CalendarDate) {
             if (event.buttons === 1 && this.touchStart !== undefined && !this.disabledMode) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
         // methods for mobile devices
-        onTouchStart(event: TouchEvent, day: ICalendarDate) {
+        onTouchStart(event: TouchEvent, day: CalendarDate) {
             event.preventDefault();
             if (this.disabledMode)
                 return;
@@ -245,7 +246,7 @@ export default {
                 this.touchStart = undefined;
             }
         },
-        onTouchEnd(event: TouchEvent, day: ICalendarDate) {
+        onTouchEnd(event: TouchEvent, day: CalendarDate) {
             if (this.disabledMode)
                 return;
             if (this.timeoutObj !== undefined) {

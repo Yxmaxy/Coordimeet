@@ -98,10 +98,13 @@ Ticket price: 5€"
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
-import Calendar from '../components/Calendar.vue';
+
+import Calendar from "@/components/Calendar.vue";
+
 import { useUserStore } from "@/stores/UserStore";
-import { CalendarType, ICalendarDate, IDateRange } from '../common/interfaces';
-import { removeHoursMinutesFromDate, initializeDateInput, formatDateForBackend, getSelectedDatesOnCalendar } from '../common/helpers';
+
+import { CalendarType, CalendarDate, DateRange } from "@/types/calendar";
+import { removeHoursMinutesFromDate, initializeDateInput, formatDateForBackend, getSelectedDatesOnCalendar } from "@/utils/dates";
 
 export default {
     setup() {
@@ -117,11 +120,11 @@ export default {
         return {
             calendarType: 1,
             length: 1,
-            selectedDates: []  as ICalendarDate[],
+            selectedDates: []  as CalendarDate[],
             fromDate: initializeDateInput(1),
             toDate: initializeDateInput(1),
             invalidDates: false,
-            selectedDateRanges: [] as IDateRange[],
+            selectedDateRanges: [] as DateRange[],
             customFields: "",
             deadline: initializeDateInput(CalendarType.DateTime),
 

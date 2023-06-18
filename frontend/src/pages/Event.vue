@@ -101,11 +101,14 @@
 </template>
 
 <script lang="ts">
-import Calendar from '../components/Calendar.vue';
+import Calendar from "@/components/Calendar.vue";
 import ApiService from "@/utils/ApiService";
 import { useUserStore } from "@/stores/UserStore";
-import { CalendarType, ICalendarDate, IEvent, EventPageType, IDateRange } from '../common/interfaces';
-import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from '../common/helpers';
+
+import { CalendarType, CalendarDate, DateRange } from "@/types/calendar";
+import { Event, EventPageType } from "@/types/event";
+
+import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from "@/utils/dates";
 
 export default {
     components: {
@@ -121,12 +124,12 @@ export default {
     },
     data() {
         return {
-            dates: [] as ICalendarDate[],
-            eventData: {} as IEvent,
+            dates: [] as CalendarDate[],
+            eventData: {} as Event,
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
-            initialIsAvailable: [] as IDateRange[],
-            selectableDates: [] as IDateRange[],
+            initialIsAvailable: [] as DateRange[],
+            selectableDates: [] as DateRange[],
             selectedDate: undefined as number|undefined,
             EventPageType,
             CalendarType,

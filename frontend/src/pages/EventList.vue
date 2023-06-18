@@ -21,7 +21,9 @@
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
 import { useUserStore } from "@/stores/UserStore";
-import { IEvent } from "../common/interfaces";
+
+import { Event, EventPageType } from "@/types/event";
+
 import EventListComponent from "../components/EventListComponent.vue";
 
 export default {
@@ -36,8 +38,8 @@ export default {
     },
     data() {
         return {
-            eventsInvited: [] as IEvent[],
-            eventsCreated: [] as IEvent[],
+            eventsInvited: [] as Event[],
+            eventsCreated: [] as Event[],
         }
     },
     methods: {
