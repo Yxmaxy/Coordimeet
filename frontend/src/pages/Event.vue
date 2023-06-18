@@ -141,7 +141,7 @@ export default {
                 return "days";
             return "hours";
         },
-        selectedDates(): IDateRange[] {
+        selectedDates(): DateRange[] {
             return getSelectedDatesOnCalendar(this.dates)
         },
     },
@@ -160,7 +160,7 @@ export default {
                             to: new Date(eventDate.EndDate)
                         }
                     })
-                } as IEvent
+                } as Event
 
                 this.eventData = eventData;
                 if (res.data.SelectedDate !== null) {
@@ -277,7 +277,7 @@ export default {
         copyLink() {
             navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/${this.$route.params.id}`);
         },
-        displayDateRange(range: IDateRange): string {
+        displayDateRange(range: DateRange): string {
             const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;
             if (convertFunc(range.from) === convertFunc(range.to))
                 return convertFunc(range.from);

@@ -6,6 +6,7 @@ import App from '@/pages/App.vue'
 
 import '@/styles/global.scss'
 import '@/styles/index.css'
+import '@/styles/ui.css'
 
 const pinia = createPinia();
 

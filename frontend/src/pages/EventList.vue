@@ -22,7 +22,7 @@
 import ApiService from "@/utils/ApiService";
 import { useUserStore } from "@/stores/UserStore";
 
-import { Event, EventPageType } from "@/types/event";
+import { Event } from "@/types/event";
 
 import EventListComponent from "../components/EventListComponent.vue";
 

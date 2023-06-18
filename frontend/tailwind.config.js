@@ -11,7 +11,9 @@ export default {
         "header": "#b7e1eb",
         "background": {
           "main": "#f2feff",
+          "lighter": "bbdadf",
         },
+        "invalid": "e4c0c0",
       },
     },
   },
