@@ -1,0 +1,19 @@
+/* Button */
+.btn {
+    @apply text-background-main bg-main transition-colors;
+    @apply active:text-main active:bg-header;
+    @apply font-bold;
+    @apply border-2 border-main;
+    @apply rounded-lg;
+    @apply py-0.5 px-3;
+    @apply select-none;
+}
+.btn.negative {
+    @apply bg-invalid border-invalid;
+    @apply active:text-background-main active:bg-header;
+}
+.btn.disabled {
+    @apply bg-background-lighter;
+    @apply cursor-not-allowed;
+    @apply active:text-background-main active:bg-background-lighter;
+}
