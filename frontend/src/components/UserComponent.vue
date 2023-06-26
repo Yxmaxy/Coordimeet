@@ -1,33 +1,47 @@
 <template>
-    <a 
+    <a
         v-if="!userStore.isLoggedIn"
         class="btn"
-        :href="loginLink"
-    >Log in</a>
-    <div
-        v-if="userStore.isLoggedIn && !showLogout"
-        class="profile"
-        @click="showLogout = true"
+        :href="userStore.loginLink"
     >
-        <div>
-            {{ userStore.user.FirstName }}
-        </div>
-        <img
-            :src="userStore.user.ProfilePhoto"
-            alt="profile"
-            referrerpolicy="no-referrer"
-        />
+        Log in
+    </a>
+    <div
+        v-else
+        class="h-full"
+    >
+        <Popup v-model:show="showLogout">
+            <template v-slot:initiator>
+                <div class="h-full flex items-center cursor-pointer select-none">
+                    <span class="font-bold">
+                        {{ userStore.user!.FirstName }}
+                    </span>
+                    <img
+                        class="rounded-full h-full p-2"
+                        :src="userStore.user!.ProfilePhoto"
+                        referrerpolicy="no-referrer"
+                        alt="profile"
+                    />
+                </div>
+            </template>
+            <template v-slot:content>
+                Neki
+            </template>
+        </Popup>
     </div>
-    <a 
-        v-if="userStore.isLoggedIn && showLogout"
+    <!-- <a 
+        v-else
         class="btn"
         :href="logoutLink"
-    >Log out</a>
+    >
+        Log out
+    </a> -->
 </template>
 
 <script lang="ts">
-import ApiService from "@/utils/ApiService";
 import { useUserStore } from "@/stores/UserStore";
+
+import Popup from "@/components/Popup.vue"
 
 export default {
     setup() {
@@ -37,50 +51,13 @@ export default {
             logoutLink: `${import.meta.env.VITE_BACKEND_URL}/googleLogout.php`,
         }
     },
+    components: {
+        Popup,
+    },
     data() {
         return {
-            loginLink: "",
-            showLogout: false,
+            showLogout: true,
         }
     },
-    methods: {
-        getLoginData() {
-            ApiService.get("googleLogin.php")
-            .then(res => {
-                if ("googleLoginURL" in res.data)
-                    this.loginLink = res.data.googleLoginURL;
-                else {
-                    this.userStore.isLoggedIn = true;
-                    this.userStore.user = res.data;
-                }
-            })
-        },
-    },
-    mounted() {
-        this.getLoginData();
-    }
 }
 </script>
-
-<style lang="scss">
-@import "../styles/colors.scss";
-
-.profile {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    height: 90%;
-    gap: 8px;
-    user-select: none;
-    cursor: pointer;
-    & > div {
-        font-weight: bold;
-    }
-    img {
-        height: 100%;
-        border: {
-            radius: 100%;
-        }
-    }
-}
-</style>

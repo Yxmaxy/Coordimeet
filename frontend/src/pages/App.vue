@@ -1,7 +1,7 @@
 <!-- Wrapper page for all other pages -->
 <template>
     <div class="h-screen">
-        <header class="sticky top-0 h-14 flex items-center justify-between pl-2 pr-4 bg-header">
+        <header class="sticky top-0 h-14 flex items-center justify-between pl-2 pr-4 bg-header z-30">
             <img
                 class="h-full p-2"
                 src="/images/logo.png"
