@@ -30,7 +30,6 @@
             <span>
                 Rok.
             </span>
-            All rights reserved.
         </div>
     </footer>
 </template>

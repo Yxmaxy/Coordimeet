@@ -8,40 +8,41 @@
     </a>
     <div
         v-else
-        class="h-full"
+        class="h-full relative"
     >
-        <Popup v-model:show="showLogout">
-            <template v-slot:initiator>
-                <div class="h-full flex items-center cursor-pointer select-none">
-                    <span class="font-bold">
-                        {{ userStore.user!.FirstName }}
-                    </span>
-                    <img
-                        class="rounded-full h-full p-2"
-                        :src="userStore.user!.ProfilePhoto"
-                        referrerpolicy="no-referrer"
-                        alt="profile"
-                    />
+        <div
+            @click="showLogout = !showLogout"
+            class="h-full flex items-center cursor-pointer select-none"
+        >
+            <span class="font-bold">
+                {{ userStore.user!.FirstName }}
+            </span>
+            <img
+                class="rounded-full h-full p-2 select-none"
+                :src="userStore.user!.ProfilePhoto"
+                referrerpolicy="no-referrer"
+                alt="profile"
+            />
+        </div>
+        <!-- Popup -->
+        <div v-if="showLogout">
+            <!-- Popup triangle -->
+            <div class="absolute -bottom-1 right-5
+                border-l-transparent border-t-transparent border-r-transparent border-b-main-lighter border-8"></div>
+            <!-- Content -->
+            <div class="absolute w-screen right-0 pl-10 pt-1 max-w-[20rem]">
+                <div class="flex flex-col bg-main-lighter rounded-lg [&>*]:p-4">
+                    <a :href="logoutLink">
+                        Log out
+                    </a>
                 </div>
-            </template>
-            <template v-slot:content>
-                Neki
-            </template>
-        </Popup>
+            </div>
+        </div>
     </div>
-    <!-- <a 
-        v-else
-        class="btn"
-        :href="logoutLink"
-    >
-        Log out
-    </a> -->
 </template>
 
 <script lang="ts">
 import { useUserStore } from "@/stores/UserStore";
-
-import Popup from "@/components/Popup.vue"
 
 export default {
     setup() {
@@ -51,12 +52,9 @@ export default {
             logoutLink: `${import.meta.env.VITE_BACKEND_URL}/googleLogout.php`,
         }
     },
-    components: {
-        Popup,
-    },
     data() {
         return {
-            showLogout: true,
+            showLogout: false,
         }
     },
 }
