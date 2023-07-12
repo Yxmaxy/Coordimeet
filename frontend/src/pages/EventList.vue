@@ -1,6 +1,27 @@
 <template>
-    <div class="event-list-page">
-        <div>
+    <div>
+        <TabController :tabs="[
+            {
+                name: 'Events I\'m invited to',
+                events: eventsCreated,
+                userIsOrganiser: false,
+            },
+            {
+                name: 'Events I\'ve created',
+                events: eventsCreated,
+                userIsOrganiser: true,
+            },
+            {
+                name: 'Something else',
+                events: eventsCreated,
+                userIsOrganiser: true,
+            }
+        ]">
+            <template v-slot:tab="{ tab }">
+                <event-list-component :events="tab?.events" :userIsOrganiser="tab?.userIsOrganiser" />
+            </template>
+        </TabController>
+        <!-- <div>
             <h1>Events I'm invited to</h1>
             <div>
                 <list-component :events="eventsInvited" />
@@ -14,7 +35,7 @@
             <div>
                 <list-component :events="eventsCreated" :userIsOrganiser="true" />
             </div>
-        </div>
+        </div> -->
     </div>
 </template>
 
@@ -24,11 +45,14 @@ import { useUserStore } from "@/stores/UserStore";
 
 import { Event } from "@/types/event";
 
-import EventListComponent from "../components/EventListComponent.vue";
+import EventListComponent from "@/components/EventListComponent.vue";
+import TabController from "@/components/TabController.vue";
 
 export default {
+    name: "EventList",
     components: {
-        "list-component": EventListComponent,
+        EventListComponent,
+        TabController,
     },
     setup() {
         const { user } = useUserStore();
@@ -46,7 +70,7 @@ export default {
         getEvents() {
             ApiService.get("eventUser.php", {
                 params: {
-                    IDUser: this.user.GoogleID,
+                    IDUser: this.user!.GoogleID,
                 }
             }).then(res => {
                 if (res.data.error) {
@@ -64,34 +88,3 @@ export default {
     },
 }
 </script>
-
-<style lang="scss" scoped>
-@import "../styles/colors.scss";
-
-.event-list-page {
-    $sectionPadding: 1rem;
-
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-
-    & > div {
-        overflow: auto;
-
-        &:first-child {
-            border-right: 2px solid $color-top-bottom;
-        }
-
-        h1 {
-            position: sticky;
-            top: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-
-            background-color: $color-background-3;
-            padding: $sectionPadding;
-        }
-    }
-}
-</style>
