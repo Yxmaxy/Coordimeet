@@ -1,19 +1,19 @@
 /* Button */
 .btn {
-    @apply text-background-main bg-main transition-colors;
-    @apply active:text-main active:bg-header;
+    @apply text-main-100 bg-main-500 transition-colors;
+    @apply active:text-main-500 active:bg-main-600;
     @apply font-bold;
-    @apply border-2 border-main;
+    @apply border-2 border-main-200;
     @apply rounded-lg;
     @apply py-0.5 px-3;
     @apply select-none;
 }
 .btn.negative {
     @apply bg-invalid border-invalid;
-    @apply active:text-background-main active:bg-header;
+    @apply active:text-main-600 active:bg-main-400;
 }
 .btn.disabled {
-    @apply bg-background-lighter;
+    @apply bg-main-100;
     @apply cursor-not-allowed;
-    @apply active:text-background-main active:bg-background-lighter;
+    @apply active:text-main-300 active:bg-main-400;
 }

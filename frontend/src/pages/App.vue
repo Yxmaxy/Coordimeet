@@ -1,7 +1,7 @@
 <!-- Wrapper page for all other pages -->
 <template>
     <div class="h-screen">
-        <header class="sticky top-0 h-14 flex items-center justify-between pl-2 pr-4 bg-header z-30">
+        <header class="sticky top-0 h-14 flex items-center justify-between pl-2 pr-4 bg-main-200 z-30">
             <img
                 class="h-full p-2"
                 src="/images/logo.png"
@@ -12,7 +12,7 @@
         </header>
         <router-view class="h-full" />
     </div>
-    <footer class="h-14 flex items-center pl-4 pr-4 bg-header">
+    <footer class="h-14 flex items-center pl-4 pr-4 bg-main-200">
         <div>
             &copy; 2023
             <a href="https://vrecer.si">

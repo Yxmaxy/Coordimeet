@@ -7,13 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        "main": "#41B9D6",
-        "header": "#b7e1eb",
-        "background": {
-          "main": "#f2feff",
-          "lighter": "bbdadf",
+        "main": {
+          "100": "#d9f1f6",
+          "200": "#b3e3ee",
+          "300": "#8dd5e6",
+          "400": "#66c7de",
+          "500": "#41b9d6",
+          "600": "#3494ab",
+          "700": "#276f80",
+          "800": "#1a4a55",
+          "900": "#0d252a",
         },
-        "invalid": "e4c0c0",
+        "text": "#061215",
+        "calendar": {
+          "in-range": "#eaf1f7",
+          "available": "#bff1bf",
+          "unavailable": "#e4c0c0",
+          "non-selected": "#f7fafc",
+        },
+        "invalid": "#e4c0c0",
       },
     },
   },
