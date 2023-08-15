@@ -30,7 +30,7 @@
         </div>
     </div>
     <div :class="['calendar-component', {'type-datetime': type === CalendarType.DateTime}]">
-        <template v-for="(day, index) in days">
+        <template v-for="(day, index) in days" :key="index">
             <div
                 v-if="type === CalendarType.Date || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
                 :class="{

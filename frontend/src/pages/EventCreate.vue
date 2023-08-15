@@ -1,105 +1,113 @@
 <template>
-    <div class="event-create-page">
-        <div class="input-area">
-            <h1>Create new event</h1>
-            <label>
-                <b>Event name</b>
-                <input
-                    type="text"
-                    placeholder="Enter a name for your event"
-                    v-model="name"
-                    @focusout="() => nameInputRequired = true"
-                    :required="nameInputRequired"
-                />
-            </label>
-            <div class="input-subsection">
-                <b>Select calendar type</b>
-                <div>
-                    <label>
-                        <input
-                            type="radio"
-                            v-model="calendarType"
-                            :value="CalendarType.Date"
-                        />
-                        Date
-                    </label>
-                    <label>
-                        <input
-                            type="radio"
-                            v-model="calendarType"
-                            :value="CalendarType.DateTime"
-                        />
-                        Date and time
-                    </label>
+    <tab-controller v-model:activeTab="activeTab" :firstNarrow="true">
+        <template v-slot:create_event>
+            <div
+                class="flex flex-col gap-4 px-4 pt-4 relative
+                bg-main-100 min-h-[calc(100vh-7rem)]"
+            >
+                <label class="flex flex-col gap-2">
+                    <span class="font-bold ml-1.5">Event name</span>
+                    <input
+                        type="text"
+                        placeholder="Enter a name for your event"
+                        v-model="name"
+                        @focusout="() => nameInputRequired = true"
+                        :required="nameInputRequired"
+                    />
+                </label>
+                <div class="ml-1.5">
+                    <span class="font-bold">Select calendar type</span>
+                    <div class="flex flex-col">
+                        <label>
+                            <input
+                                type="radio"
+                                v-model="calendarType"
+                                :value="CalendarType.Date"
+                            />
+                            Date
+                        </label>
+                        <label>
+                            <input
+                                type="radio"
+                                v-model="calendarType"
+                                :value="CalendarType.DateTime"
+                            />
+                            Date and time
+                        </label>
+                    </div>
                 </div>
-            </div>
-            <label>
-                <b>Event length in {{ calendarTypeDisplay }}</b>
-                <input
-                    type="number"
-                    v-model="length"
-                    min="1"
-                    required
-                />
-            </label>
-            <div class="input-subsection">
-                <b>Rough event duration</b>
-                <div>
-                    <label>
-                        From
-                        <input
-                            :type="selectedDateInputType"
-                            :value="fromDateComp"
-                            @input="event => handleDateInput(event.target, 'from')"
-                            :class="{'invalid': invalidDates}"
-                        />
-                    </label>
-                    <label>
-                        To
-                        <input
-                            :type="selectedDateInputType"
-                            :value="toDateComp"
-                            @input="event => handleDateInput(event.target, 'to')"
-                            :class="{'invalid': invalidDates}"
-                        />
-                    </label>
+                <label class="flex flex-col gap-2">
+                    <b>Event length in {{ calendarTypeDisplay }}</b>
+                    <input
+                        type="number"
+                        v-model="length"
+                        min="1"
+                        required
+                    />
+                </label>
+                <div class="input-subsection">
+                    <b>Rough event duration</b>
+                    <div>
+                        <label>
+                            From
+                            <input
+                                :type="selectedDateInputType"
+                                :value="fromDateComp"
+                                @input="event => handleDateInput(event.target, 'from')"
+                                :class="{'invalid': invalidDates}"
+                            />
+                        </label>
+                        <label>
+                            To
+                            <input
+                                :type="selectedDateInputType"
+                                :value="toDateComp"
+                                @input="event => handleDateInput(event.target, 'to')"
+                                :class="{'invalid': invalidDates}"
+                            />
+                        </label>
+                    </div>
                 </div>
-            </div>
-            <label>
-                <b>Additional values</b>
-                <textarea
-                    v-model="customFields"
-                    placeholder="Enter custom fields eg.
+                <label class="flex flex-col gap-2">
+                    <b>Additional values</b>
+                    <textarea
+                        v-model="customFields"
+                        placeholder="Enter custom fields eg.
 Formal attire: Yes
 Ticket price: 5€"
-                ></textarea>
-            </label>
-            <label>
-                <b>Deadline</b>
-                <input
-                    type="datetime-local"
-                    v-model="deadline"
-                />
-            </label>
-            <button id="create-button" @click="onCreateEvent">
-                Create new event
-            </button>
-        </div>
-        <main class="calendar-area">
+                    ></textarea>
+                </label>
+                <label class="flex flex-col gap-2">
+                    <b>Deadline</b>
+                    <input
+                        type="datetime-local"
+                        v-model="deadline"
+                    />
+                </label>
+                <button
+                    class="btn absolute bottom-3 left-3 right-3"
+                    @click="onCreateEvent"
+                >
+                    Create new event
+                </button>
+            </div>
+        </template>
+        <template v-slot:calendar_input>
             <calendar
                 :type="calendarType"
                 :days="selectedDates"
                 :dateRanges="selectedDateRanges"
                 :insertMode="true"
             />
-        </main>
-    </div>
+        </template>
+    </tab-controller>
 </template>
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
 
 import Calendar from "@/components/Calendar.vue";
+import TabController from "@/components/TabController.vue";
 
 import { useUserStore } from "@/stores/UserStore";
 
@@ -114,7 +122,8 @@ export default {
         }
     },
     components: {
-        "calendar": Calendar,
+        Calendar,
+        TabController,
     },
     data() {
         return {
@@ -133,6 +142,8 @@ export default {
             nameInputRequired: false,
 
             CalendarType,
+
+            activeTab: 0 as number,
         }
     },
     computed: {
@@ -202,7 +213,7 @@ export default {
 
             ApiService.post("event.php", {
                 Event: {
-                    IDOrganizer: this.user.GoogleID,
+                    IDOrganizer: this.user!.GoogleID,
                     Name: this.name,
                     Length: this.length,
                     CalendarType: this.calendarType,

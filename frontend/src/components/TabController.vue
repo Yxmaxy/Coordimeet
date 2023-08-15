@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col">
         <!-- Header -->
-        <div class="flex">
+        <div class="flex z-20">
             <!-- Tab design -->
             <div
                 v-if="isMobile"
@@ -20,8 +20,12 @@
             <div
                 v-else
                 v-for="(slotName, index) of Object.keys($slots)" :key="`${index}_else`"
-                class="flex-1 flex items-center h-14 bg-main-100
-                font-bold text-xl px-4"
+                :class="[{
+                    'first:max-w-[25rem]': !isMobile && firstNarrow,
+                }, 'flex-1 flex items-center h-14 bg-main-100 shadow-md',
+                   'border-r-2 last:border-r-0 border-main-200',
+                   'font-bold text-xl px-4'
+                ]"
             >
                 {{ tabName[slotName] }}
             </div>
@@ -32,6 +36,7 @@
                 v-for="(slot, index) of Object.keys($slots)"
                 :key="index"
                 :class="[{
+                    'first:max-w-[25rem]': !isMobile && firstNarrow,
                     'hidden': isMobile && index !== activeTab,
                     'border-r-2 last:border-r-0 border-main-200': !isMobile,
                 }, 'flex-1 min-h-[calc(100vh-7rem)]']"
@@ -59,6 +64,10 @@ export default {
             type: Number,
             default: 0,
         },
+        firstNarrow: {
+            type: Boolean,
+            default: false,
+        }
     },
     data() {
         return {

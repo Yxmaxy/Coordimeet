@@ -1,13 +1,13 @@
 <template>
     <div>
-        <TabController v-model:activeTab="activeTab">
+        <tab-controller v-model:activeTab="activeTab">
             <template v-slot:events_invited>
                 <event-list-component :events="eventsInvited" />
             </template>
             <template v-slot:events_created>
                 <event-list-component :events="eventsCreated" :userIsOrganiser="true" />
             </template>
-        </TabController>
+        </tab-controller>
         <button
             class="btn right-4 bottom-4 fixed !p-3 !rounded-2xl shadow-md"
             @click="$router.push('/event/new')"

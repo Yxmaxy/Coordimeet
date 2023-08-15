@@ -5,7 +5,7 @@
     @apply active:text-main-200 active:bg-main-700;
     @apply font-bold;
     @apply rounded-lg;
-    @apply py-0.5 px-3;
+    @apply py-1 px-3;
     @apply select-none;
 }
 .btn.negative {

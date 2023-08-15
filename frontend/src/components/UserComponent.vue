@@ -1,7 +1,7 @@
 <template>
     <a
         v-if="!userStore.isLoggedIn"
-        class="btn"
+        class="btn z-50"
         :href="userStore.loginLink"
     >
         Log in
