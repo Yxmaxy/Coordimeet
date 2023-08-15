@@ -1,6 +1,6 @@
 <!-- Wrapper page for all other pages -->
 <template>
-    <div class="h-screen">
+    <div class="min-h-screen">
         <header class="sticky top-0 h-14 flex items-center justify-between pl-2 pr-4 bg-main-200 z-30">
             <img
                 class="h-full p-2"
@@ -10,7 +10,7 @@
             />
             <user-component />
         </header>
-        <router-view class="h-[calc(100%-3.5rem)]" />
+        <router-view class="min-h-[calc(100vh-3.5rem)] h-full" />
     </div>
     <footer class="h-14 flex items-center pl-4 pr-4 bg-main-200">
         <div>

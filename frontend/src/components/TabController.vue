@@ -1,5 +1,5 @@
 <template>
-    <div class="h-full">
+    <div class="flex flex-col">
         <!-- Header -->
         <div class="flex">
             <!-- Tab design -->
@@ -20,23 +20,23 @@
             <div
                 v-else
                 v-for="(slotName, index) of Object.keys($slots)" :key="`${index}_else`"
-                class="flex-1 flex items-center h-14
-                bg-main-100 border-r-2 last:border-r-0 border-main-200
+                class="flex-1 flex items-center h-14 bg-main-100
                 font-bold text-xl px-4"
             >
                 {{ tabName[slotName] }}
             </div>
         </div>
         <!-- Content -->
-        <div class="flex flex-row h-full">
+        <div class="flex flex-row">
             <div
                 v-for="(slot, index) of Object.keys($slots)"
                 :key="index"
                 :class="[{
-                    'flex-1 border-r-2 border-main-200 last:border-r-0': !isMobile,
-                }, 'h-[calc(100%-3rem)]']"
+                    'hidden': isMobile && index !== activeTab,
+                    'border-r-2 last:border-r-0 border-main-200': !isMobile,
+                }, 'flex-1 min-h-[calc(100vh-3.5rem)]']"
             >
-                <div v-if="!isMobile || activeTab === index">
+                <div v-if="!isMobile || index === activeTab">
                     <slot :name="slot"></slot>
                 </div>
             </div>

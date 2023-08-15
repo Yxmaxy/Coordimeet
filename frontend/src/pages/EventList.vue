@@ -1,5 +1,5 @@
 <template>
-    <div class="relative">
+    <div>
         <TabController v-model:activeTab="activeTab">
             <template v-slot:events_invited>
                 <event-list-component :events="eventsInvited" />
@@ -9,7 +9,7 @@
             </template>
         </TabController>
         <button
-            class="btn right-4 bottom-4 absolute !p-3 !rounded-2xl"
+            class="btn right-4 bottom-4 fixed !p-3 !rounded-2xl"
             @click="$router.push('/event/new')"
         >
             <span class="text-xl text-white">+</span>
