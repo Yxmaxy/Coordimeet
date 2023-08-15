@@ -1,14 +1,12 @@
 <template>
-    <div>
-        <TabController v-model:activeTab="activeTab">
-            <template v-slot:events_invited>
-                Hello1
-            </template>
-            <template v-slot:events_created>
-                Hello2
-            </template>
-        </TabController>
-    </div>
+    <TabController v-model:activeTab="activeTab">
+        <template v-slot:events_invited>
+            <event-list-component :events="eventsInvited" />
+        </template>
+        <template v-slot:events_created>
+            <event-list-component :events="eventsCreated" :userIsOrganiser="true" />
+        </template>
+    </TabController>
 </template>
 
 <script lang="ts">

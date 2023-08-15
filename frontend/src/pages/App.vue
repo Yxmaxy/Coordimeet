@@ -10,7 +10,7 @@
             />
             <user-component />
         </header>
-        <router-view class="h-full" />
+        <router-view class="h-[calc(100%-3.5rem)]" />
     </div>
     <footer class="h-14 flex items-center pl-4 pr-4 bg-main-200">
         <div>
