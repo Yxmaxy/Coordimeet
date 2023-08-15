@@ -31,7 +31,7 @@
                 border-l-transparent border-t-transparent border-r-transparent border-b-main-300 border-8"></div>
             <!-- Content -->
             <div class="absolute w-screen right-0 pl-10 pt-1 max-w-[20rem]">
-                <div class="flex flex-col bg-main-300 rounded-lg [&>*]:p-4">
+                <div class="flex flex-col bg-main-300 rounded-lg [&>*]:p-4 shadow-md">
                     <a :href="logoutLink">
                         Log out
                     </a>

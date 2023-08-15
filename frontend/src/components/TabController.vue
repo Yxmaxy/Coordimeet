@@ -34,7 +34,7 @@
                 :class="[{
                     'hidden': isMobile && index !== activeTab,
                     'border-r-2 last:border-r-0 border-main-200': !isMobile,
-                }, 'flex-1 min-h-[calc(100vh-3.5rem)]']"
+                }, 'flex-1 min-h-[calc(100vh-7rem)]']"
             >
                 <div v-if="!isMobile || index === activeTab">
                     <slot :name="slot"></slot>

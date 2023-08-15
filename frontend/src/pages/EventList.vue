@@ -9,7 +9,7 @@
             </template>
         </TabController>
         <button
-            class="btn right-4 bottom-4 fixed !p-3 !rounded-2xl"
+            class="btn right-4 bottom-4 fixed !p-3 !rounded-2xl shadow-md"
             @click="$router.push('/event/new')"
         >
             <span class="text-xl text-white">+</span>

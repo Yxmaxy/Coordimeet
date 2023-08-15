@@ -1,26 +1,35 @@
 <template>
-    <div
-        v-for="event in events"
-        class="event"
-        @click="$router.push(`/event/${event.IDEvent}`)"
-    >
-        <div>
-            <b>{{ event.Name }}</b>
-            <abbr v-if="!userIsOrganiser" title="Organizer">
-                - {{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}
-            </abbr>
-        </div>
-        <div>
-            <abbr v-if="userIsOrganiser && event.SelectedDate === null" title="Event deadline">
-                {{ formatDateDayMonthYear(new Date(event.Deadline)) }}
-            </abbr>
-            <abbr
-                v-else
-                class="selected-date"
-                title="Selected date"
-            >
-                {{ event.SelectedDate }}
-            </abbr>
+    <div class="flex flex-col mt-2">
+        <div
+            v-for="event in events"
+            class="flex-1 flex justify-between bg-main-100 m-2 px-8 py-6 rounded-2xl
+            cursor-pointer shadow-md transition-all hover:-translate-y-1"
+            @click="$router.push(`/event/${event.IDEvent}`)"
+        >
+            <div>
+                <b>{{ event.Name }}</b>
+                <abbr
+                    v-if="!userIsOrganiser"
+                    title="Organizer"
+                >
+                    - {{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}
+                </abbr>
+            </div>
+            <div>
+                <abbr
+                    v-if="userIsOrganiser && event.SelectedDate === null"
+                    title="Event deadline"
+                >
+                    {{ formatDateDayMonthYear(new Date(event.Deadline)) }}
+                </abbr>
+                <abbr
+                    v-else
+                    title="Selected date"
+                    class="font-bold"
+                >
+                    {{ event.SelectedDate }}
+                </abbr>
+            </div>
         </div>
     </div>
 </template>
@@ -47,25 +56,3 @@ export default {
     },
 }
 </script>
-
-<style lang="scss" scoped>
-@import "../styles/colors.scss";
-.event {
-    background-color: $color-background-3;
-    margin: 0.75rem;
-    padding: 1.25rem;
-    border-radius: 20px;
-    display: flex;
-    justify-content: space-between;
-    cursor: pointer;
-    transition: 200ms;
-
-    &:hover {
-        background-color: $color-top-bottom;
-        transform: translateY(-0.1rem);
-    }
-    .selected-date {
-        font-weight: bold;
-    }
-}
-</style>
