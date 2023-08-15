@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="h-full">
         <!-- Header -->
         <div class="flex">
             <!-- Tab design -->
@@ -34,7 +34,7 @@
                 :key="index"
                 :class="[{
                     'flex-1 border-r-2 border-main-200 last:border-r-0': !isMobile,
-                }, 'h-[calc(100%-1.5rem)]']"
+                }, 'h-[calc(100%-3rem)]']"
             >
                 <div v-if="!isMobile || activeTab === index">
                     <slot :name="slot"></slot>

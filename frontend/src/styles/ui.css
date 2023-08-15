@@ -1,9 +1,9 @@
 /* Button */
 .btn {
-    @apply text-main-100 bg-main-500 transition-colors;
-    @apply active:text-main-500 active:bg-main-600;
+    @apply text-white bg-main-400 transition-colors;
+    @apply hover:text-main-100 hover:bg-main-500;
+    @apply active:text-main-200 active:bg-main-700;
     @apply font-bold;
-    @apply border-2 border-main-200;
     @apply rounded-lg;
     @apply py-0.5 px-3;
     @apply select-none;

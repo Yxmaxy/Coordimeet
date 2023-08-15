@@ -13,45 +13,45 @@ h1, h2, h3, h4 {
 button, input[type=checkbox], .btn {
     cursor: pointer;
 }
-button, .btn {
-    color: $color-background;
-    background-color: $color-main;
-    border: 0.15rem solid $color-main;
-    font-weight: bold;
-    border-radius: 0.5rem;
-    $p-t-b: 0.2rem;
-    $p-l-r: 0.7rem;
-    padding: {
-        left: $p-l-r;
-        right: $p-l-r;
-        top: $p-t-b;
-        bottom: $p-t-b;
-    }
-    transition: color 100ms;
-    transition: background-color 100ms;
-    &:active {
-        color: $color-main;
-        background-color: $color-top-bottom;
-    }
-    &.negative {
-        background-color: $color-invalid;
-        border-color: $color-invalid;
+// button, .btn {
+//     color: $color-background;
+//     background-color: $color-main;
+//     border: 0.15rem solid $color-main;
+//     font-weight: bold;
+//     border-radius: 0.5rem;
+//     $p-t-b: 0.2rem;
+//     $p-l-r: 0.7rem;
+//     padding: {
+//         left: $p-l-r;
+//         right: $p-l-r;
+//         top: $p-t-b;
+//         bottom: $p-t-b;
+//     }
+//     transition: color 100ms;
+//     transition: background-color 100ms;
+//     &:active {
+//         color: $color-main;
+//         background-color: $color-top-bottom;
+//     }
+//     &.negative {
+//         background-color: $color-invalid;
+//         border-color: $color-invalid;
 
-        &:active {
-            color: $color-background;
-            background-color: $color-top-bottom;
-        }
-    }
-    &.disabled {
-        background-color: $color-background-2;
-        cursor: unset;
+//         &:active {
+//             color: $color-background;
+//             background-color: $color-top-bottom;
+//         }
+//     }
+//     &.disabled {
+//         background-color: $color-background-2;
+//         cursor: unset;
         
-        &:active {
-            color: $color-background;
-            background-color: $color-background-2;
-        }
-    }
-}
+//         &:active {
+//             color: $color-background;
+//             background-color: $color-background-2;
+//         }
+//     }
+// }
 button.small {
     $p-t-b: 0.1rem;
     $p-l-r: 0.5rem;

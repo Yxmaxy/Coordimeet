@@ -1,12 +1,21 @@
 <template>
-    <TabController v-model:activeTab="activeTab">
-        <template v-slot:events_invited>
-            <event-list-component :events="eventsInvited" />
-        </template>
-        <template v-slot:events_created>
-            <event-list-component :events="eventsCreated" :userIsOrganiser="true" />
-        </template>
-    </TabController>
+    <div class="relative">
+        <TabController v-model:activeTab="activeTab">
+            <template v-slot:events_invited>
+                <event-list-component :events="eventsInvited" />
+            </template>
+            <template v-slot:events_created>
+                <event-list-component :events="eventsCreated" :userIsOrganiser="true" />
+            </template>
+        </TabController>
+        <button
+            class="btn right-4 bottom-4 absolute !p-3 !rounded-2xl"
+            @click="$router.push('/event/new')"
+        >
+            <span class="text-xl text-white">+</span>
+            New event
+        </button>
+    </div>
 </template>
 
 <script lang="ts">
