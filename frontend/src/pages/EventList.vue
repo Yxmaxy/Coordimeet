@@ -1,41 +1,13 @@
 <template>
     <div>
-        <TabController :tabs="[
-            {
-                name: 'Events I\'m invited to',
-                events: eventsCreated,
-                userIsOrganiser: false,
-            },
-            {
-                name: 'Events I\'ve created',
-                events: eventsCreated,
-                userIsOrganiser: true,
-            },
-            {
-                name: 'Something else',
-                events: eventsCreated,
-                userIsOrganiser: true,
-            }
-        ]">
-            <template v-slot:tab="{ tab }">
-                <event-list-component :events="tab?.events" :userIsOrganiser="tab?.userIsOrganiser" />
+        <TabController v-model:activeTab="activeTab">
+            <template v-slot:events_invited>
+                Hello1
+            </template>
+            <template v-slot:events_created>
+                Hello2
             </template>
         </TabController>
-        <!-- <div>
-            <h1>Events I'm invited to</h1>
-            <div>
-                <list-component :events="eventsInvited" />
-            </div>
-        </div>
-        <div>
-            <h1>
-                <div>Events I've created</div>
-                <button @click="$router.push('/event/new')">New event</button>
-            </h1>
-            <div>
-                <list-component :events="eventsCreated" :userIsOrganiser="true" />
-            </div>
-        </div> -->
     </div>
 </template>
 
@@ -64,6 +36,7 @@ export default {
         return {
             eventsInvited: [] as Event[],
             eventsCreated: [] as Event[],
+            activeTab: 0 as number,
         }
     },
     methods: {
