@@ -25,7 +25,11 @@ export default {
           "unavailable": "#e4c0c0",
           "non-selected": "#f7fafc",
         },
-        "invalid": "#e4c0c0",
+        "invalid": {
+          "light": "#ecd2d2",
+          "normal": "#e4c0c0",
+          "dark": "#dcaeae",
+        }
       },
     },
   },

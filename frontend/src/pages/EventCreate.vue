@@ -6,43 +6,40 @@
                 bg-main-100 min-h-[calc(100vh-7rem)]"
             >
                 <label class="flex flex-col gap-2">
-                    <span class="font-bold ml-1.5">Event name</span>
-                    <input
+                    <span class="font-bold ml-4">Event name</span>
+                    <input-element
                         type="text"
                         placeholder="Enter a name for your event"
                         v-model="name"
-                        @focusout="() => nameInputRequired = true"
-                        :required="nameInputRequired"
                     />
                 </label>
                 <div class="ml-1.5">
                     <span class="font-bold">Select calendar type</span>
-                    <div class="flex flex-col">
-                        <label>
-                            <input
-                                type="radio"
-                                v-model="calendarType"
-                                :value="CalendarType.Date"
-                            />
-                            Date
-                        </label>
-                        <label>
-                            <input
-                                type="radio"
-                                v-model="calendarType"
-                                :value="CalendarType.DateTime"
-                            />
-                            Date and time
-                        </label>
+                    <div class="flex flex-col gap-3 mt-3">
+                        <input-element
+                            type="radio"
+                            v-model="calendarType"
+                            :value="CalendarType.Date"
+                            placeholder="Date"
+                        />
+                        <input-element
+                            type="radio"
+                            v-model="calendarType"
+                            :value="CalendarType.DateTime"
+                            placeholder="Date and time"
+                        />
                     </div>
                 </div>
+
+                <!-- TODO: checked to here -->
+
                 <label class="flex flex-col gap-2">
                     <b>Event length in {{ calendarTypeDisplay }}</b>
-                    <input
+                    <input-element
                         type="number"
                         v-model="length"
-                        min="1"
-                        required
+                        :min="1"
+                        placeholder="Enter the length of the event"
                     />
                 </label>
                 <div class="input-subsection">
@@ -105,14 +102,19 @@ Ticket price: 5€"
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
+import {
+    removeHoursMinutesFromDate,
+    initializeDateInput,
+    formatDateForBackend,
+    getSelectedDatesOnCalendar } from "@/utils/dates";
 
+import InputElement from "@/components/ui/InputElement.vue";
 import Calendar from "@/components/Calendar.vue";
 import TabController from "@/components/TabController.vue";
 
 import { useUserStore } from "@/stores/UserStore";
 
 import { CalendarType, CalendarDate, DateRange } from "@/types/calendar";
-import { removeHoursMinutesFromDate, initializeDateInput, formatDateForBackend, getSelectedDatesOnCalendar } from "@/utils/dates";
 
 export default {
     setup() {
@@ -124,6 +126,7 @@ export default {
     components: {
         Calendar,
         TabController,
+        InputElement,
     },
     data() {
         return {
@@ -137,9 +140,7 @@ export default {
             customFields: "",
             deadline: initializeDateInput(CalendarType.DateTime),
 
-            // name input
             name: "",
-            nameInputRequired: false,
 
             CalendarType,
 
@@ -183,7 +184,6 @@ export default {
         },
         onCreateEvent() {
             if (this.name.length === 0) {
-                this.nameInputRequired = true;
                 alert("You must enter a name for the event");
                 return;
             }

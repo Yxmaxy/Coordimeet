@@ -9,7 +9,7 @@
     @apply select-none;
 }
 .btn.negative {
-    @apply bg-invalid border-invalid;
+    @apply bg-invalid-normal border-invalid-normal;
     @apply active:text-main-600 active:bg-main-400;
 }
 .btn.disabled {
