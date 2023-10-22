@@ -19,6 +19,10 @@ const router = createRouter({
 });
 
 router.beforeEach(async (to, from) => {
+    // scroll to top on route change
+    window.scrollTo(0, 0);
+
+    // check if user is logged in
     const userStore = useUserStore();
     await userStore.tryToLoginUser();
     if (from.name === to.name)
