@@ -18,7 +18,7 @@
                 {{ userStore.user!.FirstName }}
             </span>
             <img
-                class="rounded-full h-full p-2 select-none"
+                class="rounded-full w-14 p-2 select-none"
                 :src="userStore.user!.ProfilePhoto"
                 referrerpolicy="no-referrer"
                 alt="profile"
