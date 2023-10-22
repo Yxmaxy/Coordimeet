@@ -6,87 +6,90 @@
                 bg-main-100 min-h-[calc(100vh-7rem)]"
             >
                 <label class="flex flex-col gap-2">
-                    <span class="font-bold ml-4">Event name</span>
-                    <input-element
+                    <b class="ml-4">Event name</b>
+                    <custom-input
                         type="text"
                         placeholder="Enter a name for your event"
                         v-model="name"
                     />
                 </label>
-                <div class="ml-1.5">
-                    <span class="font-bold">Select calendar type</span>
-                    <div class="flex flex-col gap-3 mt-3">
-                        <input-element
+                <div class="ml-4 mb-4">
+                    <b>Select calendar type</b>
+                    <div class="flex flex-col gap-2 mt-3">
+                        <custom-radio
                             type="radio"
                             v-model="calendarType"
                             :value="CalendarType.Date"
-                            placeholder="Date"
+                            text="Date"
                         />
-                        <input-element
+                        <custom-radio
                             type="radio"
                             v-model="calendarType"
                             :value="CalendarType.DateTime"
-                            placeholder="Date and time"
+                            text="Date and time"
                         />
                     </div>
                 </div>
-
-                <!-- TODO: checked to here -->
-
                 <label class="flex flex-col gap-2">
-                    <b>Event length in {{ calendarTypeDisplay }}</b>
-                    <input-element
+                    <b class="ml-4">Event length in {{ calendarTypeDisplay }}</b>
+                    <custom-input
                         type="number"
                         v-model="length"
-                        :min="1"
                         placeholder="Enter the length of the event"
+                        pattern="[0-9]+"
+                        invalidMessage="Event length must be a positive integer"
                     />
                 </label>
-                <div class="input-subsection">
-                    <b>Rough event duration</b>
-                    <div>
-                        <label>
-                            From
-                            <input
-                                :type="selectedDateInputType"
-                                :value="fromDateComp"
-                                @input="event => handleDateInput(event.target, 'from')"
-                                :class="{'invalid': invalidDates}"
-                            />
-                        </label>
-                        <label>
-                            To
-                            <input
-                                :type="selectedDateInputType"
-                                :value="toDateComp"
-                                @input="event => handleDateInput(event.target, 'to')"
-                                :class="{'invalid': invalidDates}"
-                            />
-                        </label>
+                <div>
+                    <b class="ml-4">Rough event duration</b>
+                    <div class="ml-4 mr-4 text-xs text-main-700">
+                        The rough event duration is used for generating the calendar,
+                        where you can select the detailed {{ calendarTypeDisplay }} of the event.
                     </div>
+                    <label>
+                        <div class="mt-2 ml-4">
+                            From
+                        </div>
+                        <custom-input
+                            :type="selectedDateInputType"
+                            :modelValue="fromDateComp"
+                            @update:modelValue="event => handleDateInput(event.target, 'from')"
+                        />
+                    </label>
+                    <label>
+                        <div class="ml-4">
+                            To
+                        </div>
+                        <custom-input
+                            :type="selectedDateInputType"
+                            :modelValue="toDateComp"
+                            @update:modelValue="event => handleDateInput(event.target, 'to')"
+                        />
+                    </label>
                 </div>
                 <label class="flex flex-col gap-2">
-                    <b>Additional values</b>
-                    <textarea
+                    <b class="ml-4">Additional values</b>
+                    <custom-input
+                        type="textarea"
                         v-model="customFields"
                         placeholder="Enter custom fields eg.
 Formal attire: Yes
 Ticket price: 5€"
-                    ></textarea>
+                    />
                 </label>
                 <label class="flex flex-col gap-2">
-                    <b>Deadline</b>
-                    <input
+                    <b class="ml-4">Deadline</b>
+                    <custom-input
                         type="datetime-local"
                         v-model="deadline"
                     />
                 </label>
-                <button
-                    class="btn absolute bottom-3 left-3 right-3"
+                <custom-button
+                    class="mt-3 mb-6"
                     @click="onCreateEvent"
                 >
                     Create new event
-                </button>
+                </custom-button>
             </div>
         </template>
         <template v-slot:calendar_input>
@@ -108,7 +111,9 @@ import {
     formatDateForBackend,
     getSelectedDatesOnCalendar } from "@/utils/dates";
 
-import InputElement from "@/components/ui/InputElement.vue";
+import CustomInput from "@/components/ui/CustomInput.vue";
+import CustomButton from "@/components/ui/CustomButton.vue";
+import CustomRadio from "@/components/ui/CustomRadio.vue";
 import Calendar from "@/components/Calendar.vue";
 import TabController from "@/components/TabController.vue";
 
@@ -126,15 +131,17 @@ export default {
     components: {
         Calendar,
         TabController,
-        InputElement,
+        CustomInput,
+        CustomButton,
+        CustomRadio,
     },
     data() {
         return {
-            calendarType: 1,
+            calendarType: CalendarType.Date,
             length: 1,
             selectedDates: []  as CalendarDate[],
-            fromDate: initializeDateInput(1),
-            toDate: initializeDateInput(1),
+            fromDate: initializeDateInput(CalendarType.Date),
+            toDate: initializeDateInput(CalendarType.Date),
             invalidDates: false,
             selectedDateRanges: [] as DateRange[],
             customFields: "",
@@ -253,67 +260,3 @@ export default {
     }
 }
 </script>
-
-<style lang="scss" scoped>
-@import "../styles/colors";
-.event-create-page {
-    $sectionPadding: 1rem;
-
-    flex: 1;
-    display: grid;
-    grid-template-columns: min(35rem, 35vw) 1fr;
-    grid-template-areas:
-        "input calendar"
-        "input calendar";
-
-    .input-area {
-        grid-area: input;
-        background-color: $color-background-3;
-        overflow: auto;
-        padding: $sectionPadding;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-        position: relative;
-
-        input[type=text], input[type=date], input[type=datetime-local], textarea {
-            box-sizing: border-box;
-            width: 100%;
-        }
-
-        textarea {
-            min-height: 10ch;
-        }
-
-        & > label, div[class=input-subsection] {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-        }
-
-        div[class=input-subsection] div {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-        }
-    }
-    .calendar-area {
-        grid-area: calendar;
-        background-color: $color-background;
-        display: flex;
-        flex-direction: column;
-        padding: $sectionPadding;
-        overflow: auto;
-        .controls {
-            position: sticky;
-            top: 0;
-        }
-    }
-    #create-button {
-        position: sticky;
-        bottom: $sectionPadding;
-        left: $sectionPadding;
-        right: $sectionPadding;
-    }
-}
-</style>
