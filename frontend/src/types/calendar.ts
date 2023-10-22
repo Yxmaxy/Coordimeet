@@ -14,3 +14,9 @@ export enum CalendarType {
     DateTime = 0,
     Date = 1,
 }
+
+export enum CalendarMode {
+    Create = 0,
+    Select = 1,
+    Disabled = 2,
+}

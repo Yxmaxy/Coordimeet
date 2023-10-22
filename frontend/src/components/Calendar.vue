@@ -1,52 +1,81 @@
 <template>
-    <div v-if="!disabledMode" class="calendar-controls">
+    <!-- Controls -->
+    <div
+        v-if="mode !== CalendarMode.Disabled"
+        class="flex justify-between p-2 my-1"
+    >
         <div>
-            <label>
-                <button class="small" @click="resetDates">Reset selection</button>
-            </label>
-            <label v-if="!insertMode">
-                <button class="small" @click="invertDates">Invert selection</button>
-            </label>
-            <label v-if="!insertMode">
+            <custom-button
+                @click="resetDates"
+                :small="true"
+            >
+                Reset selection
+            </custom-button>
+            <custom-button
+                v-if="mode === CalendarMode.Select"
+                @click="invertDates"
+                :small="true"
+            >
+                Invert selection
+            </custom-button>
+            <label v-if="mode === CalendarMode.Select">
                 Select unavailable dates
                 <input v-model="selectUnavailable" type="checkbox" />
             </label>
         </div>
-        <div v-if="(type === CalendarType.DateTime)">
+        <div
+            v-if="type === CalendarType.DateTime"
+            class="flex gap-1 items-center"
+        >
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
-            <button
-                :class="['small', {'disabled': selectedWeek === 0}]"
-                @click="changeSelectedWeek(false)"
-            >Prev</button>
-            <button
-                :class="['small', {'disabled': selectedWeek === numOfWeeks}]"
-                @click="changeSelectedWeek(true)"
-            >Next</button>
-        </div>
-    </div>
-    <div class="calendar-header">
-        <div v-for="day in calendarHeader">
-            {{ day }}
-        </div>
-    </div>
-    <div :class="['calendar-component', {'type-datetime': type === CalendarType.DateTime}]">
-        <template v-for="(day, index) in days" :key="index">
-            <div
-                v-if="type === CalendarType.Date || (index >= selectedWeek * 24 * 7 && index < (1 + selectedWeek) * 24 * 7)"
-                :class="{
-                    'in-range': day.isInRange && !insertMode,
-                    'in-range-insert': insertMode,
-                    'available': day.isAvailable && !selectUnavailable,
-                    'unavailable': day.isInRange && selectUnavailable && !day.isAvailable,
-                }"
-                @mousedown="(event) => onMouseDown(event, day)"
-                @mouseenter="(event) => onMouseEnter(event, day)"
-                @mouseup="onMouseUp"
-                @mouseleave="(event) => onMouseLeave(event, day)"
-                @touchstart="(event) => onTouchStart(event, day)"
-                @touchend="(event) => onTouchEnd(event, day)"
+            <custom-button
+                class="ml-1"
+                :click="changeSelectedWeek(false)"
+                :disabled="selectedWeek === 0"
+                :small="true"
             >
-                {{day.display}}
+                Prev
+            </custom-button>
+            <custom-button
+                :click="changeSelectedWeek(true)"
+                :disabled="selectedWeek === numOfWeeks"
+                :small="true"
+            >
+                Next
+            </custom-button>
+        </div>
+    </div>
+    <!-- Header -->
+    <div class="flex">
+        <div
+            v-for="day in calendarHeader"
+            class="flex-1 py-1 font-bold text-main-100 bg-main-500 text-center select-none"
+            v-html="day"
+        />
+    </div>
+    <div :class="[{
+            'grid-cols-7': type === CalendarType.Date,
+            'grid-flow-col grid-rows-24': type === CalendarType.DateTime,
+        }, 'grid gap-0.5']"
+    >
+        <!-- TODO: calculate which days are shown beforehand! -->
+        <template v-for="(day, index) in days" :key="`day_${index}`">
+            <div
+                v-if="type === CalendarType.Date || isDayInSelectedWeek(index)"
+                :class="[{
+                    '!bg-calendar-in-range cursor-pointer': day.isInRange && mode === CalendarMode.Select,
+                    '!bg-calendar-available': day.isAvailable && !selectUnavailable,
+                    '!bg-calendar-unavailable': day.isInRange && selectUnavailable && !day.isAvailable,
+                    'cursor-pointer': mode === CalendarMode.Create,
+                }, 'p-1.5 text-center select-none bg-calendar-non-selected']"
+                @mousedown="event => onMouseDown(event, day)"
+                @mouseenter="event => onMouseEnter(event, day)"
+                @mouseup="onMouseUp"
+                @mouseleave="event => onMouseLeave(event, day)"
+                @touchstart="event => onTouchStart(event, day)"
+                @touchend="event => onTouchEnd(event, day)"
+            >
+                {{ day.display }}
             </div>
         </template>
     </div>
@@ -55,32 +84,39 @@
 <script lang="ts">
 import { PropType } from "vue";
 import { formatDateDayMonth, formatDateHour, formatDateForBackend } from "@/utils/dates";
-import { CalendarType, CalendarDate, DateRange } from "@/types/calendar";
+import { CalendarType, CalendarDate, DateRange, CalendarMode } from "@/types/calendar";
+
+import CustomButton from "@/components/ui/CustomButton.vue";
 
 const longpressTimeout = 475;
 
 export default {
-    name: "calendar",
+    name: "Calendar",
+    components: {
+        CustomButton,
+    },
+    setup() {
+        return {
+            CalendarType,
+            CalendarMode,
+        }
+    },
     props: {
         dateRanges: {
             type: Array as PropType<DateRange[]>,
             default: [],
         },
         type: {
-            type: Number,
+            type: Number as PropType<CalendarType>,
             default: CalendarType.Date,
         },
         days: {
             type: Array as PropType<CalendarDate[]>,
             default: [],
         },
-        insertMode: {  // if all selected are in range
-            type: Boolean,
-            default: false,
-        },
-        disabledMode: {  // non interactive calendar
-            type: Boolean,
-            default: false,
+        mode: {
+            type: Number as PropType<CalendarMode>,
+            default: CalendarMode.Select,
         },
         initialIsAvailable: {  // array of days which are initially selected
             type: Array as PropType<DateRange[]>,
@@ -93,7 +129,6 @@ export default {
             timeoutObj: undefined as NodeJS.Timeout|undefined,
             selectedWeek: 0,
             selectUnavailable: false,
-            CalendarType,
         }
     },
     computed: {
@@ -102,14 +137,13 @@ export default {
         },
         calendarHeader(): string[] {
             const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
-            if (this.days.length === 0)
+            // return just days for Date
+            if (this.days.length === 0 || this.type === CalendarType.Date)
                 return days;
-            if (this.type === CalendarType.Date)
-                return days;
-            for (let i = 0; i < days.length; i++) {
-                days[i] = `${days[i]} ${formatDateDayMonth(this.days[i * 24 + this.selectedWeek * 24 * 7].date)}`;
-            }
-            return days;
+            // append dates to headers on DateTime
+            return days.map(
+                (day, inx) => `${day}<br/>${formatDateDayMonth(this.days[inx * 24 + this.selectedWeek * 24 * 7].date)}`
+            );
         }
     },
     methods: {
@@ -140,8 +174,14 @@ export default {
                 return new Date(date.setDate(date.getDate() + 1));
             return new Date(date.setHours(date.getHours() + 1));
         },
+        isDayInSelectedWeek(index: number): boolean {
+            return index >= this.selectedWeek * 24 * 7 && index < (1 + this.selectedWeek) * 24 * 7
+        },
         // calculate dates to display on calendar
         calculateShownDates() {
+            // TODO: do a proper fix for the recursion...
+            const maxNumberOfDates = 24 * 7 * 10;
+
             if (this.type === CalendarType.DateTime)
                 this.selectedWeek = 0;
             
@@ -160,10 +200,11 @@ export default {
             from = this.getBufferedDate(from, 0);
             to = this.getBufferedDate(to, 0, true);
             
+            let numOfLoops = 0;
             this.days.length = 0;  // reset array
             for (let d = new Date(from); d <= to; d = this.incrementDate(d)) {  // loop through all dates
-                let isInRange = false || this.insertMode;
-                for (const range of (this.dateRanges as IDateRange[])) {  // loop through selection
+                let isInRange = false || this.mode === CalendarMode.Create;
+                for (const range of (this.dateRanges as DateRange[])) {  // loop through selection
                     if (formatDateForBackend(d) >= formatDateForBackend(range.from) && formatDateForBackend(d) <= formatDateForBackend(range.to)) {
                         isInRange = true;
                         break;
@@ -176,6 +217,10 @@ export default {
                     isInRange: isInRange,
                     isAvailable: isInRange && this.isDayInDateRanges(this.initialIsAvailable, new Date(d)),
                 });
+                // condition to stop too long recursion
+                numOfLoops++;
+                if (numOfLoops > maxNumberOfDates)
+                    return;
             }
         },
         selectDateFromTo(start: CalendarDate, end: CalendarDate, setAvailable: boolean = true) {
@@ -211,13 +256,13 @@ export default {
         },
         // methods for selecting available
         onMouseDown(event: MouseEvent, day: CalendarDate) {
-            if (!day.isInRange || this.disabledMode)
+            if (!day.isInRange || this.mode === CalendarMode.Disabled)
                 return;
             this.touchStart = day;
             day.isAvailable = !day.isAvailable;
         },
         onMouseEnter(event: MouseEvent, day: CalendarDate) {
-            if (event.buttons === 1 && this.touchStart !== undefined && !this.disabledMode) {
+            if (event.buttons === 1 && this.touchStart !== undefined && this.mode !== CalendarMode.Disabled) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
@@ -225,14 +270,14 @@ export default {
             this.touchStart = undefined;
         },
         onMouseLeave(event: MouseEvent, day: CalendarDate) {
-            if (event.buttons === 1 && this.touchStart !== undefined && !this.disabledMode) {
+            if (event.buttons === 1 && this.touchStart !== undefined && this.mode !== CalendarMode.Disabled) {
                 this.selectDateFromTo(this.touchStart, day, !this.touchStart.isAvailable);
             }
         },
         // methods for mobile devices
         onTouchStart(event: TouchEvent, day: CalendarDate) {
             event.preventDefault();
-            if (this.disabledMode)
+            if (this.mode === CalendarMode.Disabled)
                 return;
             if (this.touchStart === undefined) {  // press on first date
                 this.timeoutObj = setTimeout(() => {  // if event is longpress select multiple
@@ -247,7 +292,7 @@ export default {
             }
         },
         onTouchEnd(event: TouchEvent, day: CalendarDate) {
-            if (this.disabledMode)
+            if (this.mode === CalendarMode.Disabled)
                 return;
             if (this.timeoutObj !== undefined) {
                 // Normal event
@@ -277,65 +322,3 @@ export default {
     },
 };
 </script>
-<style lang="scss" scoped>
-@import "../styles/colors";
-
-.calendar-component {
-    box-sizing: border-box;
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-
-    &.type-datetime {
-        grid-template-rows: repeat(24, 1fr);
-        grid-auto-flow: column;
-        grid-template-columns: unset !important;
-    }
-
-    // td
-    & > div {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-sizing: border-box;
-        user-select: none;
-        background-color: $calendar-color-non-selected;
-    }
-    .in-range {
-        background-color: $calendar-color-in-range;
-        cursor: pointer;
-    }
-    .in-range-insert {
-        cursor: pointer;
-    }
-    .available {
-        background-color: $calendar-color-available;
-    }
-    .unavailable {
-        background-color: $calendar-color-unavailable;
-    }
-}
-.calendar-header {
-    display: flex;
-    div {
-        font-weight: bold;
-        color: $color-background;
-        background-color: $color-main;
-
-        text-align: center;
-        flex: 1;
-    }
-}
-.calendar-controls {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 0.4rem;
-
-    & > div {
-        display: flex;
-        gap: 0.5rem;
-    }
-}
-</style>

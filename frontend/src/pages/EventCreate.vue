@@ -99,7 +99,7 @@ Ticket price: 5€"
                 :type="calendarType"
                 :days="selectedDates"
                 :dateRanges="selectedDateRanges"
-                :insertMode="true"
+                :mode="CalendarMode.Create"
             />
         </template>
     </tab-controller>
@@ -121,7 +121,7 @@ import TabController from "@/components/TabController.vue";
 
 import { useUserStore } from "@/stores/UserStore";
 
-import { CalendarType, CalendarDate, DateRange } from "@/types/calendar";
+import { CalendarType, CalendarDate, DateRange, CalendarMode } from "@/types/calendar";
 
 export default {
     setup() {
@@ -129,6 +129,7 @@ export default {
         return {
             user,
             CalendarType,
+            CalendarMode,
         }
     },
     components: {
