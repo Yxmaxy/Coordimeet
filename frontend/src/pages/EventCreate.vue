@@ -52,8 +52,9 @@
                         </div>
                         <custom-input
                             :type="selectedDateInputType"
-                            :modelValue="fromDateComp"
-                            @update:modelValue="event => handleDateInput(event.target, 'from')"
+                            v-model="fromDate"
+                            :forceInvalidMessage="areDatesInvalid"
+                            invalidMessage="The 'From' date can't be after the 'To' date"
                         />
                     </label>
                     <label>
@@ -62,8 +63,9 @@
                         </div>
                         <custom-input
                             :type="selectedDateInputType"
-                            :modelValue="toDateComp"
-                            @update:modelValue="event => handleDateInput(event.target, 'to')"
+                            v-model="toDate"
+                            :forceInvalidMessage="areDatesInvalid"
+                            invalidMessage="The 'From' date can't be after the 'To' date"
                         />
                     </label>
                 </div>
@@ -126,6 +128,7 @@ export default {
         const { user } = useUserStore();
         return {
             user,
+            CalendarType,
         }
     },
     components: {
@@ -137,19 +140,18 @@ export default {
     },
     data() {
         return {
-            calendarType: CalendarType.Date,
+            name: "",
             length: 1,
-            selectedDates: []  as CalendarDate[],
-            fromDate: initializeDateInput(CalendarType.Date),
-            toDate: initializeDateInput(CalendarType.Date),
-            invalidDates: false,
-            selectedDateRanges: [] as DateRange[],
             customFields: "",
             deadline: initializeDateInput(CalendarType.DateTime),
+            
+            calendarType: CalendarType.Date,
+            selectedDates: [] as CalendarDate[],
+            fromDate: initializeDateInput(CalendarType.Date),
+            toDate: initializeDateInput(CalendarType.Date),
+            areDatesInvalid: false,
 
-            name: "",
-
-            CalendarType,
+            selectedDateRanges: [] as DateRange[],
 
             activeTab: 0 as number,
         }
@@ -160,27 +162,21 @@ export default {
                 return "days";
             return "hours";
         },
-        selectedDateInputType() {
+        selectedDateInputType(): string {
             if (this.calendarType === CalendarType.Date)
                 return "date";
             return "datetime-local";
         },
-        fromDateComp() {
-            return initializeDateInput(this.calendarType, this.fromDate);
-        },
-        toDateComp() {
-            return initializeDateInput(this.calendarType, this.toDate);
-        },
     },
     methods: {
         getDateRanges() {
-            this.invalidDates = false;
+            this.areDatesInvalid = false;
             const now = new Date();
             const from = this.fromDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.fromDate)) : new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const to = this.toDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.toDate)) :  new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23);
             
             if (from > to) {
-                this.invalidDates = true;
+                this.areDatesInvalid = true;
                 return;
             }
 
@@ -236,13 +232,6 @@ export default {
                 this.$router.push(`/event/${IDEvent}`);
             })
         },
-        handleDateInput(target: EventTarget|null, type: 'from'|'to') {
-            const input = target as HTMLInputElement;
-            if (type === 'from')
-                this.fromDate = input.value;
-            else
-                this.toDate = input.value;
-        }
     },
     watch: {
         fromDate() {
@@ -251,8 +240,9 @@ export default {
         toDate() {
             this.getDateRanges();
         },
-        calendarType() {
-            this.getDateRanges();
+        calendarType(newType: CalendarType) {
+            this.toDate = initializeDateInput(newType, this.toDate);
+            this.fromDate = initializeDateInput(newType, this.fromDate);
         },
     },
     mounted() {

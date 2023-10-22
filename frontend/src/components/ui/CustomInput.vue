@@ -3,7 +3,7 @@
         <component
             :is="isTextArea ? 'textarea' : 'input'"
             :class="[{
-                'bg-invalid-light border-invalid-dark': isInvalid,
+                'bg-invalid-light border-invalid-dark': forceInvalidMessage || isInvalid,
             }, 'w-full pl-4 pr-4 pt-2 pb-2 rounded-xl',
                 'border-2 border-main-300 focus:border-main-200 focus:outline-none']"
             :type="type"
@@ -18,7 +18,7 @@
             @blur="checkRequired = true"
         ></component>
         <div class="flex justify-end text-invalid-dark text-sm h-5">
-            <template v-if="isInvalid && invalidMessage">
+            <template v-if="forceInvalidMessage || isInvalid">
                 {{ invalidMessage }}
             </template>
         </div>
@@ -50,6 +50,10 @@ export default {
             type: String,
             default: "This field is required",
         },
+        forceInvalidMessage: {
+            type: Boolean,
+            default: false,
+        }
     },
     data() {
         return {
