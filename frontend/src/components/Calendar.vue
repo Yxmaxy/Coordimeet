@@ -30,14 +30,14 @@
             Selected week: {{(selectedWeek + 1)}} / {{(numOfWeeks + 1)}}
             <custom-button
                 class="ml-1"
-                :click="changeSelectedWeek(false)"
+                :click="() => changeSelectedWeek(false)"
                 :disabled="selectedWeek === 0"
                 :small="true"
             >
                 Prev
             </custom-button>
             <custom-button
-                :click="changeSelectedWeek(true)"
+                :click="() => changeSelectedWeek(true)"
                 :disabled="selectedWeek === numOfWeeks"
                 :small="true"
             >

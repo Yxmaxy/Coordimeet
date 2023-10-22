@@ -63,9 +63,9 @@ export default {
     computed: {
         isInvalid(): boolean {
             const pattern = new RegExp(this.pattern);
-            return this.checkRequired && !pattern.test(this.modelValue);
+            return this.checkRequired && !pattern.test(String(this.modelValue));
         },
-        isTextArea(): string {
+        isTextArea(): boolean {
             return this.type === "textarea";
         }
     },
