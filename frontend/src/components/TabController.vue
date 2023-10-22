@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col">
         <!-- Header -->
-        <div class="flex z-20">
+        <div class="flex z-20 sticky top-14 w-full shadow-md">
             <!-- Tab design -->
             <div
                 v-if="isMobile"
