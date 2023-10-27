@@ -1,8 +1,8 @@
 <template>
-    <tab-controller v-model:activeTab="activeTab" :firstNarrow="true">
+    <tab-controller :tabs="tabs">
         <template v-slot:create_event>
             <div
-                class="flex flex-col gap-4 px-4 pt-4 relative
+                class="flex flex-col gap-4 px-4 pt-4 h-full
                 bg-main-100 min-h-[calc(100vh-7rem)]"
             >
                 <label class="flex flex-col gap-2">
@@ -122,6 +122,19 @@ import TabController from "@/components/TabController.vue";
 import { useUserStore } from "@/stores/UserStore";
 
 import { CalendarType, CalendarDate, DateRange, CalendarMode } from "@/types/calendar";
+import { Tab } from "@/types/tabs";
+
+const tabs = [
+    {
+        name: "Create new event",
+        slot_name: "create_event",
+        isNarrow: true,
+    },
+    {
+        name: "Calendar input",
+        slot_name: "calendar_input",
+    }
+] as Tab[];
 
 export default {
     setup() {
@@ -130,6 +143,7 @@ export default {
             user,
             CalendarType,
             CalendarMode,
+            tabs,
         }
     },
     components: {
@@ -153,8 +167,6 @@ export default {
             areDatesInvalid: false,
 
             selectedDateRanges: [] as DateRange[],
-
-            activeTab: 0 as number,
         }
     },
     computed: {

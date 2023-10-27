@@ -1,6 +1,6 @@
 <template>
     <div>
-        <tab-controller v-model:activeTab="activeTab">
+        <tab-controller :tabs="tabs">
             <template v-slot:events_invited>
                 <event-list-component :events="eventsInvited" />
             </template>
@@ -23,9 +23,21 @@ import ApiService from "@/utils/ApiService";
 import { useUserStore } from "@/stores/UserStore";
 
 import { Event } from "@/types/event";
+import { Tab } from "@/types/tabs";
 
 import EventListComponent from "@/components/EventListComponent.vue";
 import TabController from "@/components/TabController.vue";
+
+const tabs = [
+    {
+        name: "Events I'm invited to",
+        slot_name: "events_invited",
+    },
+    {
+        name: "Events I've created",
+        slot_name: "events_created",
+    }
+] as Tab[];
 
 export default {
     name: "EventList",
@@ -37,13 +49,13 @@ export default {
         const { user } = useUserStore();
         return {
             user,
+            tabs,
         }
     },
     data() {
         return {
             eventsInvited: [] as Event[],
             eventsCreated: [] as Event[],
-            activeTab: 0 as number,
         }
     },
     methods: {
