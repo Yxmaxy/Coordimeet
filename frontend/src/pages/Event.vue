@@ -1,37 +1,6 @@
 <template>
-    <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
-        'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
-        'organizer': eventPageType === EventPageType.Organizer,
-    }]">
-        <aside
-            v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
-            class="responses-area"
-        >
-            <h1>Responses</h1>
-            <div>
-                <div v-for="participant in eventParticipants" class="list-element">
-                    <div>{{ participant }}</div>
-                </div>
-            </div>
-        </aside>
-        <aside v-if="eventPageType === EventPageType.Organizer" class="selectable-area">
-            <h1>Selectable dates</h1>
-            <div>
-                <div
-                    v-for="(selectableDate, index) in selectableDates"
-                    :class="['list-element', {'selected': index === selectedDate}]"
-                    @click="selectedDate = index"
-                >
-                    {{ displayDateRange(selectableDate) }}
-                </div>
-            </div>
-            <button
-                :class="{'disabled': selectedDate === undefined}"
-                @click="finishEvent"
-            >
-                Select date and finish event
-            </button>
-        </aside>
+    <div>
+        <!-- Popup -->
         <div :class="['details-area', {'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)}]">
             <div class="container">
                 <h2 v-if="eventPageType === EventPageType.NonConfirmed">
@@ -86,40 +55,113 @@
                 Submit response
             </button>
         </div>
-        <main
-            v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
-            class="calendar-area"
-        >
-            <calendar
-                :type="eventData.CalendarType"
-                :dateRanges="eventData.EventDates"
-                :days="dates"
-                :initialIsAvailable="initialIsAvailable"
-            />
-        </main>
+
+        <!-- Content -->
+
+        <tab-controller :tabs="tabs">
+            <template v-slot:responses>
+                <aside
+                    v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
+                >
+                    <div v-for="participant in eventParticipants" class="list-element">
+                        <div>{{ participant }}</div>
+                    </div>
+                </aside>
+            </template>
+            <template v-slot:selectable_dates>
+                <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
+                    'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
+                    'organizer': eventPageType === EventPageType.Organizer,
+                }]">
+                    <aside v-if="eventPageType === EventPageType.Organizer" class="selectable-area">
+                        <h1>Selectable dates</h1>
+                        <div>
+                            <div
+                                v-for="(selectableDate, index) in selectableDates"
+                                :class="['list-element', {'selected': index === selectedDate}]"
+                                @click="selectedDate = index"
+                            >
+                                {{ displayDateRange(selectableDate) }}
+                            </div>
+                        </div>
+                        <button
+                            :class="{'disabled': selectedDate === undefined}"
+                            @click="finishEvent"
+                        >
+                            Select date and finish event
+                        </button>
+                    </aside>
+                </div>
+            </template>
+            <template v-slot:event>
+                <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
+                    'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
+                    'organizer': eventPageType === EventPageType.Organizer,
+                }]">
+                    <main
+                        v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
+                        class="calendar-area"
+                    >
+                        <calendar
+                            :type="eventData.CalendarType"
+                            :dateRanges="eventData.EventDates"
+                            :days="dates"
+                            :initialIsAvailable="initialIsAvailable"
+                        />
+                    </main>
+                </div>
+            </template>
+        </tab-controller>
     </div>
 </template>
 
 <script lang="ts">
-import Calendar from "@/components/Calendar.vue";
 import ApiService from "@/utils/ApiService";
 import { useUserStore } from "@/stores/UserStore";
 
 import { CalendarType, CalendarDate, DateRange } from "@/types/calendar";
 import { Event, EventPageType } from "@/types/event";
+import { Tab } from "@/types/tabs";
 
 import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from "@/utils/dates";
 
+import Calendar from "@/components/Calendar.vue";
+import TabController from "@/components/TabController.vue";
+import CustomButton from "@/components/ui/CustomButton.vue";
+
+const tabs = [
+    {
+        name: "Responses",
+        slot_name: "responses",
+        narrow: "sm",
+    },
+    {
+        name: "Selectable dates",
+        slot_name: "selectable_dates",
+        narrow: "sm",
+    },
+    {
+        name: "Event",
+        slot_name: "event",
+    },
+] as Tab[];
+
 export default {
     components: {
-        "calendar": Calendar,
+        Calendar,
+        TabController,
+        CustomButton,
     },
     setup() {
         const { user, isLoggedIn } = useUserStore();
-        
+
         return {
             user,
             isLoggedIn,
+            tabs,
+
+            EventPageType,
+            CalendarType,
         }
     },
     data() {
@@ -128,11 +170,10 @@ export default {
             eventData: {} as Event,
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
+
             initialIsAvailable: [] as DateRange[],
             selectableDates: [] as DateRange[],
             selectedDate: undefined as number|undefined,
-            EventPageType,
-            CalendarType,
         }
     },
     computed: {
@@ -165,7 +206,7 @@ export default {
                 this.eventData = eventData;
                 if (res.data.SelectedDate !== null) {
                     this.eventPageType = EventPageType.Finished;
-                } else if (this.user.GoogleID === eventData.Organizer.GoogleID) {
+                } else if (this.user!.GoogleID === eventData.Organizer.GoogleID) {
                     this.eventPageType = EventPageType.Organizer;
                     this.getSelectableDates();
                 }
@@ -192,7 +233,7 @@ export default {
             ApiService.get("eventUser.php", {
                 params: {
                     IDEvent: this.$route.params.id,
-                    IDUser: this.user.GoogleID,
+                    IDUser: this.user!.GoogleID,
                 }
             }).then(res => {
                 if (res.data.error) {
@@ -238,7 +279,7 @@ export default {
             if (this.initialIsAvailable.length === 0) {  // a date didn't exist before
                 ApiService.post("eventUser.php", {
                     IDEvent: this.$route.params.id,
-                    IDUser: this.user.GoogleID,
+                    IDUser: this.user!.GoogleID,
                     AvailabilityDates: this.selectedDates,
                 })
                 .then(res => {
@@ -248,9 +289,9 @@ export default {
                     alert("Your response has been submitted");
                 })
             } else {  // update date that was selected before
-                ApiService.put(`eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user.GoogleID}`, {
+                ApiService.put(`eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user!.GoogleID}`, {
                     IDEvent: this.$route.params.id,
-                    IDUser: this.user.GoogleID,
+                    IDUser: this.user!.GoogleID,
                     AvailabilityDates: this.selectedDates,
                 }).then(res => {
                     if (res.status !== 201)
@@ -294,7 +335,7 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
+<!-- <style lang="scss" scoped>
 @import "../styles/colors.scss";
 
 $sectionPadding: 1rem;
@@ -430,4 +471,4 @@ $sectionPadding: 1rem;
         }
     }
 }
-</style>
+</style> -->

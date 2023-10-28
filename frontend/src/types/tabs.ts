@@ -1,5 +1,5 @@
 export interface Tab {
     name: string,
     slot_name: string,
-    isNarrow?: boolean,
+    narrow?: "xs" | "sm" | "md" | "lg",
 }

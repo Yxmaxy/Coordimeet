@@ -21,7 +21,8 @@
                 v-else
                 v-for="(tab, index) in tabs" :key="`desktop_header_${index}`"
                 :class="[{
-                    'first:max-w-[25rem]': !isMobile && tab.isNarrow,
+                    'max-w-[20rem]': !isMobile && tab.narrow === 'sm',
+                    'max-w-[25rem]': !isMobile && tab.narrow === 'md',
                 }, 'flex-1 flex items-center h-14 bg-main-100 shadow-md',
                    'border-r-2 last:border-r-0 border-main-200',
                    'font-bold text-xl px-4'
@@ -36,7 +37,8 @@
                 v-for="(tab, index) of tabs"
                 :key="`tab_content_${index}`"
                 :class="[{
-                    'first:max-w-[25rem]': !isMobile && tab.isNarrow,
+                    'max-w-[20rem]': !isMobile && tab.narrow === 'sm',
+                    'max-w-[25rem]': !isMobile && tab.narrow === 'md',
                     'hidden': isMobile && index !== activeTab,
                     'border-r-2 last:border-r-0 border-main-200': !isMobile,
                 }, 'flex-1 min-h-[calc(100vh-7rem)]']"

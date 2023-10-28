@@ -128,7 +128,7 @@ const tabs = [
     {
         name: "Create new event",
         slot_name: "create_event",
-        isNarrow: true,
+        narrow: "md",
     },
     {
         name: "Calendar input",

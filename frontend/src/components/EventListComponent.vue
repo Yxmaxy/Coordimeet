@@ -3,7 +3,7 @@
         <div
             v-for="event in events"
             class="flex-1 flex justify-between bg-main-100 m-2 px-8 py-6 rounded-2xl
-            cursor-pointer shadow-md transition-all hover:-translate-y-1"
+            cursor-pointer shadow-md transition-all hover:-translate-y-1 hover:bg-main-200"
             @click="$router.push(`/event/${event.IDEvent}`)"
         >
             <div>
