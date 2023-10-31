@@ -3,7 +3,19 @@
         <div v-for="dateRange in selectedDateRanges">
             {{ formatDateDayMonthYear(dateRange.from) }} - {{ formatDateDayMonthYear(dateRange.to) }}
         </div>
-        <div class="grid grid-cols-7 gap-0.5">
+        <!-- Header -->
+        <div>
+            <button @click="prevWeek">Prev</button>
+            <button @click="nextWeek">Next</button>
+
+            <div>Selected week {{ selectedWeek }}</div>
+        </div>
+
+        <!-- Calendar -->
+        <div :class="[{
+            'grid-cols-7': calendarType === CalendarType.Date,
+            'grid-flow-col grid-rows-24': calendarType === CalendarType.DateTime,
+        }, 'grid gap-0.5']">
             <!-- A date element -->
             <div
                 v-for="date in getCalendarDates"
@@ -13,7 +25,7 @@
                 @mousedown="onDateMouseDown(date)"
                 @mouseup="onDateMouseUp(date)"
             >
-                {{ formatDateDayMonth(date) }}
+                {{ dateDisplayFunction(date) }}
             </div>
         </div>
     </div>
@@ -22,11 +34,16 @@
 <script lang="ts">
 import { PropType } from "vue";
 
-import { formatDateDayMonthYear, formatDateDayMonth, formatDateHour, formatDateForBackend } from "@/utils/dates";
+import { formatDateDayMonthYear, formatDateDayMonth, formatDateDayMonthHour, formatDateHour, formatDateForBackend } from "@/utils/dates";
 import { CalendarType, CalendarDate, DateRange, CalendarMode } from "@/types/calendar";
 
 export default {
     name: "Calendar2",
+    setup() {
+        return {
+            CalendarType,
+        }
+    },
     props: {
         // rough event duration for calculating pages
         roughEventDateRange: {
@@ -41,10 +58,12 @@ export default {
     },
     data() {
         return {
-            selectedDateRanges: [] as DateRange[],
+            selectedDateRanges: [] as DateRange[],  // date ranges in green
 
             fromDate: null as null | Date,  // set on from date select
-            fromMode: "add" as "add" | "delete"  // mode when selecting from date
+            fromMode: "add" as "add" | "delete",  // mode when selecting from date
+
+            selectedWeek: 0,  // current selected week
         }
     },
     computed: {
@@ -52,9 +71,9 @@ export default {
         getCalendarDates(): Date[] {
             if (!this.roughEventDateRange)
                 return [];
-            const { from: roughFrom, to: roughTo } = this.roughEventDateRange;
             const dates: Date[] = [];
             const datePadding = 7;  // how many days to add to the calendar
+            const datesLimit = this.calendarType === CalendarType.Date ? 371 : 24 * 7;
             
             const rangeConversion = {
                 [CalendarType.Date]: {
@@ -78,19 +97,55 @@ export default {
                     },
                 },
                 [CalendarType.DateTime]: {
-                    from: (x: any) => x,
-                    to: (x: any) => x,
-                }
+                    from: (date: Date) => {
+                        // get current day of the week (0-6)
+                        const currentDayOfWeek = date.getDay();
+                        // get first day of the week (Monday)
+                        const newDate = new Date(date.setDate(
+                            date.getDate() - (currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1)));
+                        newDate.setDate(newDate.getDate() + this.selectedWeek * 7);
+                        newDate.setHours(0, 0);
+                        return newDate;
+                    },
+                    to: (date: Date) => {
+                        // get current day of the week (0-6)
+                        const currentDayOfWeek = date.getDay();
+                        // get last day of the week (Sunday)
+                        const newDate = new Date(date.setDate(
+                            date.getDate() + (currentDayOfWeek === 0 ? 0 : 7 - currentDayOfWeek)));
+                        newDate.setDate(newDate.getDate() + this.selectedWeek * 7);
+                        newDate.setHours(23, 59);
+                        return newDate;
+                    },
+                },
             }
+
+            const { from: roughFrom, to: roughTo } = this.roughEventDateRange;
             const from = rangeConversion[this.calendarType].from(roughFrom);
             const to = rangeConversion[this.calendarType].to(roughTo);
 
             const date = new Date(from);
-            while (date <= to) {
+            for (let i = 0; date <= to && i < datesLimit; i++) {
                 dates.push(new Date(date));
-                date.setDate(date.getDate() + 1);
+                if (this.calendarType === CalendarType.Date)
+                    date.setDate(date.getDate() + 1);
+                else if (this.calendarType === CalendarType.DateTime)
+                    date.setHours(date.getHours() + 1);
             }
             return dates;
+        },
+        dateDisplayFunction() {
+            if (this.calendarType === CalendarType.DateTime)
+                return formatDateDayMonthHour;
+            return formatDateDayMonth;
+        },
+        isPrevWeekEnabled(): boolean {
+            return this.selectedWeek > 0;
+        },
+        isNextWeekEnabled(): boolean {
+            const { from, to } = this.roughEventDateRange;
+            const weeks = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 7));
+            return this.selectedWeek < weeks - 1;
         },
     },
     methods: {
@@ -125,9 +180,15 @@ export default {
                         if (newDateRange.from > dateRange.from && newDateRange.to < dateRange.to) {
                             // add current selection to date range
                             const newDateFrom = new Date(newDateRange.from);
-                            newDateFrom.setDate(newDateFrom.getDate() - 1);
                             const newDateTo = new Date(newDateRange.to);
-                            newDateTo.setDate(newDateTo.getDate() + 1);
+                            // add padding
+                            if (this.calendarType === CalendarType.Date) {
+                                newDateFrom.setDate(newDateFrom.getDate() - 1);
+                                newDateTo.setDate(newDateTo.getDate() + 1);
+                            } else if (this.calendarType === CalendarType.DateTime) {
+                                newDateFrom.setHours(newDateFrom.getHours() - 1);
+                                newDateTo.setHours(newDateTo.getHours() + 1);
+                            }
 
                             // create new date range for last part
                             this.selectedDateRanges.push({
@@ -141,13 +202,23 @@ export default {
                         // remove from start
                         if (newDateRange.from.getTime() === dateRange.from.getTime()) {
                             const newDateTo = new Date(newDateRange.to);
-                            newDateTo.setDate(newDateTo.getDate() + 1);
+                            // add padding
+                            if (this.calendarType === CalendarType.Date)
+                                newDateTo.setDate(newDateTo.getDate() + 1);
+                            else if (this.calendarType === CalendarType.DateTime)
+                                newDateTo.setHours(newDateTo.getHours() + 1);
+
                             dateRange.from = newDateTo;
                         }
                         // remove from end
                         if (newDateRange.to.getTime() === dateRange.to.getTime()) {
                             const newDateFrom = new Date(newDateRange.from);
-                            newDateFrom.setDate(newDateFrom.getDate() - 1);
+                            // add padding
+                            if (this.calendarType === CalendarType.Date)
+                                newDateFrom.setDate(newDateFrom.getDate() - 1);
+                            else if (this.calendarType === CalendarType.DateTime)
+                                newDateFrom.setHours(newDateFrom.getHours() - 1);
+
                             dateRange.to = newDateFrom;
                         }
                     }
@@ -185,6 +256,16 @@ export default {
         isDateInSelectedDateRanges(date: Date): boolean {
             return this.selectedDateRanges
                 .some(dateRange => date >= dateRange.from && date <= dateRange.to);
+        },
+
+        // weeks
+        prevWeek() {
+            if (this.isPrevWeekEnabled)
+                this.selectedWeek--;
+        },
+        nextWeek() {
+            if (this.isNextWeekEnabled)
+                this.selectedWeek++;
         },
     },
 }
