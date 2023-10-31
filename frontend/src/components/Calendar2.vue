@@ -3,8 +3,7 @@
         <div v-for="dateRange in selectedDateRanges">
             {{ formatDateDayMonthYear(dateRange.from) }} - {{ formatDateDayMonthYear(dateRange.to) }}
         </div>
-        <div class="grid grid-cols-7 gap-1">
-
+        <div class="grid grid-cols-7 gap-0.5">
             <!-- A date element -->
             <div
                 v-for="date in getCalendarDates"
@@ -55,20 +54,27 @@ export default {
                 return [];
             const { from: roughFrom, to: roughTo } = this.roughEventDateRange;
             const dates: Date[] = [];
-
+            const datePadding = 7;  // how many days to add to the calendar
+            
             const rangeConversion = {
                 [CalendarType.Date]: {
                     from: (date: Date) => {
-                        // get first day of the month
-                        const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-                        // get first day of that week (Monday)
-                        return new Date(firstDayOfMonth.setDate(firstDayOfMonth.getDate() - (firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1)));
+                        // get current day of the week (0-6)
+                        const currentDayOfWeek = date.getDay();
+                        // get first day of the week (Monday)
+                        const newDate = new Date(date.setDate(
+                            date.getDate() - (currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1)));
+                        newDate.setDate(newDate.getDate() - datePadding);
+                        return newDate;
                     },
                     to: (date: Date) => {
-                        // get last day of the month
-                        const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-                        // get last day of that week (Sunday)
-                        return new Date(lastDayOfMonth.setDate(lastDayOfMonth.getDate() + (lastDayOfMonth.getDay() === 0 ? 0 : 7 - lastDayOfMonth.getDay())));
+                        // get current day of the week (0-6)
+                        const currentDayOfWeek = date.getDay();
+                        // get last day of the week (Sunday)
+                        const newDate = new Date(date.setDate(
+                            date.getDate() + (currentDayOfWeek === 0 ? 0 : 7 - currentDayOfWeek)));
+                        newDate.setDate(newDate.getDate() + datePadding);
+                        return newDate;
                     },
                 },
                 [CalendarType.DateTime]: {
