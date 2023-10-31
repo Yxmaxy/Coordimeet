@@ -1,3 +1,61 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+@layer base {
+    /* Colors */
+    :root {
+        --main-100: #d9f1f6;
+        --main-200: #b3e3ee;
+        --main-300: #8dd5e6;
+        --main-400: #66c7de;
+        --main-500: #41b9d6;
+        --main-600: #3494ab;
+        --main-700: #276f80;
+        --main-800: #1a4a55;
+        --main-900: #0d252a;
+    }
+    :root[data-theme=green] {
+        --main-100: #d9f6ed;
+        --main-200: #b3eedc;
+        --main-300: #8de6cb;
+        --main-400: #66deba;
+        --main-500: #41d6a9;
+        --main-600: #34ab87;
+        --main-700: #278065;
+        --main-800: #1a5543;
+        --main-900: #0d2a21;
+    }
+    :root[data-theme=dark] {
+        --main-100: #2a393f;
+        --main-200: #253338;
+        --main-300: #212d32;
+        --main-400: #1d272c;
+        --main-500: #192225;
+        --main-600: #151c1f;
+        --main-700: #101619;
+        --main-800: #0c1112;
+        --main-900: #080b0c;
+    }
+
+    /* Fonts */
+    * {
+        font-family: "Segoe UI", sans-serif;
+        color: #061215;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 0.5rem;
+    }  
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #94c5d1;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #41B9D6;
+    }
+}

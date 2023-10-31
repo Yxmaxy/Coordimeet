@@ -31,10 +31,27 @@
                 border-l-transparent border-t-transparent border-r-transparent border-b-main-400 border-8"></div>
             <!-- Content -->
             <div class="absolute w-screen right-0 pl-10 pt-1 max-w-[20rem]">
-                <div class="flex flex-col bg-main-400 rounded-lg [&>*]:p-4 shadow-md">
+                <div class="flex flex-col bg-main-300 border-2 border-main-400 rounded-lg [&>*]:p-4 shadow-md">
                     <a :href="logoutLink">
                         Log out
                     </a>
+                    <div class="flex justify-between">
+                        Theme
+                        <div class="flex gap-1 [&>*]:h-5 [&>*]:w-5 [&>*]:rounded-sm [&>*]:border-2 [&>*]:border-main-600 [&>*]:cursor-pointer">
+                            <div
+                                @click="setTheme(Theme.BLUE)"
+                                class="bg-[#41b9d6]"
+                            ></div>
+                            <div
+                                @click="setTheme(Theme.GREEN)"
+                                class="bg-[#41D6A9]"
+                            ></div>
+                            <div
+                                @click="setTheme(Theme.DARK)"
+                                class="bg-[#2a393f]"
+                            ></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -43,6 +60,7 @@
 
 <script lang="ts">
 import { useUserStore } from "@/stores/UserStore";
+import { setTheme, Theme } from "@/utils/theme";
 
 export default {
     setup() {
@@ -50,6 +68,7 @@ export default {
         return {
             userStore,
             logoutLink: `${import.meta.env.VITE_BACKEND_URL}/googleLogout.php`,
+            Theme,
         }
     },
     data() {
@@ -57,5 +76,8 @@ export default {
             showLogout: false,
         }
     },
+    methods: {
+        setTheme,
+    }
 }
 </script>
