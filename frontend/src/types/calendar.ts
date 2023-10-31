@@ -7,7 +7,7 @@ export interface CalendarDate {
     display: string,
     date: Date,
     isInRange: boolean,
-    isAvailable?: boolean,
+    isAvailable: boolean,
 }
 
 export enum CalendarType {

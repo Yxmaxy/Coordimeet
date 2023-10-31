@@ -95,11 +95,18 @@ Ticket price: 5€"
             </div>
         </template>
         <template v-slot:calendar_input>
-            <calendar
+            <!-- <calendar
                 :type="calendarType"
                 :days="selectedDates"
                 :dateRanges="selectedDateRanges"
                 :mode="CalendarMode.Create"
+            /> -->
+            <calendar2
+                :roughEventDateRange="{
+                    from: new Date(fromDate),
+                    to: new Date(toDate),
+                }"
+                :calendarType="calendarType"
             />
         </template>
     </tab-controller>
@@ -117,6 +124,7 @@ import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomRadio from "@/components/ui/CustomRadio.vue";
 import Calendar from "@/components/Calendar.vue";
+import Calendar2 from "@/components/Calendar2.vue";
 import TabController from "@/components/TabController.vue";
 
 import { useUserStore } from "@/stores/UserStore";
@@ -148,6 +156,7 @@ export default {
     },
     components: {
         Calendar,
+        Calendar2,
         TabController,
         CustomInput,
         CustomButton,
