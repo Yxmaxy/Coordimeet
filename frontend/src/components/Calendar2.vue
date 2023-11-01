@@ -3,7 +3,7 @@
         <div v-for="dateRange in selectedDateRanges">
             {{ formatDateDayMonthYear(dateRange.from) }} - {{ formatDateDayMonthYear(dateRange.to) }}
         </div>
-        <!-- Header -->
+        <!-- Controls -->
         <div>
             <button @click="prevWeek">Prev</button>
             <button @click="nextWeek">Next</button>
@@ -16,14 +16,22 @@
             'grid-cols-7': calendarType === CalendarType.Date,
             'grid-flow-col grid-rows-24': calendarType === CalendarType.DateTime,
         }, 'grid gap-0.5']">
-            <!-- A date element -->
+            <!-- Header -->
+            <!-- <div>
+                TODO!
+            </div> -->
+
+            <!-- Dates -->
             <div
                 v-for="date in getCalendarDates"
                 :class="[{
-                    'bg-calendar-available': isDateInSelectedDateRanges(date),
+                    '!bg-calendar-available': isDateInSelectedDateRanges(date) ||
+                        (fromMode === 'add' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),  // date is being selected
+                    '!bg-calendar-unavailable': (fromMode === 'delete' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),
                 }, 'bg-calendar-in-range p-2 select-none cursor-pointer']"
                 @mousedown="onDateMouseDown(date)"
                 @mouseup="onDateMouseUp(date)"
+                @mouseenter="event => onDateMouseEnter(event, date)"
             >
                 {{ dateDisplayFunction(date) }}
             </div>
@@ -62,6 +70,7 @@ export default {
 
             fromDate: null as null | Date,  // set on from date select
             fromMode: "add" as "add" | "delete",  // mode when selecting from date
+            toDate: null as null | Date,  // changed on date enter
 
             selectedWeek: 0,  // current selected week
         }
@@ -127,10 +136,7 @@ export default {
             const date = new Date(from);
             for (let i = 0; date <= to && i < datesLimit; i++) {
                 dates.push(new Date(date));
-                if (this.calendarType === CalendarType.Date)
-                    date.setDate(date.getDate() + 1);
-                else if (this.calendarType === CalendarType.DateTime)
-                    date.setHours(date.getHours() + 1);
+                this.addUnitsToDate(date, this.calendarType, 1)
             }
             return dates;
         },
@@ -147,6 +153,17 @@ export default {
             const weeks = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 7));
             return this.selectedWeek < weeks - 1;
         },
+        creatingDateRange(): DateRange | null {
+            if (!this.fromDate || !this.toDate)
+                return null;
+            // switch dates if necessary
+            const from = this.fromDate < this.toDate ? this.fromDate : this.toDate;
+            const to = this.fromDate > this.toDate ? this.fromDate : this.toDate;
+            return {
+                from: from,
+                to: to,
+            } as DateRange;
+        },
     },
     methods: {
         // imported methods
@@ -155,9 +172,11 @@ export default {
 
         onDateMouseDown(date: Date) {
             this.fromDate = date;
+            this.toDate = date;
             this.fromMode = this.isDateInSelectedDateRanges(date) ? "delete" : "add";
         },
         onDateMouseUp(date: Date) {
+            this.toDate = null;  // reset the current selection
             if (!this.fromDate)  // this is always set, only here for typescript
                 return;
             const from = this.fromDate < date ? this.fromDate : date;
@@ -182,13 +201,8 @@ export default {
                             const newDateFrom = new Date(newDateRange.from);
                             const newDateTo = new Date(newDateRange.to);
                             // add padding
-                            if (this.calendarType === CalendarType.Date) {
-                                newDateFrom.setDate(newDateFrom.getDate() - 1);
-                                newDateTo.setDate(newDateTo.getDate() + 1);
-                            } else if (this.calendarType === CalendarType.DateTime) {
-                                newDateFrom.setHours(newDateFrom.getHours() - 1);
-                                newDateTo.setHours(newDateTo.getHours() + 1);
-                            }
+                            this.addUnitsToDate(newDateFrom, this.calendarType, -1);
+                            this.addUnitsToDate(newDateTo, this.calendarType, 1);
 
                             // create new date range for last part
                             this.selectedDateRanges.push({
@@ -203,10 +217,7 @@ export default {
                         if (newDateRange.from.getTime() === dateRange.from.getTime()) {
                             const newDateTo = new Date(newDateRange.to);
                             // add padding
-                            if (this.calendarType === CalendarType.Date)
-                                newDateTo.setDate(newDateTo.getDate() + 1);
-                            else if (this.calendarType === CalendarType.DateTime)
-                                newDateTo.setHours(newDateTo.getHours() + 1);
+                            this.addUnitsToDate(newDateTo, this.calendarType, 1)
 
                             dateRange.from = newDateTo;
                         }
@@ -214,10 +225,7 @@ export default {
                         if (newDateRange.to.getTime() === dateRange.to.getTime()) {
                             const newDateFrom = new Date(newDateRange.from);
                             // add padding
-                            if (this.calendarType === CalendarType.Date)
-                                newDateFrom.setDate(newDateFrom.getDate() - 1);
-                            else if (this.calendarType === CalendarType.DateTime)
-                                newDateFrom.setHours(newDateFrom.getHours() - 1);
+                            this.addUnitsToDate(newDateFrom, this.calendarType, -1)
 
                             dateRange.to = newDateFrom;
                         }
@@ -241,7 +249,7 @@ export default {
                             continue;
                         // join sibling ranges
                         const nextDate = new Date(dateRange.to);
-                        nextDate.setDate(nextDate.getDate() + 1);
+                        this.addUnitsToDate(nextDate, this.calendarType, 1);
                         if (nextDate.getTime() === siblingDateRange.from.getTime()) {
                             dateRange.to = siblingDateRange.to;
                             this.selectedDateRanges = this.selectedDateRanges.filter(x => x !== siblingDateRange);
@@ -251,11 +259,26 @@ export default {
             }
             this.fromDate = null;
         },
+        onDateMouseEnter(event: MouseEvent, date: Date) {
+            if (event.buttons !== 1)
+                return;
+            this.toDate = date;
+        },
 
         // dates
         isDateInSelectedDateRanges(date: Date): boolean {
             return this.selectedDateRanges
-                .some(dateRange => date >= dateRange.from && date <= dateRange.to);
+                .some(dateRange => this.isDateInDateRange(date, dateRange));
+        },
+        isDateInDateRange(date: Date, dateRange: DateRange) {
+            return date >= dateRange.from && date <= dateRange.to;
+        },
+        addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
+            if (calendarType === CalendarType.Date)
+                date.setDate(date.getDate() + units);
+            else if (calendarType === CalendarType.DateTime)
+                date.setHours(date.getHours() + units);
+            return date;
         },
 
         // weeks
