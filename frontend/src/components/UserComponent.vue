@@ -47,6 +47,10 @@
                                 class="bg-[#41D6A9]"
                             ></div>
                             <div
+                                @click="setTheme(Theme.PINK)"
+                                class="bg-[#e178cd]"
+                            ></div>
+                            <div
                                 @click="setTheme(Theme.DARK)"
                                 class="bg-[#2a393f]"
                             ></div>

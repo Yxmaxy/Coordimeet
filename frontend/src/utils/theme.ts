@@ -2,6 +2,7 @@ export enum Theme {
     BLUE = "blue",
     GREEN = "green",
     DARK = "dark",
+    PINK = "pink",
 }
 
 function getTheme(): Theme {
