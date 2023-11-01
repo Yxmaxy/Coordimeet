@@ -8,6 +8,7 @@ export default {
     extend: {
       colors: {
         "main": {
+          "000": "var(--main-000)",
           "100": "var(--main-100)",
           "200": "var(--main-200)",
           "300": "var(--main-300)",
@@ -18,7 +19,6 @@ export default {
           "800": "var(--main-800)",
           "900": "var(--main-900)",
         },
-        "text": "#061215",
         "calendar": {
           "in-range": "#eaf1f7",
           "available": "#bff1bf",

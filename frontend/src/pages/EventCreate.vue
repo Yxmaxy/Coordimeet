@@ -101,13 +101,15 @@ Ticket price: 5€"
                 :dateRanges="selectedDateRanges"
                 :mode="CalendarMode.Create"
             /> -->
-            <calendar2
-                :roughEventDateRange="{
-                    from: new Date(fromDate),
-                    to: new Date(toDate),
-                }"
-                :calendarType="calendarType"
-            />
+            <div class="bg-main-000 h-full">
+                <calendar2
+                    :roughEventDateRange="{
+                        from: new Date(fromDate),
+                        to: new Date(toDate),
+                    }"
+                    :calendarType="calendarType"
+                />
+            </div>
         </template>
     </tab-controller>
 </template>

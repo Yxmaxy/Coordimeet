@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="bg-main-000">
         <tab-controller :tabs="tabs">
             <template v-slot:events_invited>
                 <event-list-component :events="eventsInvited" />

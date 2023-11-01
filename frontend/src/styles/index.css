@@ -6,6 +6,7 @@
 @layer base {
     /* Colors */
     :root {
+        --main-000: #ecf8fa;
         --main-100: #d9f1f6;
         --main-200: #b3e3ee;
         --main-300: #8dd5e6;
@@ -15,8 +16,11 @@
         --main-700: #276f80;
         --main-800: #1a4a55;
         --main-900: #0d252a;
+
+        --text: #061215;
     }
     :root[data-theme=green] {
+        --main-000: #ecfaf6;
         --main-100: #d9f6ed;
         --main-200: #b3eedc;
         --main-300: #8de6cb;
@@ -26,8 +30,11 @@
         --main-700: #278065;
         --main-800: #1a5543;
         --main-900: #0d2a21;
+
+        --text: #061215;
     }
     :root[data-theme=dark] {
+        --main-000: #3f4c52;
         --main-100: #2a393f;
         --main-200: #253338;
         --main-300: #212d32;
@@ -37,12 +44,14 @@
         --main-700: #101619;
         --main-800: #0c1112;
         --main-900: #080b0c;
+
+        --text: #e0e0e0;
     }
 
     /* Fonts */
     * {
         font-family: "Segoe UI", sans-serif;
-        color: #061215;
+        color: var(--text);
     }
 
     /* Scrollbar */
@@ -50,12 +59,12 @@
         width: 0.5rem;
     }  
     ::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: var(--main-100);
     }
     ::-webkit-scrollbar-thumb {
-        background: #94c5d1;
+        background: var(--main-400);
     }
     ::-webkit-scrollbar-thumb:hover {
-        background: #41B9D6;
+        background: var(--main-500);
     }
 }
