@@ -1,18 +1,29 @@
 <template>
-    <div>
+    <div class="mx-2">
         <!-- Controls -->
-        <div>
-            <button @click="prevWeek">Prev</button>
-            <button @click="nextWeek">Next</button>
-
-            <div>Selected week {{ selectedWeek }}</div>
+        <div
+            class="flex py-2 justify-between"
+        >
+            <div>
+                <!-- Other controls -->
+            </div>
+            <div
+                v-if="calendarType === CalendarType.DateTime"
+                class="flex gap-2 items-center"
+            >
+                Selected week: {{ selectedWeek + 1 }} / {{ numberOfAllWeeks + 1 }}
+                <div class="flex gap-1">
+                    <custom-button @click="prevWeek">Prev</custom-button>
+                    <custom-button @click="nextWeek">Next</custom-button>
+                </div>
+            </div>
         </div>
 
         <!-- Header -->
         <div class="flex">
             <div
                 v-for="header in getCalendarHeader"
-                class="w-full text-main-000 bg-main-500 text-center font-bold p-2"
+                class="w-full text-main-000 bg-main-500 text-center font-bold py-2"
                 v-html="header"
             />
         </div>
@@ -24,7 +35,7 @@
         }, 'grid']">
             <div
                 v-for="date in getCalendarDates"
-                class="p-[0.075rem]"
+                class="p-[0.075rem] h-full"
                 @mousedown="onDateMouseDown(date)"
                 @mouseup="onDateMouseUp(date)"
                 @mouseenter="event => onDateMouseEnter(event, date)"
@@ -35,7 +46,8 @@
                         '!bg-calendar-available': isDateInSelectedDateRanges(date) ||
                             (fromMode === 'add' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),  // date is being selected
                         '!bg-calendar-unavailable': (fromMode === 'delete' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),
-                    }, 'bg-calendar-in-range transition-colors duration-75 p-2 text-center select-none cursor-pointer']"
+                    }, 'bg-calendar-in-range transition-colors duration-75',
+                    'h-full py-2 flex items-center justify-center select-none cursor-pointer']"
                 >
                     {{ dateDisplayFunction(date) }}
                 </div>
@@ -50,12 +62,17 @@ import { PropType } from "vue";
 import { formatDateDayMonthYear, formatDateDayMonth, formatDateDayMonthHour, formatDateHour, formatDateForBackend } from "@/utils/dates";
 import { CalendarType, CalendarDate, DateRange, CalendarMode } from "@/types/calendar";
 
+import CustomButton from "./ui/CustomButton.vue";
+
 export default {
     name: "Calendar2",
     setup() {
         return {
             CalendarType,
         }
+    },
+    components: {
+        CustomButton,
     },
     props: {
         // rough event duration for calculating pages
@@ -162,9 +179,11 @@ export default {
             return this.selectedWeek > 0;
         },
         isNextWeekEnabled(): boolean {
+            return this.selectedWeek < this.numberOfAllWeeks;
+        },
+        numberOfAllWeeks(): number {
             const { from, to } = this.roughEventDateRange;
-            const weeks = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 7));
-            return this.selectedWeek < weeks - 1;
+            return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 7));
         },
         creatingDateRange(): DateRange | null {
             if (!this.fromDate || !this.toDate)
