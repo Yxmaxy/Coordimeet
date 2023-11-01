@@ -74,10 +74,16 @@ export default {
     components: {
         CustomButton,
     },
+    emits: [ "update:selectedDateRanges" ],
     props: {
         // rough event duration for calculating pages
         roughEventDateRange: {
             type: Object as PropType<DateRange>,
+            required: true,
+        },
+        // selected date ranges shown in green
+        selectedDateRanges: {
+            type: Array as PropType<DateRange[]>,
             required: true,
         },
         // calendar type
@@ -88,8 +94,6 @@ export default {
     },
     data() {
         return {
-            selectedDateRanges: [] as DateRange[],  // date ranges in green
-
             fromDate: null as null | Date,  // set on from date select
             fromMode: "add" as "add" | "delete",  // mode when selecting from date
             toDate: null as null | Date,  // changed on date enter
@@ -220,9 +224,9 @@ export default {
 
             if (this.fromMode === "delete") {  // date range started on a selected date
                 // remove "eaten up" ranges
-                this.selectedDateRanges = this.selectedDateRanges.filter(x => {
+                this.$emit("update:selectedDateRanges", this.selectedDateRanges.filter(x => {
                     return !(x.from >= newDateRange.from && x.to <= newDateRange.to);
-                });
+                }));
                 
                 for (const dateRange of this.selectedDateRanges) {
                     if (dateRange.from <= newDateRange.from && newDateRange.to <= dateRange.to) {
@@ -265,13 +269,13 @@ export default {
                 
             } else if (this.fromMode === "add") {  // date range started on a non-selected date
                 // remove "eaten up" ranges
-                this.selectedDateRanges = this.selectedDateRanges.filter(x => {
+                this.$emit("update:selectedDateRanges", this.selectedDateRanges.filter(x => {
                     return !(x.from >= newDateRange.from && x.to <= newDateRange.to);
-                });
+                }));
                 // append new date range
                 this.selectedDateRanges.push(newDateRange);
                 // sort date ranges
-                this.selectedDateRanges = this.selectedDateRanges.sort((a, b) => a.from.getTime() - b.from.getTime());
+                this.$emit("update:selectedDateRanges", this.selectedDateRanges.sort((a, b) => a.from.getTime() - b.from.getTime()));
                 // cleanup - join ranges
                 for (const dateRange of this.selectedDateRanges) {
                     for (const siblingDateRange of this.selectedDateRanges) {
@@ -283,7 +287,7 @@ export default {
                         this.addUnitsToDate(nextDate, this.calendarType, 1);
                         if (nextDate.getTime() === siblingDateRange.from.getTime()) {
                             dateRange.to = siblingDateRange.to;
-                            this.selectedDateRanges = this.selectedDateRanges.filter(x => x !== siblingDateRange);
+                            this.$emit("update:selectedDateRanges", this.selectedDateRanges.filter(x => x !== siblingDateRange));
                         }
                     }
                 }

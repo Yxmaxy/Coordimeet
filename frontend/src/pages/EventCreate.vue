@@ -103,10 +103,8 @@ Ticket price: 5€"
             /> -->
             <div class="bg-main-000 h-full">
                 <calendar2
-                    :roughEventDateRange="{
-                        from: new Date(fromDate),
-                        to: new Date(toDate),
-                    }"
+                    :selectedDateRanges="selectedDateRanges"
+                    :roughEventDateRange="roughEventDateRange"
                     :calendarType="calendarType"
                 />
             </div>
@@ -117,10 +115,8 @@ Ticket price: 5€"
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
 import {
-    removeHoursMinutesFromDate,
     initializeDateInput,
-    formatDateForBackend,
-    getSelectedDatesOnCalendar } from "@/utils/dates";
+    formatDateForBackend } from "@/utils/dates";
 
 import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
@@ -172,12 +168,9 @@ export default {
             deadline: initializeDateInput(CalendarType.DateTime),
             
             calendarType: CalendarType.Date,
-            selectedDates: [] as CalendarDate[],
+            selectedDateRanges: [] as DateRange[],
             fromDate: initializeDateInput(CalendarType.Date),
             toDate: initializeDateInput(CalendarType.Date),
-            areDatesInvalid: false,
-
-            selectedDateRanges: [] as DateRange[],
         }
     },
     computed: {
@@ -191,24 +184,17 @@ export default {
                 return "date";
             return "datetime-local";
         },
+        areDatesInvalid(): boolean {
+            return this.fromDate < this.toDate;
+        },
+        roughEventDateRange(): DateRange {
+            return {
+                from: new Date(this.fromDate),
+                to: new Date(this.toDate),
+            }
+        },
     },
     methods: {
-        getDateRanges() {
-            this.areDatesInvalid = false;
-            const now = new Date();
-            const from = this.fromDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.fromDate)) : new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const to = this.toDate.length > 0 ? removeHoursMinutesFromDate(new Date(this.toDate)) :  new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23);
-            
-            if (from > to) {
-                this.areDatesInvalid = true;
-                return;
-            }
-
-            this.selectedDateRanges = [{
-                from: from,
-                to: to,
-            }];
-        },
         onCreateEvent() {
             if (this.name.length === 0) {
                 alert("You must enter a name for the event");
@@ -231,7 +217,12 @@ export default {
             }
 
             // calculate dates
-            const dates = getSelectedDatesOnCalendar(this.selectedDates);
+            const dates = this.selectedDateRanges.map(dateRange => {
+                return {
+                    StartDate: formatDateForBackend(dateRange.from),
+                    EndDate: formatDateForBackend(dateRange.to),
+                }
+            });
 
             if (dates.length === 0) {
                 alert(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
@@ -258,19 +249,10 @@ export default {
         },
     },
     watch: {
-        fromDate() {
-            this.getDateRanges();
-        },
-        toDate() {
-            this.getDateRanges();
-        },
         calendarType(newType: CalendarType) {
             this.toDate = initializeDateInput(newType, this.toDate);
             this.fromDate = initializeDateInput(newType, this.fromDate);
         },
     },
-    mounted() {
-        this.getDateRanges();
-    }
 }
 </script>
