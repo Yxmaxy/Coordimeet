@@ -72,7 +72,7 @@ export default {
     },
     methods: {
         checkIsMobile() {
-            this.isMobile = window.innerWidth <= 768;
+            this.isMobile = window.innerWidth <= 850;
         },
     },
     mounted() {

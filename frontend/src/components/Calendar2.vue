@@ -1,8 +1,5 @@
 <template>
     <div>
-        <div v-for="dateRange in selectedDateRanges">
-            {{ formatDateDayMonthYear(dateRange.from) }} - {{ formatDateDayMonthYear(dateRange.to) }}
-        </div>
         <!-- Controls -->
         <div>
             <button @click="prevWeek">Prev</button>
@@ -11,29 +8,37 @@
             <div>Selected week {{ selectedWeek }}</div>
         </div>
 
+        <!-- Header -->
+        <div class="flex">
+            <div
+                v-for="header in getCalendarHeader"
+                class="w-full text-main-000 bg-main-500 text-center font-bold p-2"
+                v-html="header"
+            />
+        </div>
+
         <!-- Calendar -->
         <div :class="[{
             'grid-cols-7': calendarType === CalendarType.Date,
             'grid-flow-col grid-rows-24': calendarType === CalendarType.DateTime,
-        }, 'grid gap-0.5']">
-            <!-- Header -->
-            <!-- <div>
-                TODO!
-            </div> -->
-
-            <!-- Dates -->
+        }, 'grid']">
             <div
                 v-for="date in getCalendarDates"
-                :class="[{
-                    '!bg-calendar-available': isDateInSelectedDateRanges(date) ||
-                        (fromMode === 'add' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),  // date is being selected
-                    '!bg-calendar-unavailable': (fromMode === 'delete' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),
-                }, 'bg-calendar-in-range p-2 select-none cursor-pointer']"
+                class="p-[0.075rem]"
                 @mousedown="onDateMouseDown(date)"
                 @mouseup="onDateMouseUp(date)"
                 @mouseenter="event => onDateMouseEnter(event, date)"
+                @mouseleave="onDateMouseLeave"
             >
-                {{ dateDisplayFunction(date) }}
+                <div
+                    :class="[{
+                        '!bg-calendar-available': isDateInSelectedDateRanges(date) ||
+                            (fromMode === 'add' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),  // date is being selected
+                        '!bg-calendar-unavailable': (fromMode === 'delete' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),
+                    }, 'bg-calendar-in-range transition-colors duration-75 p-2 text-center select-none cursor-pointer']"
+                >
+                    {{ dateDisplayFunction(date) }}
+                </div>
             </div>
         </div>
     </div>
@@ -76,8 +81,8 @@ export default {
         }
     },
     computed: {
-        // gets dates to display on the calendar
         getCalendarDates(): Date[] {
+            // gets dates to display on the calendar
             if (!this.roughEventDateRange)
                 return [];
             const dates: Date[] = [];
@@ -140,9 +145,17 @@ export default {
             }
             return dates;
         },
+        getCalendarHeader(): string[] {
+            const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
+            if (this.calendarType === CalendarType.Date)
+                return days;
+            return this.getCalendarDates
+                .filter((_, index) => index % 24 === 0)
+                .map((date, index) => `${days[index]}<br/>${formatDateDayMonth(date)}`);
+        },
         dateDisplayFunction() {
             if (this.calendarType === CalendarType.DateTime)
-                return formatDateDayMonthHour;
+                return formatDateHour;
             return formatDateDayMonth;
         },
         isPrevWeekEnabled(): boolean {
@@ -176,7 +189,6 @@ export default {
             this.fromMode = this.isDateInSelectedDateRanges(date) ? "delete" : "add";
         },
         onDateMouseUp(date: Date) {
-            this.toDate = null;  // reset the current selection
             if (!this.fromDate)  // this is always set, only here for typescript
                 return;
             const from = this.fromDate < date ? this.fromDate : date;
@@ -263,6 +275,9 @@ export default {
             if (event.buttons !== 1)
                 return;
             this.toDate = date;
+        },
+        onDateMouseLeave() {
+            this.toDate = null;
         },
 
         // dates
