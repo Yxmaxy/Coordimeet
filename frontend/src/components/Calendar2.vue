@@ -5,7 +5,7 @@
             class="flex py-2 justify-between"
         >
             <div>
-                <!-- Other controls -->
+                <!-- TODO: Other controls -->
             </div>
             <div
                 v-if="calendarType === CalendarType.DateTime"
@@ -46,6 +46,7 @@
                         '!bg-calendar-available': isDateInSelectedDateRanges(date) ||
                             (fromMode === 'add' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),  // date is being selected
                         '!bg-calendar-unavailable': (fromMode === 'delete' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),
+                        '!bg-calendar-selectable !cursor-not-allowed': !isDateInSelectableDateRanges(date)  // date is in selectable date ranges,
                     }, 'bg-calendar-in-range transition-colors duration-75',
                     'h-full py-2 flex items-center justify-center select-none cursor-pointer']"
                 >
@@ -85,6 +86,11 @@ export default {
         selectedDateRanges: {
             type: Array as PropType<DateRange[]>,
             required: true,
+        },
+        // selectable date ranges shown which the user can choose
+        selectableDateRanges: {
+            type: Array as PropType<DateRange[]>,
+            default: [],
         },
         // calendar type
         calendarType: {
@@ -222,13 +228,15 @@ export default {
                 to: to,
             } as DateRange;
 
+            let updateSelectedDateRanges = this.selectedDateRanges;
+
             if (this.fromMode === "delete") {  // date range started on a selected date
                 // remove "eaten up" ranges
-                this.$emit("update:selectedDateRanges", this.selectedDateRanges.filter(x => {
+                updateSelectedDateRanges = updateSelectedDateRanges.filter(x => {
                     return !(x.from >= newDateRange.from && x.to <= newDateRange.to);
-                }));
+                });
                 
-                for (const dateRange of this.selectedDateRanges) {
+                for (const dateRange of updateSelectedDateRanges) {
                     if (dateRange.from <= newDateRange.from && newDateRange.to <= dateRange.to) {
                         // selection splits existing range
                         if (newDateRange.from > dateRange.from && newDateRange.to < dateRange.to) {
@@ -240,7 +248,7 @@ export default {
                             this.addUnitsToDate(newDateTo, this.calendarType, 1);
 
                             // create new date range for last part
-                            this.selectedDateRanges.push({
+                            updateSelectedDateRanges.push({
                                 from: newDateTo,
                                 to: dateRange.to,
                             });
@@ -269,16 +277,16 @@ export default {
                 
             } else if (this.fromMode === "add") {  // date range started on a non-selected date
                 // remove "eaten up" ranges
-                this.$emit("update:selectedDateRanges", this.selectedDateRanges.filter(x => {
+                updateSelectedDateRanges = updateSelectedDateRanges.filter(x => {
                     return !(x.from >= newDateRange.from && x.to <= newDateRange.to);
-                }));
+                });
                 // append new date range
-                this.selectedDateRanges.push(newDateRange);
+                updateSelectedDateRanges.push(newDateRange);
                 // sort date ranges
-                this.$emit("update:selectedDateRanges", this.selectedDateRanges.sort((a, b) => a.from.getTime() - b.from.getTime()));
+                updateSelectedDateRanges = updateSelectedDateRanges.sort((a, b) => a.from.getTime() - b.from.getTime());
                 // cleanup - join ranges
-                for (const dateRange of this.selectedDateRanges) {
-                    for (const siblingDateRange of this.selectedDateRanges) {
+                for (const dateRange of updateSelectedDateRanges) {
+                    for (const siblingDateRange of updateSelectedDateRanges) {
                         // skip duplicates; dateRange is always smaller than siblingDateRange
                         if (dateRange.from >= siblingDateRange.from)
                             continue;
@@ -287,11 +295,13 @@ export default {
                         this.addUnitsToDate(nextDate, this.calendarType, 1);
                         if (nextDate.getTime() === siblingDateRange.from.getTime()) {
                             dateRange.to = siblingDateRange.to;
-                            this.$emit("update:selectedDateRanges", this.selectedDateRanges.filter(x => x !== siblingDateRange));
+                            updateSelectedDateRanges = updateSelectedDateRanges.filter(x => x !== siblingDateRange);
                         }
                     }
                 }
             }
+            // emit the changes
+            this.$emit("update:selectedDateRanges", updateSelectedDateRanges);
             this.fromDate = null;
         },
         onDateMouseEnter(event: MouseEvent, date: Date) {
@@ -310,6 +320,12 @@ export default {
         },
         isDateInDateRange(date: Date, dateRange: DateRange) {
             return date >= dateRange.from && date <= dateRange.to;
+        },
+        isDateInSelectableDateRanges(date: Date): boolean {
+            if (this.selectableDateRanges.length === 0)
+                return true;
+            return this.selectableDateRanges
+                .some(dateRange => this.isDateInDateRange(date, dateRange));
         },
         addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
             if (calendarType === CalendarType.Date)
