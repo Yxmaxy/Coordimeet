@@ -103,7 +103,7 @@ Ticket price: 5€"
             /> -->
             <div class="bg-main-000 h-full">
                 <calendar2
-                    :selectedDateRanges="selectedDateRanges"
+                    v-model:selectedDateRanges="selectedDateRanges"
                     :roughEventDateRange="roughEventDateRange"
                     :calendarType="calendarType"
                 />

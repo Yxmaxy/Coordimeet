@@ -25,8 +25,10 @@
                 v-for="header in getCalendarHeader"
                 class="w-full text-main-000 bg-main-500 text-center font-bold py-2"
                 v-html="header"
-            />
+            ></div>
         </div>
+
+        {{ selectedDateRanges }}
 
         <!-- Calendar -->
         <div :class="[{
@@ -46,7 +48,7 @@
                         '!bg-calendar-available': isDateInSelectedDateRanges(date) ||
                             (fromMode === 'add' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),  // date is being selected
                         '!bg-calendar-unavailable': (fromMode === 'delete' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),
-                        '!bg-calendar-selectable !cursor-not-allowed': !isDateInSelectableDateRanges(date)  // date is in selectable date ranges,
+                        '!bg-calendar-selectable !cursor-not-allowed': !isDateInSelectableDateRanges(date),  // date is in selectable date ranges
                     }, 'bg-calendar-in-range transition-colors duration-75',
                     'h-full py-2 flex items-center justify-center select-none cursor-pointer']"
                 >
@@ -213,12 +215,16 @@ export default {
         formatDateDayMonthYear,
 
         onDateMouseDown(date: Date) {
+            if (!this.isDateInSelectableDateRanges(date))  // date is not selectable
+                return;
             this.fromDate = date;
             this.toDate = date;
             this.fromMode = this.isDateInSelectedDateRanges(date) ? "delete" : "add";
         },
         onDateMouseUp(date: Date) {
             if (!this.fromDate)  // this is always set, only here for typescript
+                return;
+            if (!this.isDateInSelectableDateRanges(date))  // date is not selectable
                 return;
             const from = this.fromDate < date ? this.fromDate : date;
             const to = this.fromDate > date ? this.fromDate : date;
@@ -276,6 +282,8 @@ export default {
                 }
                 
             } else if (this.fromMode === "add") {  // date range started on a non-selected date
+                // TODO: remove dates if they aren't in selectable date ranges!
+                
                 // remove "eaten up" ranges
                 updateSelectedDateRanges = updateSelectedDateRanges.filter(x => {
                     return !(x.from >= newDateRange.from && x.to <= newDateRange.to);
@@ -305,6 +313,8 @@ export default {
             this.fromDate = null;
         },
         onDateMouseEnter(event: MouseEvent, date: Date) {
+            if (!this.isDateInSelectableDateRanges(date))  // date is not selectable
+                return;
             if (event.buttons !== 1)
                 return;
             this.toDate = date;

@@ -32,7 +32,7 @@
             <!-- Content -->
             <div class="absolute w-screen right-0 pl-10 pt-1 max-w-[20rem]">
                 <div class="flex flex-col bg-main-300 border-2 border-main-400 rounded-lg [&>*]:p-4 shadow-md">
-                    <a :href="logoutLink">
+                    <a :href="logoutLink" class="hover:bg-main-400 transition-colors">
                         Log out
                     </a>
                     <div class="flex justify-between">
