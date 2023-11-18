@@ -282,12 +282,28 @@ export default {
                 }
                 
             } else if (this.fromMode === "add") {  // date range started on a non-selected date
-                // TODO: remove dates if they aren't in selectable date ranges!
-                
                 // remove "eaten up" ranges
                 updateSelectedDateRanges = updateSelectedDateRanges.filter(x => {
                     return !(x.from >= newDateRange.from && x.to <= newDateRange.to);
                 });
+                // check for new gaps in selectableDateRanges
+                if (this.selectableDateRanges) {
+                    for (let i = 0; i < this.selectableDateRanges.length - 1; i++) {
+                        const selectableDateRange = this.selectableDateRanges[i];
+                        const nextSelctableDateRange = this.selectableDateRanges[i + 1];
+                        // new date range from is inside a selected date range and to is outside
+                        if (this.isDateInDateRange(newDateRange.from, selectableDateRange) && newDateRange.to > selectableDateRange.to) {
+                            // insert a date range for the first selectable part
+                            const previousDateRange = {
+                                from: newDateRange.from,
+                                to: selectableDateRange.to
+                            } as DateRange
+                            // modify the new date range to start on the next selectable date range
+                            newDateRange.from = nextSelctableDateRange.from;
+                            updateSelectedDateRanges.push(previousDateRange);
+                        }
+                    }
+                }
                 // append new date range
                 updateSelectedDateRanges.push(newDateRange);
                 // sort date ranges
