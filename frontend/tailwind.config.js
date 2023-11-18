@@ -20,10 +20,10 @@ export default {
           "900": "var(--main-900)",
         },
         "calendar": {
-          "in-range": "#eaf1f7",
-          "available": "#bff1bf",
-          "unavailable": "#e4c0c0",
-          "non-selected": "#f7fafc",
+          "available": "#bff1bf",  // green
+          "unavailable": "#e4c0c0",  // red
+          "default": "var(--main-200)",  // default
+          "disabled": "var(--main-100)", // disabled
         },
         "invalid": {
           "light": "#ecd2d2",

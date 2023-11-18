@@ -48,8 +48,8 @@
                         '!bg-calendar-available': isDateInSelectedDateRanges(date) ||
                             (fromMode === 'add' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),  // date is being selected
                         '!bg-calendar-unavailable': (fromMode === 'delete' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),
-                        '!bg-calendar-selectable !cursor-not-allowed': !isDateInSelectableDateRanges(date),  // date is in selectable date ranges
-                    }, 'bg-calendar-in-range transition-colors duration-75',
+                        '!bg-calendar-disabled !cursor-not-allowed': !isDateInSelectableDateRanges(date),  // date is in selectable date ranges
+                    }, 'bg-calendar-default transition-colors duration-75',
                     'h-full py-2 flex items-center justify-center select-none cursor-pointer']"
                 >
                     {{ dateDisplayFunction(date) }}
