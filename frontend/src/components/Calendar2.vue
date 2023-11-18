@@ -4,8 +4,19 @@
         <div
             class="flex py-2 justify-between"
         >
-            <div>
-                <!-- TODO: Other controls -->
+            <div class="flex gap-1">
+                <custom-button
+                    @click="$emit('update:selectedDateRanges', [])"
+                    :small="true"
+                >
+                    Reset selection
+                </custom-button>
+                <custom-button
+                    @click="invertSelectedDateRanges"
+                    :small="true"
+                >
+                    Invert selection
+                </custom-button>
             </div>
             <div
                 v-if="calendarType === CalendarType.DateTime"
@@ -214,6 +225,7 @@ export default {
         formatDateDayMonth,
         formatDateDayMonthYear,
 
+        // event handlers
         onDateMouseDown(date: Date) {
             if (!this.isDateInSelectableDateRanges(date))  // date is not selectable
                 return;
@@ -237,50 +249,7 @@ export default {
             let updateSelectedDateRanges = this.selectedDateRanges;
 
             if (this.fromMode === "delete") {  // date range started on a selected date
-                // remove "eaten up" ranges
-                updateSelectedDateRanges = updateSelectedDateRanges.filter(x => {
-                    return !(x.from >= newDateRange.from && x.to <= newDateRange.to);
-                });
-                
-                for (const dateRange of updateSelectedDateRanges) {
-                    if (dateRange.from <= newDateRange.from && newDateRange.to <= dateRange.to) {
-                        // selection splits existing range
-                        if (newDateRange.from > dateRange.from && newDateRange.to < dateRange.to) {
-                            // add current selection to date range
-                            const newDateFrom = new Date(newDateRange.from);
-                            const newDateTo = new Date(newDateRange.to);
-                            // add padding
-                            this.addUnitsToDate(newDateFrom, this.calendarType, -1);
-                            this.addUnitsToDate(newDateTo, this.calendarType, 1);
-
-                            // create new date range for last part
-                            updateSelectedDateRanges.push({
-                                from: newDateTo,
-                                to: dateRange.to,
-                            });
-                            // update current range for first part
-                            dateRange.to = new Date(newDateFrom);
-                            return;
-                        }
-                        // remove from start
-                        if (newDateRange.from.getTime() === dateRange.from.getTime()) {
-                            const newDateTo = new Date(newDateRange.to);
-                            // add padding
-                            this.addUnitsToDate(newDateTo, this.calendarType, 1)
-
-                            dateRange.from = newDateTo;
-                        }
-                        // remove from end
-                        if (newDateRange.to.getTime() === dateRange.to.getTime()) {
-                            const newDateFrom = new Date(newDateRange.from);
-                            // add padding
-                            this.addUnitsToDate(newDateFrom, this.calendarType, -1)
-
-                            dateRange.to = newDateFrom;
-                        }
-                    }
-                }
-                
+                updateSelectedDateRanges = this.deleteDateRangeFromDateRanges(newDateRange, updateSelectedDateRanges);
             } else if (this.fromMode === "add") {  // date range started on a non-selected date
                 // remove "eaten up" ranges
                 updateSelectedDateRanges = updateSelectedDateRanges.filter(x => {
@@ -339,7 +308,55 @@ export default {
             this.toDate = null;
         },
 
-        // dates
+        // interaction handlers
+        deleteDateRangeFromDateRanges(deleteDateRange: DateRange, dateRanges: DateRange[]): DateRange[] {
+            // remove "eaten up" ranges
+            dateRanges = dateRanges.filter(x => {
+                return !(x.from >= deleteDateRange.from && x.to <= deleteDateRange.to);
+            });
+            
+            for (const dateRange of dateRanges) {
+                if (dateRange.from <= deleteDateRange.from && deleteDateRange.to <= dateRange.to) {
+                    // selection splits existing range
+                    if (deleteDateRange.from > dateRange.from && deleteDateRange.to < dateRange.to) {
+                        // add current selection to date range
+                        const newDateFrom = new Date(deleteDateRange.from);
+                        const newDateTo = new Date(deleteDateRange.to);
+                        // add padding
+                        this.addUnitsToDate(newDateFrom, this.calendarType, -1);
+                        this.addUnitsToDate(newDateTo, this.calendarType, 1);
+
+                        // create new date range for last part
+                        dateRanges.push({
+                            from: newDateTo,
+                            to: dateRange.to,
+                        });
+                        // update current range for first part
+                        dateRange.to = new Date(newDateFrom);
+                        continue;
+                    }
+                    // remove from start
+                    if (deleteDateRange.from.getTime() === dateRange.from.getTime()) {
+                        const newDateTo = new Date(deleteDateRange.to);
+                        // add padding
+                        this.addUnitsToDate(newDateTo, this.calendarType, 1)
+
+                        dateRange.from = newDateTo;
+                    }
+                    // remove from end
+                    if (deleteDateRange.to.getTime() === dateRange.to.getTime()) {
+                        const newDateFrom = new Date(deleteDateRange.from);
+                        // add padding
+                        this.addUnitsToDate(newDateFrom, this.calendarType, -1)
+
+                        dateRange.to = newDateFrom;
+                    }
+                }
+            }
+            return dateRanges;
+        },
+
+        // date helpers
         isDateInSelectedDateRanges(date: Date): boolean {
             return this.selectedDateRanges
                 .some(dateRange => this.isDateInDateRange(date, dateRange));
@@ -359,6 +376,18 @@ export default {
             else if (calendarType === CalendarType.DateTime)
                 date.setHours(date.getHours() + units);
             return date;
+        },
+        deepCopyDateRange(dateRange: DateRange): DateRange {
+            return {
+                from: new Date(dateRange.from),
+                to: new Date(dateRange.to),
+            } as DateRange
+        },
+        invertSelectedDateRanges() {
+            let updateSelectedDateRanges = this.selectableDateRanges.map(this.deepCopyDateRange);
+            for (const selectedDateRange of this.selectedDateRanges)
+                updateSelectedDateRanges = this.deleteDateRangeFromDateRanges(selectedDateRange, updateSelectedDateRanges);
+            this.$emit('update:selectedDateRanges', updateSelectedDateRanges);
         },
 
         // weeks
