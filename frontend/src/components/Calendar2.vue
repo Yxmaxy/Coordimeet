@@ -4,9 +4,9 @@
         <div
             class="flex py-2 justify-between"
         >
-            <div class="flex gap-1">
+            <div class="flex gap-1 items-center">
                 <custom-button
-                    @click="$emit('update:selectedDateRanges', [])"
+                    @click="resetSelectedDateRanges"
                     :small="true"
                 >
                     Reset selection
@@ -17,6 +17,10 @@
                 >
                     Invert selection
                 </custom-button>
+                <label class="text-sm flex gap-1">
+                    <span>Unavailable dates</span>
+                    <input v-model="selectUnavailable" type="checkbox" />
+                </label>
             </div>
             <div
                 v-if="calendarType === CalendarType.DateTime"
@@ -56,10 +60,9 @@
             >
                 <div
                     :class="[{
-                        '!bg-calendar-available': isDateInSelectedDateRanges(date) ||
-                            (fromMode === 'add' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),  // date is being selected
-                        '!bg-calendar-unavailable': (fromMode === 'delete' && creatingDateRange && isDateInDateRange(date, creatingDateRange)),
-                        '!bg-calendar-disabled !cursor-not-allowed': !isDateInSelectableDateRanges(date),  // date is in selectable date ranges
+                        '!bg-calendar-available': isDateAvailable(date) && !selectUnavailable,
+                        '!bg-calendar-unavailable': isDateUnavailable(date) || selectUnavailable && !isDateAvailable(date) && !isDateDisabled(date),
+                        '!bg-calendar-disabled !cursor-not-allowed': isDateDisabled(date),
                     }, 'bg-calendar-default transition-colors duration-75',
                     'h-full py-2 flex items-center justify-center select-none cursor-pointer']"
                 >
@@ -116,6 +119,8 @@ export default {
             fromDate: null as null | Date,  // set on from date select
             fromMode: "add" as "add" | "delete",  // mode when selecting from date
             toDate: null as null | Date,  // changed on date enter
+
+            selectUnavailable: false,  // is user selecting unavailable dates
 
             selectedWeek: 0,  // current selected week
         }
@@ -389,6 +394,12 @@ export default {
                 updateSelectedDateRanges = this.deleteDateRangeFromDateRanges(selectedDateRange, updateSelectedDateRanges);
             this.$emit('update:selectedDateRanges', updateSelectedDateRanges);
         },
+        resetSelectedDateRanges() {
+            // sets the selected date ranges either to full or empty
+            const updateSelectedDateRanges = this.selectUnavailable ?
+                this.selectableDateRanges.map(this.deepCopyDateRange) : []
+            this.$emit('update:selectedDateRanges', updateSelectedDateRanges)
+        },
 
         // weeks
         prevWeek() {
@@ -399,6 +410,33 @@ export default {
             if (this.isNextWeekEnabled)
                 this.selectedWeek++;
         },
+
+        // calendar colors
+        isDateAvailable(date: Date): boolean {
+            if (this.isDateInSelectedDateRanges(date))
+                return true;
+            // check if date is currently selected
+            return this.fromMode === 'add' &&
+                this.creatingDateRange !== null &&
+                this.isDateInDateRange(date, this.creatingDateRange)
+        },
+        isDateUnavailable(date: Date): boolean {
+            // is date currently being deleted
+            return this.fromMode === 'delete' &&
+                this.creatingDateRange !== null &&
+                this.isDateInDateRange(date, this.creatingDateRange)
+        },
+        isDateDisabled(date: Date): boolean {
+            return !this.isDateInSelectableDateRanges(date);
+        },
+    },
+    watch: {
+        selectUnavailable() {
+            // if selected date ranges are empty or completely full, reset whenever the unavailable is switched
+            if (this.selectedDateRanges.length === 0 || this.selectedDateRanges.length === this.selectableDateRanges.length) {
+                this.resetSelectedDateRanges();
+            }
+        }
     },
 }
 </script>
