@@ -76,13 +76,13 @@
 <script lang="ts">
 import { PropType } from "vue";
 
-import { formatDateDayMonthYear, formatDateDayMonth, formatDateDayMonthHour, formatDateHour, formatDateForBackend } from "@/utils/dates";
-import { CalendarType, CalendarDate, DateRange, CalendarMode } from "@/types/calendar";
+import { formatDateDayMonthYear, formatDateDayMonth, formatDateHour } from "@/utils/dates";
+import { CalendarType, DateRange } from "@/types/calendar";
 
 import CustomButton from "./ui/CustomButton.vue";
 
 export default {
-    name: "Calendar2",
+    name: "Calendar",
     setup() {
         return {
             CalendarType,
