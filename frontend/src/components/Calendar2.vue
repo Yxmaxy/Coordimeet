@@ -43,8 +43,6 @@
             ></div>
         </div>
 
-        {{ selectedDateRanges }}
-
         <!-- Calendar -->
         <div :class="[{
             'grid-cols-7': calendarType === CalendarType.Date,
@@ -57,6 +55,8 @@
                 @mouseup="onDateMouseUp(date)"
                 @mouseenter="event => onDateMouseEnter(event, date)"
                 @mouseleave="onDateMouseLeave"
+                @touchstart.prevent="onDateTouchStart(date)"
+                @touchend="onDateTouchEnd(date)"
             >
                 <div
                     :class="[{
@@ -121,6 +121,7 @@ export default {
             toDate: null as null | Date,  // changed on date enter
 
             selectUnavailable: false,  // is user selecting unavailable dates
+            longpressTimeout: null as null | ReturnType<typeof setTimeout>,
 
             selectedWeek: 0,  // current selected week
         }
@@ -261,7 +262,7 @@ export default {
             this.fromMode = this.isDateInSelectedDateRanges(date) ? "delete" : "add";
         },
         onDateMouseUp(date: Date) {
-            if (!this.fromDate)  // this is always set, only here for typescript
+            if (!this.fromDate)  // this should always be set
                 return;
             if (!this.isDateInSelectableDateRanges(date))  // date is not selectable
                 return;
@@ -333,6 +334,27 @@ export default {
         },
         onDateMouseLeave() {
             this.toDate = null;
+        },
+        onDateTouchStart(date: Date) {
+            if (this.fromDate === null) {  // start user selection
+                this.longpressTimeout = setTimeout(() => {
+                    window.navigator.vibrate(200);
+                    this.onDateMouseDown(date);
+                }, 350)
+            } else {  // end user selection
+                this.onDateMouseUp(date);
+                this.longpressTimeout = null;
+            }
+        },
+        onDateTouchEnd(date: Date) {
+            // long press was canceled on same date
+            if (this.fromDate?.getTime() === date.getTime() || this.longpressTimeout === null)
+                return;
+            clearInterval(this.longpressTimeout);
+            this.longpressTimeout = null;
+            // select the current date
+            this.onDateMouseDown(date);
+            this.onDateMouseUp(date);
         },
 
         // interaction handlers
@@ -458,7 +480,7 @@ export default {
             if (this.selectedDateRanges.length === 0 || this.selectedDateRanges.length === this.defaultDateRanges.length) {
                 this.resetSelectedDateRanges();
             }
-        }
+        },
     },
 }
 </script>
