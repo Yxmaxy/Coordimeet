@@ -20,8 +20,8 @@ export default {
           "900": "var(--main-900)",
         },
         "calendar": {
-          "available": "#bff1bf",  // green
-          "unavailable": "#e4c0c0",  // red
+          "available": "var(--calendar-available)",  // green
+          "unavailable": "var(--calendar-unavailable)",  // red
           "default": "var(--main-200)",  // default
           "disabled": "var(--main-100)", // disabled
         },

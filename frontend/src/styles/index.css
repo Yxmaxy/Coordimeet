@@ -18,6 +18,9 @@
         --main-900: #0d252a;
 
         --text: #061215;
+
+        --calendar-available: #bff1bf;
+        --calendar-unavailable: #e4c0c0;
     }
     :root[data-theme=green] {
         --main-000: #ecfaf6;
@@ -32,6 +35,8 @@
         --main-900: #0d2a21;
 
         --text: #061215;
+
+        --calendar-available: #c0dfb0;
     }
     :root[data-theme=pink] {
         --main-000: #fcf1fa;
@@ -46,10 +51,12 @@
         --main-900: #43243d;
 
         --text: #061215;
+
+        --calendar-unavailable: #daaeae;
     }
     :root[data-theme=dark] {
         --main-000: #3f4c52;
-        --main-100: #2a393f;
+        --main-100: #2e3f46;
         --main-200: #253338;
         --main-300: #212d32;
         --main-400: #1d272c;
@@ -60,6 +67,9 @@
         --main-900: #080b0c;
 
         --text: #e0e0e0;
+
+        --calendar-available: rgb(110, 153, 110);
+        --calendar-unavailable: #b59696;
     }
 
     /* Fonts */
@@ -80,5 +90,10 @@
     }
     ::-webkit-scrollbar-thumb:hover {
         background: var(--main-500);
+    }
+
+    /* Checkbox */
+    input[type=checkbox] {
+        accent-color: var(--main-600);
     }
 }

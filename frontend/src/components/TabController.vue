@@ -8,7 +8,7 @@
                 v-for="(tab, index) in tabs" :key="`mobile_header_${index}`"
                 :class="[{
                     'bg-main-300 text-main-100': activeTab !== index,
-                    'bg-main-200 text-main-700': activeTab === index,
+                    'bg-main-200': activeTab === index,
                 },
                 'flex-1 flex items-center justify-center cursor-pointer select-none h-14',
                 'transition-colors border-r-2 last:border-r-0 border-main-200']"
