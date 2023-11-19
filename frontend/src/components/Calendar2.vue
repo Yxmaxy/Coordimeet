@@ -1,5 +1,5 @@
 <template>
-    <div class="mx-2">
+    <div class="mx-2 mb-2">
         <!-- Controls -->
         <div
             class="flex py-2 justify-between"
@@ -126,6 +126,7 @@ export default {
         }
     },
     computed: {
+        // calendar
         getCalendarDates(): Date[] {
             // gets dates to display on the calendar
             if (!this.roughEventDateRange)
@@ -134,6 +135,7 @@ export default {
             const datePadding = 7;  // how many days to add to the calendar
             const datesLimit = this.calendarType === CalendarType.Date ? 371 : 24 * 7;
             
+            // functions for calculating the correct padding for from and to dates
             const rangeConversion = {
                 [CalendarType.Date]: {
                     from: (date: Date) => {
@@ -198,11 +200,8 @@ export default {
                 .filter((_, index) => index % 24 === 0)
                 .map((date, index) => `${days[index]}<br/>${formatDateDayMonth(date)}`);
         },
-        dateDisplayFunction() {
-            if (this.calendarType === CalendarType.DateTime)
-                return formatDateHour;
-            return formatDateDayMonth;
-        },
+
+        // weeks
         isPrevWeekEnabled(): boolean {
             return this.selectedWeek > 0;
         },
@@ -213,7 +212,15 @@ export default {
             const { from, to } = this.roughEventDateRange;
             return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 7));
         },
+
+        // dates
+        dateDisplayFunction() {
+            if (this.calendarType === CalendarType.DateTime)
+                return formatDateHour;
+            return formatDateDayMonth;
+        },
         creatingDateRange(): DateRange | null {
+            // used when the user is interacting with the calendar
             if (!this.fromDate || !this.toDate)
                 return null;
             // switch dates if necessary
@@ -223,6 +230,21 @@ export default {
                 from: from,
                 to: to,
             } as DateRange;
+        },
+        defaultDateRanges(): DateRange[] {
+            // used when reseting the selection
+            if (this.selectableDateRanges.length !== 0)
+                return this.selectableDateRanges;
+            if (this.getCalendarDates.length > 0) {
+                const firstDate = this.getCalendarDates[0];
+                const lastDate = this.getCalendarDates[this.getCalendarDates.length - 1];
+                return [{
+                    from: new Date(firstDate),
+                    to: new Date(lastDate)
+                } as DateRange]
+            }
+
+            return []
         },
     },
     methods: {
@@ -389,7 +411,7 @@ export default {
             } as DateRange
         },
         invertSelectedDateRanges() {
-            let updateSelectedDateRanges = this.selectableDateRanges.map(this.deepCopyDateRange);
+            let updateSelectedDateRanges = this.defaultDateRanges.map(this.deepCopyDateRange);
             for (const selectedDateRange of this.selectedDateRanges)
                 updateSelectedDateRanges = this.deleteDateRangeFromDateRanges(selectedDateRange, updateSelectedDateRanges);
             this.$emit('update:selectedDateRanges', updateSelectedDateRanges);
@@ -397,7 +419,7 @@ export default {
         resetSelectedDateRanges() {
             // sets the selected date ranges either to full or empty
             const updateSelectedDateRanges = this.selectUnavailable ?
-                this.selectableDateRanges.map(this.deepCopyDateRange) : []
+                this.defaultDateRanges.map(this.deepCopyDateRange) : []
             this.$emit('update:selectedDateRanges', updateSelectedDateRanges)
         },
 
@@ -433,7 +455,7 @@ export default {
     watch: {
         selectUnavailable() {
             // if selected date ranges are empty or completely full, reset whenever the unavailable is switched
-            if (this.selectedDateRanges.length === 0 || this.selectedDateRanges.length === this.selectableDateRanges.length) {
+            if (this.selectedDateRanges.length === 0 || this.selectedDateRanges.length === this.defaultDateRanges.length) {
                 this.resetSelectedDateRanges();
             }
         }
