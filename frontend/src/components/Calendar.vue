@@ -9,18 +9,33 @@
                     @click="resetSelectedDateRanges"
                     :small="true"
                 >
-                    Reset selection
+                    Reset
                 </custom-button>
                 <custom-button
                     @click="invertSelectedDateRanges"
                     :small="true"
                 >
-                    Invert selection
+                    Invert
                 </custom-button>
-                <label class="text-sm flex gap-1">
-                    <span>Unavailable dates</span>
-                    <input v-model="selectUnavailable" type="checkbox" />
-                </label>
+                
+                <custom-toggle
+                    class="ml-3"
+                    v-model="selectUnavailable"
+                >
+                    <template v-slot:left>
+                        <div
+                            class="h-5 w-5 rounded-sm
+                            border-2 border-main-300 bg-calendar-available"
+                        ></div>
+                    </template>
+
+                    <template v-slot:right>
+                        <div
+                            class="h-5 w-5 rounded-sm
+                            border-2 border-main-300 bg-calendar-unavailable"
+                        ></div>
+                    </template>
+                </custom-toggle>
             </div>
             <div
                 v-if="calendarType === CalendarType.DateTime"
@@ -80,6 +95,7 @@ import { formatDateDayMonthYear, formatDateDayMonth, formatDateHour } from "@/ut
 import { CalendarType, DateRange } from "@/types/calendar";
 
 import CustomButton from "./ui/CustomButton.vue";
+import CustomToggle from "./ui/CustomToggle.vue";
 
 export default {
     name: "Calendar",
@@ -90,6 +106,7 @@ export default {
     },
     components: {
         CustomButton,
+        CustomToggle,
     },
     emits: [ "update:selectedDateRanges" ],
     props: {
