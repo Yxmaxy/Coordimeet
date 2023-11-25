@@ -1,10 +1,10 @@
 <template>
-    <div class="bg-main-000">
+    <div class="bg-main-000 h-full">
 
         <!-- NonConfirmed and Finished -->
         <div
             v-if="pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)"
-            class="flex justify-center items-center"
+            class="flex justify-center items-center min-h-[calc(100vh-3.5rem)]"
         >
             <event-data
                 v-if="eventData"
@@ -28,12 +28,12 @@
                     >
                         <custom-button
                             :negative="true"
-                            @click="$router.push('/event/list')"
+                            :click="() => $router.push('/event/list')"
                         >
                             Decline
                         </custom-button>
                         <custom-button
-                            @click="eventPageType = EventPageType.Invitee"
+                            :click="() => eventPageType = EventPageType.Invitee"
                         >
                             Accept
                         </custom-button>

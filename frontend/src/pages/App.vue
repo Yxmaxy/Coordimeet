@@ -14,7 +14,7 @@
     </div>
     <footer class="h-14 flex items-center pl-4 pr-4 bg-main-200">
         <div>
-            &copy; 2023
+            &copy; 2022 - {{ currentYear }}
             <a href="https://vrecer.si">
                 Marko,
             </a>
@@ -41,6 +41,11 @@ export default {
     name: "App",
     components: {
         "user-component": UserComponent,
-    }
+    },
+    setup() {
+        return {
+            currentYear: new Date().getFullYear(),
+        }
+    },
 }
 </script>

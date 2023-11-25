@@ -8,6 +8,7 @@
             'font-bold rounded-lg py-1.5 px-2.5 select-none',
             {
                 'text-sm py-1 px-2': small,
+                'bg-calendar-unavailable': negative,
                 'bg-main-100 cursor-not-allowed active:text-main-300 active:bg-main-400': disabled,
             },
         ]"
@@ -28,10 +29,14 @@ export default {
             type: Boolean,
             default: false,
         },
+        negative: {
+            type: Boolean,
+            default: false,
+        },
         click: {
             type: Function,
             default: null,
-        }
+        },
     }
 }
 </script>
