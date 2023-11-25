@@ -11,13 +11,14 @@
                 >
                     Reset
                 </custom-button>
+
                 <custom-button
                     @click="invertSelectedDateRanges"
                     :small="true"
                 >
                     Invert
                 </custom-button>
-                
+
                 <custom-toggle
                     class="ml-3"
                     v-model="selectUnavailable"

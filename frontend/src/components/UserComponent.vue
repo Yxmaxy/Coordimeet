@@ -1,11 +1,11 @@
 <template>
-    <a
+    <custom-button
         v-if="!userStore.isLoggedIn"
-        class="btn z-50"
-        :href="userStore.loginLink"
+        class="z-50"
+        :click="onLogin"
     >
         Log in
-    </a>
+</custom-button>
     <div
         v-else
         class="h-full relative"
@@ -72,7 +72,13 @@
 import { useUserStore } from "@/stores/UserStore";
 import { setTheme, Theme } from "@/utils/theme";
 
+import CustomButton from "@/components/ui/CustomButton.vue";
+
 export default {
+    name: "UserComponent",
+    components: {
+        CustomButton,
+    },
     setup() {
         const userStore = useUserStore();
         return {
@@ -88,6 +94,9 @@ export default {
     },
     methods: {
         setTheme,
+        onLogin() {
+            window.location.href = this.userStore.loginLink;
+        }
     }
 }
 </script>

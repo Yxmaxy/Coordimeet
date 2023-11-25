@@ -8,13 +8,12 @@
                 <event-list-component :events="eventsCreated" :userIsOrganiser="true" />
             </template>
         </tab-controller>
-        <button
-            class="btn right-4 bottom-4 fixed !p-3 !rounded-2xl shadow-md"
-            @click="$router.push('/event/new')"
+        <custom-button
+            class="right-4 bottom-4 fixed !p-3 !rounded-2xl shadow-md"
+            :click="() => $router.push('/event/new')"
         >
-            <span class="text-xl text-white">+</span>
-            New event
-        </button>
+            + New event
+        </custom-button>
     </div>
 </template>
 
@@ -27,6 +26,7 @@ import { Tab } from "@/types/tabs";
 
 import EventListComponent from "@/components/EventListComponent.vue";
 import TabController from "@/components/TabController.vue";
+import CustomButton from "@/components/ui/CustomButton.vue";
 
 const tabs = [
     {
@@ -44,6 +44,7 @@ export default {
     components: {
         EventListComponent,
         TabController,
+        CustomButton,
     },
     setup() {
         const { user } = useUserStore();
