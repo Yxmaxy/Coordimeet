@@ -1,115 +1,96 @@
 <template>
-    <div>
-        <!-- Popup -->
-        <div :class="['details-area', {'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)}]">
-            <div class="container">
-                <h2 v-if="eventPageType === EventPageType.NonConfirmed">
-                    You've been invited to:
-                </h2>
-                <h2 v-else-if="eventPageType === EventPageType.Finished">
-                    This event has finished!
-                </h2>
-                <h1 class="space-between">
-                    {{ eventData.Name }}
-                    <button
-                        v-if="eventPageType === EventPageType.Organizer"    
-                        id="copy-link"
-                        @click="copyLink"
-                    >
-                        Copy invite link to clipboard
-                    </button>
-                </h1>
-                <div class="data">
-                    <div>Organizer: {{ eventData.Organizer?.FirstName }} {{ eventData.Organizer?.LastName }}</div>
-                    <div>Deadline: {{ formatDateDayMonthYear(new Date(eventData.Deadline)) }}</div>
-                    <div>Duration: {{ eventData.Length }} {{ readableCalendarUnits }}</div>
-                    <div v-for="value, key in eventData.Config">
-                        {{ key }}:
-                        {{ value }}
-                    </div>
-                </div>
-                <div
-                    v-if="eventPageType === EventPageType.NonConfirmed"
-                    class="accept-decline-buttons"
-                >
-                    <button class="negative" @click="$router.push('/event/list')">
-                        Decline
-                    </button>
-                    <button @click="eventPageType = EventPageType.Invitee">
-                        Accept
-                    </button>
-                </div>
-                <div
-                    v-if="eventPageType === EventPageType.Finished"
-                >
-                    <h3>The selected date is: {{ eventData.SelectedDate }}</h3>
-                </div>
-            </div>
+    <div class="bg-main-000">
 
-            <button
-                v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
-                id="submit-response"
-                @click="onSubmitEvent"
-                :class="{'disabled': selectedDates.length === 0}"
+        <!-- NonConfirmed and Finished -->
+        <div
+            v-if="pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)"
+            class="flex justify-center items-center"
+        >
+            <event-data
+                v-if="eventData"
+                class="bg-main-100 px-16 py-10 rounded-lg shadow-lg"
+                :event="eventData"
             >
-                Submit response
-            </button>
+                <template v-slot:before>
+                    <div class="text-xl font-bold">
+                        <template v-if="pageTypeIn(EventPageType.NonConfirmed)">
+                            You've been invited to:
+                        </template>
+                        <template v-else>
+                            This event has finished!
+                        </template>
+                    </div>
+                </template>
+                <template v-slot:after>
+                    <div
+                        v-if="pageTypeIn(EventPageType.NonConfirmed)"
+                        class="flex justify-center gap-4 mt-4"
+                    >
+                        <custom-button
+                            :negative="true"
+                            @click="$router.push('/event/list')"
+                        >
+                            Decline
+                        </custom-button>
+                        <custom-button
+                            @click="eventPageType = EventPageType.Invitee"
+                        >
+                            Accept
+                        </custom-button>
+                    </div>
+                    <div
+                        v-if="pageTypeIn(EventPageType.Finished)"
+                        class="text-lg font-bold mt-4"
+                    >
+                        The selected date is: {{ eventData.SelectedDate }}
+                    </div>
+                </template>
+            </event-data>
         </div>
 
         <!-- Content -->
+        <tab-controller
+            v-else
+            :tabs="tabs"
+        >
+            <template v-slot:event>
+                <div class="h-full bg-main-100 p-4">
+                    <event-data
+                        v-if="eventData"
+                        :event="eventData"
+                    >
+                        <template v-slot:after>
+                            <custom-button
+                                v-if="pageTypeIn(EventPageType.Organizer)"
+                                class="mt-5"
+                                :small="true"
+                                @click="copyLink"
+                            >
+                                Copy invite link to clipboard
+                            </custom-button>
+                        </template>
+                    </event-data>
+                </div>
+            </template>
 
-        <tab-controller :tabs="tabs">
             <template v-slot:responses>
-                <aside
+                <div
                     v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
                 >
                     <div v-for="participant in eventParticipants" class="list-element">
                         <div>{{ participant }}</div>
                     </div>
-                </aside>
-            </template>
-            <template v-slot:selectable_dates>
-                <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
-                    'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
-                    'organizer': eventPageType === EventPageType.Organizer,
-                }]">
-                    <aside v-if="eventPageType === EventPageType.Organizer" class="selectable-area">
-                        <h1>Selectable dates</h1>
-                        <div>
-                            <div
-                                v-for="(selectableDate, index) in selectableDates"
-                                :class="['list-element', {'selected': index === selectedDate}]"
-                                @click="selectedDate = index"
-                            >
-                                {{ displayDateRange(selectableDate) }}
-                            </div>
-                        </div>
-                        <button
-                            :class="{'disabled': selectedDate === undefined}"
-                            @click="finishEvent"
-                        >
-                            Select date and finish event
-                        </button>
-                    </aside>
                 </div>
             </template>
-            <template v-slot:event>
-                <div v-if="Object.keys(eventData).length !== 0" :class="['event-page', {
-                    'basic-view': pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished),
-                    'organizer': eventPageType === EventPageType.Organizer,
-                }]">
-                    <main
-                        v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
-                        class="calendar-area"
-                    >
-                        <calendar
-                            :type="eventData.CalendarType"
-                            :dateRanges="eventData.EventDates"
-                            :days="dates"
-                            :initialIsAvailable="initialIsAvailable"
-                        />
-                    </main>
-                </div>
+
+            <template v-slot:calendar>
+                <calendar
+                    v-if="eventData"
+                    v-model:selectedDateRanges="selectedDateRanges"
+                    :roughEventDateRange="roughEventDateRange"
+                    :selectableDateRanges="eventData.EventDates"
+                    :calendarType="eventData.CalendarType"
+                />
             </template>
         </tab-controller>
     </div>
@@ -119,30 +100,31 @@
 import ApiService from "@/utils/ApiService";
 import { useUserStore } from "@/stores/UserStore";
 
-import { CalendarType, CalendarDate, DateRange } from "@/types/calendar";
+import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventPageType } from "@/types/event";
 import { Tab } from "@/types/tabs";
 
 import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from "@/utils/dates";
 
+import EventData from "@/components/EventData.vue";
 import Calendar from "@/components/Calendar.vue";
 import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 
 const tabs = [
     {
+        name: "Event",
+        slot_name: "event",
+        narrow: "sm",
+    },
+    {
         name: "Responses",
         slot_name: "responses",
         narrow: "sm",
     },
     {
-        name: "Selectable dates",
-        slot_name: "selectable_dates",
-        narrow: "sm",
-    },
-    {
-        name: "Event",
-        slot_name: "event",
+        name: "Calendar",
+        slot_name: "calendar",
     },
 ] as Tab[];
 
@@ -151,13 +133,13 @@ export default {
         Calendar,
         TabController,
         CustomButton,
+        EventData,
     },
     setup() {
-        const { user, isLoggedIn } = useUserStore();
+        const { user } = useUserStore();
 
         return {
             user,
-            isLoggedIn,
             tabs,
 
             EventPageType,
@@ -166,50 +148,65 @@ export default {
     },
     data() {
         return {
-            dates: [] as CalendarDate[],
-            eventData: {} as Event,
+            dates: [] as any[],
+            eventData: null as null | Event,
             eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
 
             initialIsAvailable: [] as DateRange[],
             selectableDates: [] as DateRange[],
             selectedDate: undefined as number|undefined,
+
+            // new variables
+            selectedDateRanges: [] as DateRange[],
         }
     },
     computed: {
-        readableCalendarUnits(): string {
-            if (this.eventData.CalendarType === CalendarType.Date)
-                return "days";
-            return "hours";
-        },
         selectedDates(): DateRange[] {
             return getSelectedDatesOnCalendar(this.dates)
+        },
+        roughEventDateRange(): DateRange {
+            if (this.eventData === null)
+                return {} as DateRange
+            return {
+                from: new Date(this.eventData.EventDates.reduce(
+                    (prev, min) => prev.from < min.from ? prev : min).from
+                ),
+                to: new Date(this.eventData.EventDates.reduce(
+                    (prev, max) => prev.to > max.to ? prev : max).to
+                ),
+            }
         },
     },
     methods: {
         getEventData() {
+            // gets the event data and sets page type
             ApiService.get("event.php", {
                 params: {
                     IDEvent: this.$route.params.id,
                 }
             }).then(res => {
+                // convert
                 const eventData = {
                     ...res.data,
                     EventDates: res.data.EventDates.map((eventDate: any) => {
                         return {
                             from: new Date(eventDate.StartDate),
                             to: new Date(eventDate.EndDate)
-                        }
+                        } as DateRange
                     })
                 } as Event
 
-                this.eventData = eventData;
-                if (res.data.SelectedDate !== null) {
+                // the event has finished
+                if (eventData.SelectedDate !== null) {
                     this.eventPageType = EventPageType.Finished;
+                // the current user is the organizer
                 } else if (this.user!.GoogleID === eventData.Organizer.GoogleID) {
                     this.eventPageType = EventPageType.Organizer;
-                    this.getSelectableDates();
+                    // TODO: re-add this
+                    // this.getSelectableDates();
                 }
+                this.eventData = eventData;
             })
         },
         getEventParticipants() {
@@ -310,16 +307,13 @@ export default {
             })
         },
         pageTypeIn(...types: EventPageType[]): boolean {
-            for (const type of types)
-                if (this.eventPageType === type)
-                    return true;
-            return false;
+            return types.includes(this.eventPageType);
         },
         copyLink() {
-            navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/${this.$route.params.id}`);
+            navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/#/event/${this.$route.params.id}`);
         },
         displayDateRange(range: DateRange): string {
-            const convertFunc = this.eventData.CalendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;
+            const convertFunc = this.eventData?.CalendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;
             if (convertFunc(range.from) === convertFunc(range.to))
                 return convertFunc(range.from);
             return `${convertFunc(range.from)} - ${convertFunc(range.to)}`;
@@ -329,8 +323,8 @@ export default {
     },
     mounted() {
         this.getEventData();
-        this.getEventParticipants();
-        this.getSelectedDates();
+        // this.getEventParticipants();
+        // this.getSelectedDates();
     },
 }
 </script>

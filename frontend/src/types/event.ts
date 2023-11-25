@@ -15,8 +15,8 @@ export interface Event {
 }
 
 export enum EventPageType {
-    Invitee = 0,        // calendar and all event data
-    Organizer = 1,      // data about user responses, ending data
-    NonConfirmed = 2,   // invitee sees just basic event data, confirm decline button
+    NonConfirmed = 0,   // invitee sees just basic event data, confirm decline button
+    Invitee = 1,        // calendar and all event data
+    Organizer = 2,      // data about user responses, ending data
     Finished = 3,       // Event has finished, show only the simplest information
 }
