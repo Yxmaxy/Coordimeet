@@ -75,11 +75,14 @@
 
             <template v-slot:responses>
                 <div
-                    v-if="pageTypeIn(EventPageType.Invitee, EventPageType.Organizer)"
+                    v-for="participant in eventParticipants"
+                    :class="[{
+                        'text-main-200': !participant.isSelected,
+                    }, 'p-4 font-bold border-b-2 border-b-main-200 cursor-pointer',
+                    'hover:bg-main-100 transition-colors']"
+                    @click="toggleParticipant(participant)"
                 >
-                    <div v-for="participant in eventParticipants" class="list-element">
-                        <div>{{ participant }}</div>
-                    </div>
+                    {{ participant.FirstName }} {{ participant.LastName }}
                 </div>
             </template>
 
@@ -117,7 +120,7 @@
                         v-else
                         :small="true"
                         :click="submitSelection"
-                        :disabled="!isSelectedDateRangesSet"
+                        :disabled="!isSelectedDateRangesSet || gettingParticipantData"
                     >
                         Submit the selection
                     </custom-button>
@@ -140,7 +143,7 @@ import ApiService from "@/utils/ApiService";
 import { useUserStore } from "@/stores/UserStore";
 
 import { CalendarType, DateRange } from "@/types/calendar";
-import { Event, EventPageType } from "@/types/event";
+import { Event, EventPageType, EventParticipant } from "@/types/event";
 import { Tab } from "@/types/tabs";
 
 import {
@@ -197,7 +200,6 @@ export default {
         return {
             dates: [] as any[],
             eventData: null as null | Event,
-            eventParticipants: [] as string[],
             eventPageType: EventPageType.NonConfirmed as EventPageType,
 
             initialIsAvailable: [] as DateRange[],
@@ -208,6 +210,8 @@ export default {
             previousSelectedDateRanges: [] as DateRange[],  // set if the invitee submitted before
 
             isOrganiserMode: false,  // organiser mode toggle
+            gettingParticipantData: false,  // for fetching event participants
+            eventParticipants: [] as EventParticipant[],
         }
     },
     computed: {
@@ -229,13 +233,16 @@ export default {
         isPreviousSelectedDateRangesSet(): boolean {
             return this.previousSelectedDateRanges.length !== 0
         },
+        selectedEventParticipants(): EventParticipant[] {
+            return this.eventParticipants.filter(participant => participant.isSelected);
+        }
     },
     methods: {
         // imported
         formatDateDayMonth,
         formatDateDayMonthYear,
 
-        // initialize event
+        // event
         getEventData() {
             // gets the event data and sets page type
             ApiService.get("event.php", {
@@ -274,7 +281,7 @@ export default {
                 }
             }).then(res => {
                 if (res.data.error) {
-                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+                    alert(`An error occured while fetching your previous selection: ${res.data.error}`)
                     return;
                 }
                 // empty response
@@ -294,21 +301,32 @@ export default {
                 }
             });
         },
-        getEventParticipants() {
+        getParticipants() {
+            this.gettingParticipantData = true;
             ApiService.get("eventUser.php", {
                 params: {
                     IDEvent: this.$route.params.id,
                 }
             }).then(res => {
                 if (res.data.error) {
-                    console.log(res.data.error);
+                    alert(`An error occured while fetching the participants: ${res.data.error}`)
                     return;
                 }
                 if (res.data.length === 0)
                     return;
+
+                console.log(res.data)
+
+                // handle 
                 this.eventParticipants = res.data.map((participant: any) => {
-                    return `${participant.FirstName} ${participant.LastName}`;
+                    return {
+                        ...participant,
+                        Dates: convertDateRangesFromBackend(participant.Dates),
+                        isSelected: true,
+                    } as EventParticipant
                 })
+            }).finally(() => {
+                this.gettingParticipantData = false;
             })
         },
 
@@ -350,6 +368,11 @@ export default {
             })
         },
 
+        // interaction
+        toggleParticipant(participant: EventParticipant) {
+            participant.isSelected = !participant.isSelected;
+        },
+
         // helpers
         pageTypeIn(...types: EventPageType[]): boolean {
             return types.includes(this.eventPageType);
@@ -367,151 +390,19 @@ export default {
     mounted() {
         this.getEventData();
         this.getPreviousSelectedDateRanges();
-        // this.getEventParticipants();
+        this.getParticipants();
     },
     watch: {
         isOrganiserMode(isOrganiser: boolean) {
-            // intialize the selection to previous selected date range
-            this.selectedDateRanges = isOrganiser ? [] : this.previousSelectedDateRanges;
+            if (isOrganiser) {
+                // get participant data
+                this.getParticipants();
+                this.selectedDateRanges = [];
+            } else {
+                // initialize invitee selection to previous selection
+                this.selectedDateRanges = this.previousSelectedDateRanges;
+            }
         },
     }
 }
 </script>
-
-<!-- <style lang="scss" scoped>
-@import "../styles/colors.scss";
-
-$sectionPadding: 1rem;
-
-@mixin aside-mixin {
-    background-color: $color-background-3;
-    overflow: auto;
-    border-right: 2px solid $color-top-bottom;
-
-    h1 {
-        background-color: $color-background-3;
-        padding: $sectionPadding;
-        position: sticky;
-        top: 0;
-    }
-    .list-element {
-        display: flex;
-        justify-content: space-between;
-        padding: {
-            left: $sectionPadding;
-            right: $sectionPadding;
-            top: calc($sectionPadding / 2);
-            bottom: calc($sectionPadding / 2);
-        };
-    }
-}
-
-.event-page {
-    flex: 1;
-    display: grid;
-    grid-template-rows: min(15rem, 30vh) 1fr;
-    grid-template-columns: min(20rem, 30vw) 1fr;
-    grid-template-areas:
-        "responses details"
-        "responses calendar";
-    &.basic-view {
-        grid-template-rows: 1fr;
-        grid-template-columns: 1fr;
-        grid-template-areas:
-            "details";
-    }
-    &.organizer {
-        grid-template-columns: min(20rem, 30vw) min(20rem, 30vw) 1fr;
-        grid-template-areas:
-            "responses selectable details"
-            "responses selectable calendar";
-    }
-    .responses-area {
-        grid-area: responses;
-        @include aside-mixin;
-    }
-    .selectable-area {
-        grid-area: selectable;
-        @include aside-mixin;
-
-        button {
-            position: fixed;
-            bottom: $sectionPadding + 2rem;
-            margin: $sectionPadding;
-            width: calc(min(20rem, 30vw) - 2 * $sectionPadding);
-        }
-
-        .list-element {
-            transition: 200ms;
-            user-select: none;
-            cursor: pointer;
-            &:hover {
-                background-color: $color-background-2;
-            }
-            &.selected {
-                color: $color-background;
-                background-color: $color-main;
-            }
-        }
-    }
-    .calendar-area {
-        grid-area: calendar;
-        background-color: $color-background;
-        display: flex;
-        flex-direction: column;
-        padding: $sectionPadding;
-        overflow: auto;
-    }
-    .details-area {
-        grid-area: details;
-        background-color: $color-background-3;
-        padding: $sectionPadding;
-        position: relative;
-        overflow: auto;
-
-        #submit-response {
-            position: absolute;
-            right: 0.5rem;
-            bottom: 0.5rem;
-        }
-
-        &.basic-view {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: $color-background;
-            h1, h2 {
-                text-align: center;
-            }
-            .container {
-                max-width: 25rem;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                padding: 2rem;
-                background-color: $color-background;
-                border: {
-                    radius: 20px;
-                    color: $color-main;
-                    style: solid;
-                    width: 2px;
-                }
-                .data {
-                    margin: {
-                        top: 1rem;
-                        bottom: 1.5rem;
-                    };
-                    max-width: 20rem;
-                    width: 100%;
-                }
-            }
-            .accept-decline-buttons {
-                display: flex;
-                justify-content: center;
-                gap: 1rem;
-            }
-        }
-    }
-}
-</style> -->

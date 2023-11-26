@@ -20,3 +20,12 @@ export enum EventPageType {
     Organizer = 2,      // data about user responses, ending data
     Finished = 3,       // Event has finished, show only the simplest information
 }
+
+export interface EventParticipant {
+    GoogleID: string,
+    FirstName: string,
+    LastName: string,
+    Dates: DateRange[],
+
+    isSelected: boolean,
+}
