@@ -110,7 +110,8 @@ Ticket price: 5€"
 import ApiService from "@/utils/ApiService";
 import {
     initializeDateInput,
-    formatDateForBackend } from "@/utils/dates";
+    formatDateForBackend,
+    convertDateRangesForBackend } from "@/utils/dates";
 
 import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
@@ -207,15 +208,8 @@ export default {
                 }
             }
 
-            // calculate dates
-            const dates = this.selectedDateRanges.map(dateRange => {
-                return {
-                    StartDate: formatDateForBackend(dateRange.from),
-                    EndDate: formatDateForBackend(dateRange.to),
-                }
-            });
-
-            if (dates.length === 0) {
+            // check if dates were selected
+            if (this.selectedDateRanges.length === 0) {
                 alert(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
                 return;
             }
@@ -230,7 +224,7 @@ export default {
                     Config: config,
                     SelectedDate: null,
                 },
-                EventRanges: dates,
+                EventRanges: convertDateRangesForBackend(this.selectedDateRanges),
             })
             .then(res => {
                 const IDEvent = res.data.IDEvent;

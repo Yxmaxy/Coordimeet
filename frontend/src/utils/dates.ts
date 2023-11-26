@@ -1,4 +1,4 @@
-import { DateRange, CalendarType, CalendarDate } from "@/types/calendar";
+import { CalendarType, DateRange } from "@/types/calendar";
 
 function padNumber(number: number, places: number = 2): string {
     return number.toString().padStart(places, '0');
@@ -36,34 +36,24 @@ export function initializeDateInput(type: CalendarType, date?: string): string {
     return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}T${padNumber(now.getHours())}:00`;
 }
 
-export function getSelectedDatesOnCalendar(selectedDates: CalendarDate[]): DateRange[] {
-    const dates: any = [];
-    let currentStart: Date|undefined = undefined;
-    for (let i = 0; i < selectedDates.length; i++) {
-        const currDate = selectedDates[i];
-        if (currentStart === undefined && currDate.isAvailable)  // set currentStart
-            currentStart = currDate.date;
-        const prevDate = selectedDates[i - 1];
-        if (currentStart !== undefined && i === selectedDates.length - 1) {
-            if (currDate.isAvailable) {  // last one is available
-                dates.push({
-                    StartDate: formatDateForBackend(new Date(currentStart)),
-                    EndDate: formatDateForBackend(new Date(currDate.date)),
-                })
-            } else {
-                dates.push({
-                    StartDate: formatDateForBackend(new Date(currentStart)),
-                    EndDate: formatDateForBackend(new Date(prevDate.date)),
-                })
-            }
-        }
-        else if (currentStart !== undefined && !currDate.isAvailable) {  // add prevDate to dates
-            dates.push({
-                StartDate: formatDateForBackend(new Date(currentStart)),
-                EndDate: formatDateForBackend(new Date(prevDate.date)),
-            })
-            currentStart = undefined;
-        }
+export function convertDateRangeForBackend(dateRange: DateRange): any {
+    return {
+        StartDate: formatDateForBackend(dateRange.from),
+        EndDate: formatDateForBackend(dateRange.to),
     }
-    return dates;
+}
+
+export function convertDateRangesForBackend(dateRanges: DateRange[]) {
+    return dateRanges.map(convertDateRangeForBackend);
+}
+
+export function convertDateRangeFromBackend(dateRange: any): DateRange {
+    return {
+        from: new Date(dateRange.StartDate),
+        to: new Date(dateRange.EndDate)
+    } as DateRange
+}
+
+export function convertDateRangesFromBackend(dateRanges: any[]): DateRange[] {
+    return dateRanges.map(convertDateRangeFromBackend);
 }

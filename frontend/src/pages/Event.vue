@@ -84,6 +84,45 @@
             </template>
 
             <template v-slot:calendar>
+                <div class="bg-main-100 shadow-md p-3 mb-3 flex justify-between items-center">
+                    <!-- Organiser mode toggle -->
+                    <div>
+                        <custom-toggle
+                            v-if="pageTypeIn(EventPageType.Organizer)"
+                            v-model="isOrganiserMode"
+                        >
+                            <template v-slot:left>
+                                <span class="font-bold mr-1">
+                                    Invitee
+                                </span>
+                            </template>
+                            <template v-slot:right>
+                                <span class="font-bold ml-1">
+                                    Organiser
+                                </span>
+                            </template>
+                        </custom-toggle>
+                    </div>
+
+                    <!-- Submit buttons -->
+                    <custom-button
+                        v-if="pageTypeIn(EventPageType.Organizer) && isOrganiserMode"
+                        :small="true"
+                        :disabled="!isSelectedDateRangesSet"
+                        :click="finishEvent"
+                    >
+                        Submit and finish the event
+                    </custom-button>
+                    <custom-button
+                        v-else
+                        :small="true"
+                        :click="submitSelection"
+                        :disabled="!isSelectedDateRangesSet"
+                    >
+                        Submit the selection
+                    </custom-button>
+                </div>
+                <!-- Calendar -->
                 <calendar
                     v-if="eventData"
                     v-model:selectedDateRanges="selectedDateRanges"
@@ -104,12 +143,19 @@ import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventPageType } from "@/types/event";
 import { Tab } from "@/types/tabs";
 
-import { formatDateDayMonth, formatDateDayMonthYear, formatDateDayMonthHour, getSelectedDatesOnCalendar } from "@/utils/dates";
+import {
+    formatDateDayMonth,
+    formatDateDayMonthYear,
+    formatDateDayMonthHour,
+    convertDateRangesFromBackend,
+    convertDateRangesForBackend } from "@/utils/dates";
 
 import EventData from "@/components/EventData.vue";
 import Calendar from "@/components/Calendar.vue";
 import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
+import CustomToggle from "@/components/ui/CustomToggle.vue";
+import { AxiosResponse } from "axios";
 
 const tabs = [
     {
@@ -133,6 +179,7 @@ export default {
         Calendar,
         TabController,
         CustomButton,
+        CustomToggle,
         EventData,
     },
     setup() {
@@ -157,14 +204,13 @@ export default {
             selectableDates: [] as DateRange[],
             selectedDate: undefined as number|undefined,
 
-            // new variables
-            selectedDateRanges: [] as DateRange[],
+            selectedDateRanges: [] as DateRange[],  // the current calendar selection
+            previousSelectedDateRanges: [] as DateRange[],  // set if the invitee submitted before
+
+            isOrganiserMode: false,  // organiser mode toggle
         }
     },
     computed: {
-        selectedDates(): DateRange[] {
-            return getSelectedDatesOnCalendar(this.dates)
-        },
         roughEventDateRange(): DateRange {
             if (this.eventData === null)
                 return {} as DateRange
@@ -177,8 +223,19 @@ export default {
                 ),
             }
         },
+        isSelectedDateRangesSet(): boolean {
+            return this.selectedDateRanges.length !== 0
+        },
+        isPreviousSelectedDateRangesSet(): boolean {
+            return this.previousSelectedDateRanges.length !== 0
+        },
     },
     methods: {
+        // imported
+        formatDateDayMonth,
+        formatDateDayMonthYear,
+
+        // initialize event
         getEventData() {
             // gets the event data and sets page type
             ApiService.get("event.php", {
@@ -203,11 +260,39 @@ export default {
                 // the current user is the organizer
                 } else if (this.user!.GoogleID === eventData.Organizer.GoogleID) {
                     this.eventPageType = EventPageType.Organizer;
-                    // TODO: re-add this
-                    // this.getSelectableDates();
                 }
                 this.eventData = eventData;
             })
+        },
+        getPreviousSelectedDateRanges() {
+            // gets the user's selected date ranges if they exist
+            // also "upgrades" the user to invitee if needed
+            ApiService.get("eventUser.php", {
+                params: {
+                    IDEvent: this.$route.params.id,
+                    IDUser: this.user!.GoogleID,
+                }
+            }).then(res => {
+                if (res.data.error) {
+                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+                    return;
+                }
+                // empty response
+                if (res.data.length === 0)
+                    return;
+                
+                if (res.data.Dates.length !== 0) {
+                    // "upgrade" user to invitee if the data was submitted
+                    if (this.eventPageType === EventPageType.NonConfirmed)
+                        this.eventPageType = EventPageType.Invitee;
+
+                    // update selectedDateRanges with previous response
+                    this.previousSelectedDateRanges = convertDateRangesFromBackend(res.data.Dates);
+
+                    // intialize the selected date ranges
+                    this.selectedDateRanges = this.previousSelectedDateRanges;
+                }
+            });
         },
         getEventParticipants() {
             ApiService.get("eventUser.php", {
@@ -226,79 +311,37 @@ export default {
                 })
             })
         },
-        getSelectedDates() {
-            ApiService.get("eventUser.php", {
-                params: {
-                    IDEvent: this.$route.params.id,
-                    IDUser: this.user!.GoogleID,
-                }
-            }).then(res => {
-                if (res.data.error) {
-                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
-                    return;
-                }
-                if (res.data.length === 0)
-                    return;
-                if (res.data.Dates.length !== 0 && this.eventPageType === EventPageType.NonConfirmed)
-                    this.eventPageType = EventPageType.Invitee;
-                this.initialIsAvailable = res.data.Dates === undefined ? [] : res.data.Dates.map((range: any) => {
-                    return {
-                        from: new Date(range.StartDate),
-                        to: new Date(range.EndDate),
-                    }
-                });
-            });
-        },
-        getSelectableDates() {
-            if (this.eventPageType !== EventPageType.Organizer)
+
+        // submit event
+        submitSelection() {
+            // submit as an invitee
+            if (!this.isSelectedDateRangesSet)
                 return;
-            ApiService.get("eventDate.php", {
-                params: {
-                    IDEvent: this.$route.params.id,
-                }
-            }).then(res => {
-                if (res.data.error) {
-                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
+
+            // handler if the event succeedes
+            const handleResponse = (response: AxiosResponse) => {
+                if (response.status !== 201)
                     return;
-                }
-                this.selectableDates = res.data === undefined ? [] : res.data.map((range: any) => {
-                    return {
-                        from: new Date(range.StartDate),
-                        to: new Date(range.EndDate),
-                    }
-                });
-            });
-        },
-        onSubmitEvent() {
-            this.selectedDate = undefined;
-            if (this.selectedDates.length === 0)
-                return;
-            if (this.initialIsAvailable.length === 0) {  // a date didn't exist before
+                this.previousSelectedDateRanges = this.selectedDateRanges;
+                alert("Your response has been submitted");
+            }
+
+            if (!this.isPreviousSelectedDateRangesSet) {
                 ApiService.post("eventUser.php", {
                     IDEvent: this.$route.params.id,
                     IDUser: this.user!.GoogleID,
-                    AvailabilityDates: this.selectedDates,
-                })
-                .then(res => {
-                    if (res.status !== 201)
-                        return
-                    this.getSelectableDates();
-                    alert("Your response has been submitted");
-                })
+                    AvailabilityDates: convertDateRangesForBackend(this.selectedDateRanges),
+                }).then(handleResponse)
             } else {  // update date that was selected before
                 ApiService.put(`eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user!.GoogleID}`, {
                     IDEvent: this.$route.params.id,
                     IDUser: this.user!.GoogleID,
-                    AvailabilityDates: this.selectedDates,
-                }).then(res => {
-                    if (res.status !== 201)
-                        return
-                    this.getSelectableDates();
-                    alert("Your response has been submitted");
-                })
+                    AvailabilityDates: convertDateRangesForBackend(this.selectedDateRanges),
+                }).then(handleResponse)
             }
         },
         finishEvent() {
+            // finish the event as the organiser
             ApiService.put(`eventDate.php?IDEvent=${this.$route.params.id}`, {
                 SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
             }).then(() => {
@@ -306,6 +349,8 @@ export default {
                 this.$router.push("/event/list");
             })
         },
+
+        // helpers
         pageTypeIn(...types: EventPageType[]): boolean {
             return types.includes(this.eventPageType);
         },
@@ -318,14 +363,18 @@ export default {
                 return convertFunc(range.from);
             return `${convertFunc(range.from)} - ${convertFunc(range.to)}`;
         },
-        formatDateDayMonth,
-        formatDateDayMonthYear,
     },
     mounted() {
         this.getEventData();
+        this.getPreviousSelectedDateRanges();
         // this.getEventParticipants();
-        // this.getSelectedDates();
     },
+    watch: {
+        isOrganiserMode(isOrganiser: boolean) {
+            // intialize the selection to previous selected date range
+            this.selectedDateRanges = isOrganiser ? [] : this.previousSelectedDateRanges;
+        },
+    }
 }
 </script>
 
