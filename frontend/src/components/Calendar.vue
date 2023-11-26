@@ -65,24 +65,30 @@
             'grid-flow-col grid-rows-24': calendarType === CalendarType.DateTime,
         }, 'grid']">
             <div
-                v-for="date in getCalendarDates"
+                v-for="calendarDate in getCalendarDates"
                 class="p-[0.075rem] h-full"
-                @mousedown="onDateMouseDown(date)"
-                @mouseup="onDateMouseUp(date)"
-                @mouseenter="event => onDateMouseEnter(event, date)"
+                @mousedown="onDateMouseDown(calendarDate.date)"
+                @mouseup="onDateMouseUp(calendarDate.date)"
+                @mouseenter="event => onDateMouseEnter(event, calendarDate.date)"
                 @mouseleave="onDateMouseLeave"
-                @touchstart.prevent="onDateTouchStart(date)"
-                @touchend="onDateTouchEnd(date)"
+                @touchstart.prevent="onDateTouchStart(calendarDate.date)"
+                @touchend="onDateTouchEnd(calendarDate.date)"
             >
                 <div
                     :class="[{
-                        '!bg-calendar-available': isDateAvailable(date) && !selectUnavailable,
-                        '!bg-calendar-unavailable': isDateUnavailable(date) || selectUnavailable && !isDateAvailable(date) && !isDateDisabled(date),
-                        '!bg-calendar-disabled !cursor-not-allowed': isDateDisabled(date),
+                        '!bg-calendar-available': isDateAvailable(calendarDate.date) && !selectUnavailable,
+                        '!bg-calendar-unavailable': isDateUnavailable(calendarDate.date) || selectUnavailable && !isDateAvailable(calendarDate.date) && !isDateDisabled(calendarDate.date),
+                        '!bg-calendar-disabled !cursor-not-allowed': isDateDisabled(calendarDate.date),
                     }, 'bg-calendar-default transition-colors duration-75',
-                    'h-full py-2 flex items-center justify-center select-none cursor-pointer']"
+                    'h-full py-2 flex items-center justify-center select-none cursor-pointer relative']"
                 >
-                    {{ dateDisplayFunction(date) }}
+                    <!-- Heatmap overlay -->
+                    <div
+                        class="absolute top-0 bottom-0 left-0 right-0 bg-calendar-available"
+                        :style="`opacity: ${calendarDate.heatmap / (maxHeatmapValue + 1)}`"
+                    ></div>
+                    <!-- Display value -->
+                    {{ dateDisplayFunction(calendarDate.date) }}
                 </div>
             </div>
         </div>
@@ -93,7 +99,7 @@
 import { PropType } from "vue";
 
 import { formatDateDayMonthYear, formatDateDayMonth, formatDateHour } from "@/utils/dates";
-import { CalendarType, DateRange } from "@/types/calendar";
+import { CalendarType, DateRange, CalendarDate } from "@/types/calendar";
 
 import CustomButton from "./ui/CustomButton.vue";
 import CustomToggle from "./ui/CustomToggle.vue";
@@ -126,6 +132,11 @@ export default {
             type: Array as PropType<DateRange[]>,
             default: [],
         },
+        // date ranges for calculating heatmap
+        heatmapDateRanges: {
+            type: Array as PropType<DateRange[]>,
+            default: [],
+        },
         // calendar type
         calendarType: {
             type: Number as PropType<CalendarType>,
@@ -146,11 +157,11 @@ export default {
     },
     computed: {
         // calendar
-        getCalendarDates(): Date[] {
+        getCalendarDates(): CalendarDate[] {
             // gets dates to display on the calendar
             if (!this.roughEventDateRange)
                 return [];
-            const dates: Date[] = [];
+            const calendarDates: CalendarDate[] = [];
             const datePadding = 7;  // how many days to add to the calendar
             const datesLimit = this.calendarType === CalendarType.Date ? 371 : 24 * 7;
             
@@ -206,10 +217,23 @@ export default {
 
             const date = new Date(from);
             for (let i = 0; date <= to && i < datesLimit; i++) {
-                dates.push(new Date(date));
+                // calculate heatmap if it's provided
+                const heatmap = this.heatmapDateRanges.length === 0 ? 0 :
+                    this.heatmapDateRanges.reduce((acc, range) => {
+                        if (this.isDateInDateRange(date, range))
+                            acc++;
+                        return acc;
+                    }, 0)
+
+                // create new date
+                const calendarDate = {
+                    date: new Date(date),
+                    heatmap: heatmap,
+                }
+                calendarDates.push(calendarDate);
                 this.addUnitsToDate(date, this.calendarType, 1)
             }
-            return dates;
+            return calendarDates;
         },
         getCalendarHeader(): string[] {
             const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
@@ -217,7 +241,17 @@ export default {
                 return days;
             return this.getCalendarDates
                 .filter((_, index) => index % 24 === 0)
-                .map((date, index) => `${days[index]}<br/>${formatDateDayMonth(date)}`);
+                .map((calendarDate, index) => `${days[index]}<br/>${formatDateDayMonth(calendarDate.date)}`);
+        },
+        maxHeatmapValue(): number {
+            // finds the maximum heatmap value
+            if (this.heatmapDateRanges.length === 0)
+                return 1;
+            return this.getCalendarDates.reduce((max, range) => {
+                if (range.heatmap > max)
+                    return range.heatmap;
+                return max;
+            }, 1);
         },
 
         // weeks
@@ -255,11 +289,11 @@ export default {
             if (this.selectableDateRanges.length !== 0)
                 return this.selectableDateRanges;
             if (this.getCalendarDates.length > 0) {
-                const firstDate = this.getCalendarDates[0];
-                const lastDate = this.getCalendarDates[this.getCalendarDates.length - 1];
+                const firstCalendarDate = this.getCalendarDates[0];
+                const lastCalendarDate = this.getCalendarDates[this.getCalendarDates.length - 1];
                 return [{
-                    from: new Date(firstDate),
-                    to: new Date(lastDate)
+                    from: new Date(firstCalendarDate.date),
+                    to: new Date(lastCalendarDate.date)
                 } as DateRange]
             }
 

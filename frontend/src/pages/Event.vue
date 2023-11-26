@@ -78,8 +78,8 @@
                     v-for="participant in eventParticipants"
                     :class="[{
                         'text-main-200': !participant.isSelected,
-                    }, 'p-4 font-bold border-b-2 border-b-main-200 cursor-pointer',
-                    'hover:bg-main-100 transition-colors']"
+                        'cursor-pointer hover:bg-main-100': isOrganiserMode,
+                    }, 'p-4 font-bold border-b-2 border-b-main-200 transition-colors']"
                     @click="toggleParticipant(participant)"
                 >
                     {{ participant.FirstName }} {{ participant.LastName }}
@@ -114,7 +114,7 @@
                         :disabled="!isSelectedDateRangesSet"
                         :click="finishEvent"
                     >
-                        Submit and finish the event
+                        Submit and finish
                     </custom-button>
                     <custom-button
                         v-else
@@ -122,7 +122,7 @@
                         :click="submitSelection"
                         :disabled="!isSelectedDateRangesSet || gettingParticipantData"
                     >
-                        Submit the selection
+                        Submit
                     </custom-button>
                 </div>
                 <!-- Calendar -->
@@ -131,6 +131,7 @@
                     v-model:selectedDateRanges="selectedDateRanges"
                     :roughEventDateRange="roughEventDateRange"
                     :selectableDateRanges="eventData.EventDates"
+                    :heatmapDateRanges="selectedEventParticipantDateRanges"
                     :calendarType="eventData.CalendarType"
                 />
             </template>
@@ -233,8 +234,14 @@ export default {
         isPreviousSelectedDateRangesSet(): boolean {
             return this.previousSelectedDateRanges.length !== 0
         },
-        selectedEventParticipants(): EventParticipant[] {
-            return this.eventParticipants.filter(participant => participant.isSelected);
+        selectedEventParticipantDateRanges(): DateRange[] {
+            if (!this.isOrganiserMode)
+                return [];
+            const participantDates = this.eventParticipants
+                .filter(participant => participant.isSelected)
+                .map(participant => participant.Dates)
+            const dateRanges = [] as DateRange[]
+            return dateRanges.concat(...participantDates)
         }
     },
     methods: {
@@ -370,6 +377,8 @@ export default {
 
         // interaction
         toggleParticipant(participant: EventParticipant) {
+            if (!this.isOrganiserMode)
+                return;
             participant.isSelected = !participant.isSelected;
         },
 
@@ -401,6 +410,7 @@ export default {
             } else {
                 // initialize invitee selection to previous selection
                 this.selectedDateRanges = this.previousSelectedDateRanges;
+                this.eventParticipants.map(participant => participant.isSelected = true);
             }
         },
     }
