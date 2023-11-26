@@ -15,7 +15,15 @@ export function setTheme(theme: Theme) {
     updateAppTheme();
 }
 
+function updateMetaTheme() {
+    const meta = document.querySelector('meta[name="theme-color"]') as HTMLElement;
+    const color = getComputedStyle(meta).getPropertyValue("--main-200");
+    meta.setAttribute("content", color);
+}
+
 export function updateAppTheme() {
     const root = document.querySelector(":root") as HTMLElement;
     root.dataset.theme = getTheme();
+
+    updateMetaTheme();
 }
