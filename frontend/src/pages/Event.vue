@@ -133,6 +133,7 @@
                     :selectableDateRanges="eventData.EventDates"
                     :heatmapDateRanges="selectedEventParticipantDateRanges"
                     :calendarType="eventData.CalendarType"
+                    :enableOptions="!isOrganiserMode"
                 />
             </template>
         </tab-controller>
@@ -322,9 +323,7 @@ export default {
                 if (res.data.length === 0)
                     return;
 
-                console.log(res.data)
-
-                // handle 
+                // set the participants array
                 this.eventParticipants = res.data.map((participant: any) => {
                     return {
                         ...participant,

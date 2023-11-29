@@ -2,19 +2,21 @@
     <div class="mx-2 mb-2">
         <!-- Controls -->
         <div
-            class="flex py-2 justify-between"
+            class="flex py-2 justify-between relative"
         >
             <div class="flex gap-1 items-center">
                 <custom-button
-                    @click="resetSelectedDateRanges"
+                    :click="resetSelectedDateRanges"
                     :small="true"
+                    :disabled="!enableOptions"
                 >
                     Reset
                 </custom-button>
 
                 <custom-button
-                    @click="invertSelectedDateRanges"
+                    :click="invertSelectedDateRanges"
                     :small="true"
+                    :disabled="!enableOptions"
                 >
                     Invert
                 </custom-button>
@@ -22,6 +24,7 @@
                 <custom-toggle
                     class="ml-3"
                     v-model="selectUnavailable"
+                    :disabled="!enableOptions"
                 >
                     <template v-slot:left>
                         <div
@@ -85,10 +88,13 @@
                     <!-- Heatmap overlay -->
                     <div
                         class="absolute top-0 bottom-0 left-0 right-0 bg-calendar-available"
-                        :style="`opacity: ${calendarDate.heatmap / (maxHeatmapValue + 1)}`"
+                        :style="`opacity: ${getHeatmapValue(calendarDate)}`"
                     ></div>
+
                     <!-- Display value -->
-                    {{ dateDisplayFunction(calendarDate.date) }}
+                    <span class="z-10">
+                        {{ dateDisplayFunction(calendarDate.date) }}
+                    </span>
                 </div>
             </div>
         </div>
@@ -141,6 +147,11 @@ export default {
         calendarType: {
             type: Number as PropType<CalendarType>,
             required: true,
+        },
+        // should options be enabled
+        enableOptions: {
+            type: Boolean,
+            default: true,
         },
     },
     data() {
@@ -218,7 +229,7 @@ export default {
             const date = new Date(from);
             for (let i = 0; date <= to && i < datesLimit; i++) {
                 // calculate heatmap if it's provided
-                const heatmap = this.heatmapDateRanges.length === 0 ? 0 :
+                const heatmap = !this.isHeatmapProvided ? 0 :
                     this.heatmapDateRanges.reduce((acc, range) => {
                         if (this.isDateInDateRange(date, range))
                             acc++;
@@ -245,7 +256,7 @@ export default {
         },
         maxHeatmapValue(): number {
             // finds the maximum heatmap value
-            if (this.heatmapDateRanges.length === 0)
+            if (!this.isHeatmapProvided)
                 return 1;
             return this.getCalendarDates.reduce((max, range) => {
                 if (range.heatmap > max)
@@ -298,6 +309,11 @@ export default {
             }
 
             return []
+        },
+
+        // heatmap
+        isHeatmapProvided(): boolean {
+            return this.heatmapDateRanges.length > 0;
         },
     },
     methods: {
@@ -525,12 +541,23 @@ export default {
         isDateDisabled(date: Date): boolean {
             return !this.isDateInSelectableDateRanges(date);
         },
+
+        // heatmap
+        getHeatmapValue(calendarDate: CalendarDate) {
+            return calendarDate.heatmap / (this.maxHeatmapValue + 1);
+        }
     },
     watch: {
         selectUnavailable() {
             // if selected date ranges are empty or completely full, reset whenever the unavailable is switched
             if (this.selectedDateRanges.length === 0 || this.selectedDateRanges.length === this.defaultDateRanges.length) {
                 this.resetSelectedDateRanges();
+            }
+        },
+        enableOptions(enable: boolean) {
+            // reset options when disabled
+            if (!enable) {
+                this.selectUnavailable = false;
             }
         },
     },

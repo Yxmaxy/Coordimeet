@@ -1,5 +1,9 @@
 <template>
-    <div class="cursor-pointer flex gap-1 items-center">
+    <div
+        :class="[{
+            '!cursor-not-allowed opacity-75': disabled,
+        }, 'cursor-pointer flex gap-1 items-center']"
+    >
         <div @click="onToggle('left')">
             <slot name="left"></slot>
         </div>
@@ -30,9 +34,15 @@ export default {
             type: Boolean,
             required: true
         },
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
     },
     methods: {
         onToggle(direction: "left" | "right" | "toggle") {
+            if (this.disabled)
+                return;
             const conversion = {
                 "left": false,
                 "right": true,
