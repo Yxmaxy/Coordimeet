@@ -45,7 +45,7 @@
                 v-if="calendarType === CalendarType.DateTime"
                 class="flex gap-2 items-center"
             >
-                Selected week: {{ selectedWeek + 1 }} / {{ numberOfAllWeeks + 1 }}
+                Week: {{ selectedWeek + 1 }} / {{ numberOfAllWeeks + 1 }}
                 <div class="flex gap-1">
                     <custom-button @click="prevWeek">Prev</custom-button>
                     <custom-button @click="nextWeek">Next</custom-button>
@@ -173,7 +173,6 @@ export default {
             if (!this.roughEventDateRange)
                 return [];
             const calendarDates: CalendarDate[] = [];
-            const datePadding = 7;  // how many days to add to the calendar
             const datesLimit = this.calendarType === CalendarType.Date ? 371 : 24 * 7;
             
             // functions for calculating the correct padding for from and to dates
@@ -185,7 +184,6 @@ export default {
                         // get first day of the week (Monday)
                         const newDate = new Date(date.setDate(
                             date.getDate() - (currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1)));
-                        newDate.setDate(newDate.getDate() - datePadding);
                         return newDate;
                     },
                     to: (date: Date) => {
@@ -194,7 +192,6 @@ export default {
                         // get last day of the week (Sunday)
                         const newDate = new Date(date.setDate(
                             date.getDate() + (currentDayOfWeek === 0 ? 0 : 7 - currentDayOfWeek)));
-                        newDate.setDate(newDate.getDate() + datePadding);
                         return newDate;
                     },
                 },
@@ -299,16 +296,19 @@ export default {
             // used when reseting the selection
             if (this.selectableDateRanges.length !== 0)
                 return this.selectableDateRanges;
-            if (this.getCalendarDates.length > 0) {
-                const firstCalendarDate = this.getCalendarDates[0];
-                const lastCalendarDate = this.getCalendarDates[this.getCalendarDates.length - 1];
-                return [{
-                    from: new Date(firstCalendarDate.date),
-                    to: new Date(lastCalendarDate.date)
-                } as DateRange]
-            }
 
-            return []
+            // prepare the roughEventDateRange for processing
+            const fromDate = new Date(this.roughEventDateRange.from);
+            const toDate = new Date(this.roughEventDateRange.to);
+            if (this.calendarType === CalendarType.DateTime) {
+                fromDate.setHours(0, 0);
+                toDate.setHours(23, 59);
+            }
+            
+            return [{
+                from: fromDate,
+                to: toDate
+            } as DateRange]
         },
 
         // heatmap
@@ -512,6 +512,16 @@ export default {
                 this.defaultDateRanges.map(this.deepCopyDateRange) : []
             this.$emit('update:selectedDateRanges', updateSelectedDateRanges)
         },
+        getDateRangeLength(dateRange: DateRange): number {
+            const from = new Date(dateRange.from);
+            const to = new Date(dateRange.to);
+            return from.getTime() - to.getTime();
+        },
+        areDateRangesSameLengths(dateRange1: DateRange[], dateRange2: DateRange[]): boolean {
+            return dateRange1.every((dateRange, index) => {
+                return this.getDateRangeLength(dateRange) === this.getDateRangeLength(dateRange2[index]);
+            })
+        },
 
         // weeks
         prevWeek() {
@@ -550,7 +560,7 @@ export default {
     watch: {
         selectUnavailable() {
             // if selected date ranges are empty or completely full, reset whenever the unavailable is switched
-            if (this.selectedDateRanges.length === 0 || this.selectedDateRanges.length === this.defaultDateRanges.length) {
+            if (this.selectedDateRanges.length === 0 || this.areDateRangesSameLengths(this.selectedDateRanges, this.defaultDateRanges)) {
                 this.resetSelectedDateRanges();
             }
         },

@@ -162,7 +162,7 @@ export default {
             calendarType: CalendarType.Date,
             selectedDateRanges: [] as DateRange[],
             fromDate: initializeDateInput(CalendarType.Date),
-            toDate: initializeDateInput(CalendarType.Date),
+            toDate: initializeDateInput(CalendarType.Date, undefined, 14),
         }
     },
     computed: {
@@ -177,7 +177,7 @@ export default {
             return "datetime-local";
         },
         areDatesInvalid(): boolean {
-            return this.fromDate < this.toDate;
+            return this.roughEventDateRange.from.getTime() > this.roughEventDateRange.to.getTime();
         },
         roughEventDateRange(): DateRange {
             return {
@@ -237,6 +237,7 @@ export default {
         calendarType(newType: CalendarType) {
             this.toDate = initializeDateInput(newType, this.toDate);
             this.fromDate = initializeDateInput(newType, this.fromDate);
+            this.selectedDateRanges = [];
         },
     },
 }

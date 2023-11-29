@@ -17,7 +17,7 @@
                             You've been invited to:
                         </template>
                         <template v-else>
-                            This event has finished!
+                            The event date has been selected!
                         </template>
                     </div>
                 </template>

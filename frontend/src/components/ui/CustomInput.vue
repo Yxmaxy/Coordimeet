@@ -8,7 +8,7 @@
                 'bg-main-000 border-2 border-main-300 focus:border-main-200 focus:outline-none']"
             :type="type"
             rows="3"
-            min="1"
+            :min="minValue"
 
             :placeholder="placeholder"
             :value="modelValue"
@@ -17,6 +17,7 @@
             @focus="checkRequired = false"
             @blur="checkRequired = true"
         ></component>
+
         <div class="flex justify-end text-invalid-dark text-sm h-5">
             <template v-if="forceInvalidMessage || isInvalid">
                 {{ invalidMessage }}
@@ -26,6 +27,7 @@
 </template>
 
 <script lang="ts">
+import { formatDateYMD, formatDateTimeYMD } from "@/utils/dates";
 
 export default {
     name: "InputElement",
@@ -67,7 +69,14 @@ export default {
         },
         isTextArea(): boolean {
             return this.type === "textarea";
-        }
+        },
+        minValue(): string {
+            if (this.type.startsWith("datetime"))
+                return formatDateTimeYMD(new Date());
+            if (this.type.startsWith("date"))
+                return formatDateYMD(new Date())
+            return "1";
+        },
     },
 }
 </script>
