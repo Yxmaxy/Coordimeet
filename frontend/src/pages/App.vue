@@ -1,41 +1,51 @@
 <!-- Wrapper page for all other pages -->
 <template>
-    <div class="app">
-        <header-component class="header-section"/>
-        <router-view class="page-section"/>
-        <footer-component class="footer-section" />
+    <div class="min-h-screen">
+        <header class="sticky top-0 h-14 flex items-center justify-between pl-2 pr-4 bg-main-200 z-30">
+            <img
+                class="h-full p-2 cursor-pointer"
+                src="/images/logo.png"
+                alt="logo"
+                @click="$router.push('/')"
+            />
+            <user-component />
+        </header>
+        <router-view class="min-h-[calc(100vh-3.5rem)] h-full" />
     </div>
+    <footer class="h-14 flex items-center pl-4 pr-4 bg-main-200">
+        <div>
+            &copy; 2022 - {{ currentYear }}
+            <a href="https://vrecer.si">
+                Marko,
+            </a>
+            <a href="https://leepush.eu">
+                Bine,
+            </a>
+            <a href="https://nikigre.si">
+                Nik,
+            </a>
+            <span>
+                Nika,
+            </span>
+            <span>
+                Rok.
+            </span>
+        </div>
+    </footer>
 </template>
 
 <script lang="ts">
-import Header from "../components/Header.vue";
-import Footer from "../components/Footer.vue";
+import UserComponent from "@/components/UserComponent.vue";
 
 export default {
+    name: "App",
     components: {
-        "header-component": Header,
-        "footer-component": Footer,
-    }
+        "user-component": UserComponent,
+    },
+    setup() {
+        return {
+            currentYear: new Date().getFullYear(),
+        }
+    },
 }
 </script>
-
-<style lang="scss" scoped>
-.app {
-    height: 100vh;
-    display: grid;
-    grid-template-areas:
-        "header"
-        "page"
-        "footer";
-    grid-template-rows: 3.5rem calc(100vh - 6.5rem) 3rem;
-}
-.header-section {
-    grid-area: header;
-}
-.page-section {
-    grid-area: page;
-}
-.footer-section {
-    grid-area: footer;
-}
-</style>
