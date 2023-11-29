@@ -1,6 +1,6 @@
 <template>
     <div class="bg-main-000">
-        <tab-controller :tabs="tabs">
+        <tab-controller :tabs="tabs" :breakpoint="750">
             <template v-slot:events_invited>
                 <event-list-component :events="eventsInvited" />
             </template>

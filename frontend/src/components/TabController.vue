@@ -62,7 +62,11 @@ export default {
         tabs: {
             type: Array as PropType<Tab[]>,
             required: true,
-        }
+        },
+        breakpoint: {
+            type: Number,
+            default: 850,
+        },
     },
     data() {
         return {
@@ -72,7 +76,7 @@ export default {
     },
     methods: {
         checkIsMobile() {
-            this.isMobile = window.innerWidth <= 850;
+            this.isMobile = window.innerWidth <= this.breakpoint;
         },
     },
     mounted() {

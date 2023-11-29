@@ -47,8 +47,18 @@
             >
                 Week: {{ selectedWeek + 1 }} / {{ numberOfAllWeeks + 1 }}
                 <div class="flex gap-1">
-                    <custom-button @click="prevWeek">Prev</custom-button>
-                    <custom-button @click="nextWeek">Next</custom-button>
+                    <custom-button
+                        @click="prevWeek"
+                        :small="true"
+                    >
+                        Prev
+                    </custom-button>
+                    <custom-button
+                        @click="nextWeek"
+                        :small="true"
+                    >
+                        Next
+                    </custom-button>
                 </div>
             </div>
         </div>

@@ -52,6 +52,7 @@
         <tab-controller
             v-else
             :tabs="tabs"
+            :breakpoint="1050"
         >
             <template v-slot:event>
                 <div class="h-full bg-main-100 p-4">

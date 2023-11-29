@@ -8,12 +8,12 @@
         >
             <div>
                 <b>{{ event.Name }}</b>
-                <abbr
-                    v-if="!userIsOrganiser"
-                    title="Organizer"
-                >
-                    - {{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}
-                </abbr>
+                <template v-if="!userIsOrganiser">
+                    -
+                    <abbr title="Organizer">
+                        {{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}
+                    </abbr>
+                </template>
             </div>
             <div>
                 <abbr
