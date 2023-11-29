@@ -111,7 +111,7 @@
                     <custom-button
                         v-if="pageTypeIn(EventPageType.Organizer) && isOrganiserMode"
                         :small="true"
-                        :disabled="!isSelectedDateRangesSet"
+                        :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
                         :click="finishEvent"
                     >
                         Submit and finish
@@ -200,20 +200,15 @@ export default {
     },
     data() {
         return {
-            dates: [] as any[],
             eventData: null as null | Event,
             eventPageType: EventPageType.NonConfirmed as EventPageType,
-
-            initialIsAvailable: [] as DateRange[],
-            selectableDates: [] as DateRange[],
-            selectedDate: undefined as number|undefined,
+            eventParticipants: [] as EventParticipant[],
 
             selectedDateRanges: [] as DateRange[],  // the current calendar selection
             previousSelectedDateRanges: [] as DateRange[],  // set if the invitee submitted before
 
             isOrganiserMode: false,  // organiser mode toggle
             gettingParticipantData: false,  // for fetching event participants
-            eventParticipants: [] as EventParticipant[],
         }
     },
     computed: {
@@ -366,8 +361,12 @@ export default {
         },
         finishEvent() {
             // finish the event as the organiser
+            if (!this.isSelectedDateRangesSet || this.selectedDateRanges.length !== 1)
+                return;
+            
+            const selectedDateRange = this.selectedDateRanges[0];  // get the selected date range
             ApiService.put(`eventDate.php?IDEvent=${this.$route.params.id}`, {
-                SelectedDate: this.displayDateRange(this.selectableDates[this.selectedDate ?? 0])
+                SelectedDate: this.displayDateRange(selectedDateRange)
             }).then(() => {
                 alert("Event date successfully selected!\nYou will now be returned to the event list");
                 this.$router.push("/event/list");
@@ -389,7 +388,9 @@ export default {
             navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/#/event/${this.$route.params.id}`);
         },
         displayDateRange(range: DateRange): string {
-            const convertFunc = this.eventData?.CalendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;
+            // converts date range to a readable format
+            const convertFunc = this.eventData?.CalendarType === CalendarType.Date ?
+                formatDateDayMonthYear : formatDateDayMonthHour;
             if (convertFunc(range.from) === convertFunc(range.to))
                 return convertFunc(range.from);
             return `${convertFunc(range.from)} - ${convertFunc(range.to)}`;
