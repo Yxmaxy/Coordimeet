@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+    /* Colors */
+    :root {
+        --main-000: #ecf8fa;
+        --main-100: #d9f1f6;
+        --main-200: #b3e3ee;
+        --main-300: #8dd5e6;
+        --main-400: #66c7de;
+        --main-500: #41b9d6;
+        --main-600: #3494ab;
+        --main-700: #276f80;
+        --main-800: #1a4a55;
+        --main-900: #0d252a;
+
+        --text: #061215;
+
+        --calendar-available: #bff1bf;
+        --calendar-unavailable: #e4c0c0;
+    }
+    :root[data-theme=green] {
+        --main-000: #ecfaf6;
+        --main-100: #d9f6ed;
+        --main-200: #b3eedc;
+        --main-300: #8de6cb;
+        --main-400: #66deba;
+        --main-500: #41d6a9;
+        --main-600: #34ab87;
+        --main-700: #278065;
+        --main-800: #1a5543;
+        --main-900: #0d2a21;
+
+        --text: #061215;
+
+        --calendar-available: #e0cfa7;
+    }
+    :root[data-theme=pink] {
+        --main-000: #fcf1fa;
+        --main-100: #f3c9eb;
+        --main-200: #edaee1;
+        --main-300: #e793d7;
+        --main-400: #e485d2;
+        --main-500: #e178cd;
+        --main-600: #ca6cb8;
+        --main-700: #9d548f;
+        --main-800: #703c66;
+        --main-900: #43243d;
+
+        --text: #061215;
+
+        --calendar-unavailable: #daaeae;
+    }
+    :root[data-theme=dark] {
+        --main-000: #3f4c52;
+        --main-100: #2e3f46;
+        --main-200: #253338;
+        --main-300: #212d32;
+        --main-400: #1d272c;
+        --main-500: #192225;
+        --main-600: #151c1f;
+        --main-700: #101619;
+        --main-800: #0c1112;
+        --main-900: #080b0c;
+
+        --text: #e0e0e0;
+
+        --calendar-available: rgb(110, 153, 110);
+        --calendar-unavailable: #b59696;
+    }
+
+    /* Fonts */
+    * {
+        font-family: "Segoe UI", sans-serif;
+        color: var(--text);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 0.5rem;
+    }  
+    ::-webkit-scrollbar-track {
+        background: var(--main-100);
+    }
+    ::-webkit-scrollbar-thumb {
+        background: var(--main-400);
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--main-500);
+    }
+
+    /* Checkbox */
+    input[type=checkbox] {
+        accent-color: var(--main-600);
+    }
+}
