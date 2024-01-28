@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  # db_prod:
+  #   container_name: coordimeet-db-prod
+  #   image: mariadb:10.7.8
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+  #     MYSQL_USER: ${DB_USERNAME}
+  #     MYSQL_PASSWORD: ${DB_PASSWORD}
+  #     MYSQL_DATABASE: ${DB_DATABASE}
+  #   ports:
+  #     - "${DB_PORT}:3306"
+  #   volumes:
+  #     - db-data-prod:/var/lib/mysql
+  #     - ./backend/database:/docker-entrypoint-initdb.d
+  #   restart: always
+  #   env_file:
+  #     - .env
+
+  frontend_prod:
+    container_name: coordimeet-frontend-prod
+    build:
+      context: ./
+      dockerfile: ./frontend/DockerfileProd
+    ports:
+      - "${FRONTEND_PORT}:80"
+    # depends_on:
+    #   - db_prod
+    #   - backend_prod
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: always
+    env_file:
+      - .env
+
+volumes:
+  db-data-prod:
+    driver: local
