@@ -19,7 +19,6 @@ services:
     container_name: coordimeet-backend
     build:
       context: ./backend
-      dockerfile: Dockerfile
     volumes:
       - ./backend:/app
     ports:
@@ -32,8 +31,7 @@ services:
   frontend:
     container_name: coordimeet-frontend
     build:
-      context: ./
-      dockerfile: ./frontend/Dockerfile
+      context: ./frontend
     ports:
       - "${FRONTEND_PORT}:3000"
     depends_on:
