@@ -3,7 +3,7 @@
         <slot name="before"></slot>
         <div class="text-2xl font-bold">{{ event.Name }}</div>
         <div class="flex flex-col gap-1 mt-3">
-            <div>Organizer: {{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}</div>
+            <div>Organizer: {{ event.Organizer?.first_name }} {{ event.Organizer?.last_name }}</div>
             <div>Deadline: {{ formatDateDayMonthYear(new Date(event.Deadline)) }}</div>
             <div>Duration: {{ event.Length }} {{ readableCalendarUnits }}</div>
             <div v-for="value, key in event.Config">

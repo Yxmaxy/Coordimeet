@@ -1,13 +1,6 @@
 <template>
-    <custom-button
-        v-if="!userStore.isLoggedIn"
-        class="z-50"
-        :click="onLogin"
-    >
-        Log in
-</custom-button>
     <div
-        v-else
+        v-if="userStore.isLoggedIn"
         class="h-full relative"
     >
         <div
@@ -15,14 +8,14 @@
             class="h-full flex items-center cursor-pointer select-none"
         >
             <span class="font-bold">
-                {{ userStore.user!.FirstName }}
+                {{ userStore.user!.first_name }}
             </span>
-            <img
+            <!-- <img
                 class="rounded-full w-14 p-2 select-none"
                 :src="userStore.user!.ProfilePhoto"
                 referrerpolicy="no-referrer"
                 alt="profile"
-            />
+            /> -->
         </div>
         <!-- Background -->
         <div
@@ -38,9 +31,9 @@
             <!-- Content -->
             <div class="absolute w-screen right-0 pl-10 pt-1 max-w-[20rem]">
                 <div class="flex flex-col bg-main-300 border-2 border-main-400 rounded-lg [&>*]:p-4 shadow-md">
-                    <a :href="logoutLink" class="hover:bg-main-400 transition-colors">
+                    <button @click="onLogout" class="hover:bg-main-400 transition-colors text-left">
                         Log out
-                    </a>
+                    </button>
                     <div class="flex justify-between">
                         Theme
                         <div class="flex gap-1 [&>*]:h-5 [&>*]:w-5 [&>*]:rounded-sm [&>*]:border-2 [&>*]:border-main-600 [&>*]:cursor-pointer">
@@ -69,7 +62,7 @@
 </template>
 
 <script lang="ts">
-import { useUserStore } from "@/stores/UserStore";
+import { useStoreUser } from "@/stores/storeUser";
 import { setTheme, Theme } from "@/utils/theme";
 
 import CustomButton from "@/components/ui/CustomButton.vue";
@@ -80,10 +73,9 @@ export default {
         CustomButton,
     },
     setup() {
-        const userStore = useUserStore();
+        const userStore = useStoreUser();
         return {
             userStore,
-            logoutLink: `${import.meta.env.VITE_BACKEND_URL}/googleLogout.php`,
             Theme,
         }
     },
@@ -94,8 +86,10 @@ export default {
     },
     methods: {
         setTheme,
-        onLogin() {
-            window.location.href = this.userStore.loginLink;
+        onLogout() {
+            this.userStore.onLogout();
+            this.showLogout = false;
+            this.$router.push("/");
         }
     }
 }

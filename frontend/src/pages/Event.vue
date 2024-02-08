@@ -143,7 +143,7 @@
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
-import { useUserStore } from "@/stores/UserStore";
+import { useStoreUser } from "@/stores/storeUser";
 
 import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventPageType, EventParticipant } from "@/types/event";
@@ -189,7 +189,7 @@ export default {
         EventData,
     },
     setup() {
-        const { user } = useUserStore();
+        const { user } = useStoreUser();
 
         return {
             user,

@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia';
 import { User } from '@/types/user';
 import ApiService from "@/utils/ApiService";
+import { saveTokens, retrieveUserID, removeTokens } from "@/utils/tokens";
 
-export const useUserStore = defineStore("UserStore", {
+export const useStoreUser = defineStore("storeUser", {
     state: () => {
         return {
-            loginLink: "" as string,
             user: undefined as User | undefined,
         }
     },
@@ -13,18 +13,35 @@ export const useUserStore = defineStore("UserStore", {
         isLoggedIn: (state) => state.user !== undefined,
     },
     actions: {
-        async tryToLoginUser(): Promise<boolean> {
-            if (this.isLoggedIn)
-                return true;
-            const res = await ApiService.get("googleLogin.php");
-            if (res.status !== 200)
-                return false;
-            if ("googleLoginURL" in res.data) {
-                this.loginLink = res.data.googleLoginURL;
-                return false;
+        async retrieveUser(): Promise<User|undefined> {
+            // return the user if it's already retrieved
+            if (this.user)
+                return this.user;
+            // retrieve user information from the API
+            const userID = retrieveUserID();
+            if (!userID)
+                return undefined;
+            const userResponse = await ApiService.get(`/users/user/${userID}/`);
+            if (userResponse.status === 200) {
+                this.user = userResponse.data;
+                return this.user;
             }
-            this.user = res.data;
-            return true;
+            return undefined;
+        },
+        async onLogin(username: string, password: string): Promise<boolean> {
+            // retrieve access token
+            const response = await ApiService.post("/users/token/", {
+                username, password
+            });
+            if (response.status === 200) {
+                saveTokens(response.data.token, response.data.id);
+                return await this.retrieveUser() !== undefined;
+            }
+            return false;
+        },
+        onLogout() {
+            removeTokens();
+            this.user = undefined;
         }
     }
 })

@@ -1,6 +1,6 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 
-import { useUserStore } from "@/stores/UserStore";
+import { useStoreUser } from "@/stores/storeUser";
 
 import Home from "@/pages/Home.vue";
 import Event from "@/pages/Event.vue";
@@ -8,7 +8,7 @@ import EventCreate from "@/pages/EventCreate.vue";
 import EventList from "@/pages/EventList.vue";
 
 const router = createRouter({
-    history: createWebHashHistory(),
+    history: createWebHistory(),
     routes: [
         { path: "/", component: Home, name: "home" },
         { path: "/event/:id", component: Event, name: "event"},
@@ -22,9 +22,9 @@ router.beforeEach(async (to, from) => {
     // scroll to top on route change
     window.scrollTo(0, 0);
 
-    // check if user is logged in
-    const userStore = useUserStore();
-    await userStore.tryToLoginUser();
+    // retrieve the user
+    const userStore = useStoreUser();
+    await userStore.retrieveUser();
     if (from.name === to.name)
         return false;
     if (to.name === "event") {

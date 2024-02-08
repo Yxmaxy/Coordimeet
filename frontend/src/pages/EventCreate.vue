@@ -119,7 +119,7 @@ import CustomRadio from "@/components/ui/CustomRadio.vue";
 import Calendar from "@/components/Calendar.vue";
 import TabController from "@/components/TabController.vue";
 
-import { useUserStore } from "@/stores/UserStore";
+import { useStoreUser } from "@/stores/storeUser";
 
 import { CalendarType, DateRange } from "@/types/calendar";
 import { Tab } from "@/types/tabs";
@@ -138,7 +138,7 @@ const tabs = [
 
 export default {
     setup() {
-        const { user } = useUserStore();
+        const { user } = useStoreUser();
         return {
             user,
             CalendarType,

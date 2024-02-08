@@ -19,7 +19,7 @@
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
-import { useUserStore } from "@/stores/UserStore";
+import { useStoreUser } from "@/stores/storeUser";
 
 import { Event } from "@/types/event";
 import { Tab } from "@/types/tabs";
@@ -47,7 +47,7 @@ export default {
         CustomButton,
     },
     setup() {
-        const { user } = useUserStore();
+        const { user } = useStoreUser();
         return {
             user,
             tabs,

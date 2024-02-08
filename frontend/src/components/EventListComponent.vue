@@ -11,7 +11,7 @@
                 <template v-if="!userIsOrganiser">
                     -
                     <abbr title="Organizer">
-                        {{ event.Organizer?.FirstName }} {{ event.Organizer?.LastName }}
+                        {{ event.Organizer?.first_name }} {{ event.Organizer?.last_name }}
                     </abbr>
                 </template>
             </div>
