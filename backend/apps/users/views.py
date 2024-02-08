@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from apps.users import serializers
 
 
-class CustomtokenObtainSlidingView(TokenObtainSlidingView):
+class CustomTokenObtainSlidingView(TokenObtainSlidingView):
     serializer_class = serializers.CustomTokenObtainSlidingSerializer
 
 

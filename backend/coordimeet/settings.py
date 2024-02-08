@@ -148,13 +148,14 @@ REST_FRAMEWORK = {
 # Simple JWT settings
 SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.SlidingToken",),
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
 }
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     os.environ.get("VITE_FRONTEND_URL"),
+    # TODO: fix this to read from the environment variable
     "http://127.0.0.1:3000",
     "http://localhost:3000",
 
