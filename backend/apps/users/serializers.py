@@ -21,9 +21,8 @@ class CustomTokenObtainSlidingSerializer(TokenObtainSlidingSerializer):
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for the user object.
-    TODO: extend with other fields like the image, etc.
     """
-    
+
     class Meta:
         model = get_user_model()
         fields = ["id", "first_name", "last_name", "email"]

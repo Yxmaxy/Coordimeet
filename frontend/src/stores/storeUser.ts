@@ -28,10 +28,10 @@ export const useStoreUser = defineStore("storeUser", {
             }
             return undefined;
         },
-        async onLogin(username: string, password: string): Promise<boolean> {
+        async onLogin(email: string, password: string): Promise<boolean> {
             // retrieve access token
             const response = await ApiService.post("/users/token/", {
-                username, password
+                email, password
             });
             if (response.status === 200) {
                 saveTokens(response.data.token, response.data.id);

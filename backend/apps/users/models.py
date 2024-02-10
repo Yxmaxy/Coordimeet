@@ -6,6 +6,10 @@ from apps.users.managers import CoordimeetUserManager
 
 
 class CoordimeetUser(AbstractBaseUser, PermissionsMixin):
+    """
+    Custom user model for Coordimeet
+    """
+
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)

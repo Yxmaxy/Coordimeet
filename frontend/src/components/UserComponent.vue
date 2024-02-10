@@ -8,14 +8,8 @@
             class="h-full flex items-center cursor-pointer select-none"
         >
             <span class="font-bold">
-                {{ userStore.user!.first_name }}
+                {{ userDisplayName }}
             </span>
-            <!-- <img
-                class="rounded-full w-14 p-2 select-none"
-                :src="userStore.user!.ProfilePhoto"
-                referrerpolicy="no-referrer"
-                alt="profile"
-            /> -->
         </div>
         <!-- Background -->
         <div
@@ -82,6 +76,15 @@ export default {
     data() {
         return {
             showLogout: false,
+        }
+    },
+    computed: {
+        userDisplayName() {
+            if (this.userStore.user!.first_name && this.userStore.user!.last_name)
+                return `${this.userStore.user!.first_name} ${this.userStore.user!.last_name}`;
+            if (this.userStore.user!.first_name)
+                return this.userStore.user!.first_name;
+            return this.userStore.user!.email;
         }
     },
     methods: {

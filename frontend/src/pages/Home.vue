@@ -7,9 +7,9 @@
             <div class="text-center text-main-200 mb-4">(Temporary form)</div>
 
             <custom-input
-                v-model="username"
-                type="username"
-                placeholder="Username"
+                v-model="email"
+                type="email"
+                placeholder="Email"
             />
             <custom-input
                 v-model="password"
@@ -47,13 +47,13 @@ export default {
     },
     data() {
         return {
-            username: "",
+            email: "",
             password: "",
         }
     },
     methods: {
         async onLogin() {
-            const successful = await this.storeUser.onLogin(this.username, this.password);
+            const successful = await this.storeUser.onLogin(this.email, this.password);
             if (successful) {
                 this.$router.push("/event/list");
             }
