@@ -10,7 +10,7 @@
                     :small="true"
                     :disabled="!enableOptions"
                 >
-                    Reset
+                    Reset <custom-icon class="text-sm" icon="refresh" />
                 </custom-button>
 
                 <custom-button
@@ -18,7 +18,7 @@
                     :small="true"
                     :disabled="!enableOptions"
                 >
-                    Invert
+                    Invert <custom-icon class="text-sm" icon="invert_colors" />
                 </custom-button>
 
                 <custom-toggle
@@ -119,6 +119,7 @@ import { CalendarType, DateRange, CalendarDate } from "@/types/calendar";
 
 import CustomButton from "./ui/CustomButton.vue";
 import CustomToggle from "./ui/CustomToggle.vue";
+import CustomIcon from "./ui/CustomIcon.vue";
 
 export default {
     name: "Calendar",
@@ -130,6 +131,7 @@ export default {
     components: {
         CustomButton,
         CustomToggle,
+        CustomIcon,
     },
     emits: [ "update:selectedDateRanges" ],
     props: {

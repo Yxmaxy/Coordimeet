@@ -1,4 +1,7 @@
 /** @type {import('tailwindcss').Config} */
+
+import plugin from "tailwindcss/plugin";
+
 export default {
   content: [
     "./index.html",
@@ -36,6 +39,12 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        ".size-inherit": { "font-size": "inherit" },
+      });
+    }),
+  ],
 }
 

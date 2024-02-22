@@ -12,7 +12,7 @@
             class="right-4 bottom-4 fixed !p-3 !rounded-2xl shadow-md"
             :click="() => $router.push('/event/new')"
         >
-            + New event
+            <custom-icon icon="add"/> New event
         </custom-button>
     </div>
 </template>
@@ -27,15 +27,18 @@ import { Tab } from "@/types/tabs";
 import EventListComponent from "@/components/EventListComponent.vue";
 import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
+import CustomIcon from "@/components/ui/CustomIcon.vue";
 
 const tabs = [
     {
         name: "Events I'm invited to",
         slot_name: "events_invited",
+        icon: "group",
     },
     {
         name: "Events I've created",
         slot_name: "events_created",
+        icon: "engineering",
     }
 ] as Tab[];
 
@@ -45,6 +48,7 @@ export default {
         EventListComponent,
         TabController,
         CustomButton,
+        CustomIcon,
     },
     setup() {
         const { user } = useStoreUser();

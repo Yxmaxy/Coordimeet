@@ -41,11 +41,13 @@
                     />
                 </label>
                 <div>
-                    <b class="ml-4">Rough event duration</b>
-                    <div class="ml-4 mr-4 text-xs text-main-700">
-                        The rough event duration is used for generating the calendar,
-                        where you can select the detailed {{ calendarTypeDisplay }} of the event.
-                    </div>
+                    <b class="ml-4 flex gap-2 items-center">
+                        Rough event duration
+                        <help-icon class="text-base">
+                            The rough event duration is used for generating the calendar,
+                            where you can select the detailed {{ calendarTypeDisplay }} of the event.
+                        </help-icon>
+                    </b>
                     <label>
                         <div class="mt-2 ml-4">
                             From
@@ -90,7 +92,7 @@ Ticket price: 5€"
                     class="mt-3 mb-6"
                     @click="onCreateEvent"
                 >
-                    Create new event
+                    Create new event <custom-icon class="text-base" icon="event_available" />
                 </custom-button>
             </div>
         </template>
@@ -116,6 +118,9 @@ import {
 import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomRadio from "@/components/ui/CustomRadio.vue";
+import CustomIcon from "@/components/ui/CustomIcon.vue";
+import HelpIcon from "@/components/ui/HelpIcon.vue";
+
 import Calendar from "@/components/Calendar.vue";
 import TabController from "@/components/TabController.vue";
 
@@ -129,10 +134,12 @@ const tabs = [
         name: "Create new event",
         slot_name: "create_event",
         narrow: "md",
+        icon: "calendar_add_on",
     },
     {
         name: "Calendar input",
         slot_name: "calendar_input",
+        icon: "calendar_month",
     }
 ] as Tab[];
 
@@ -151,6 +158,8 @@ export default {
         CustomInput,
         CustomButton,
         CustomRadio,
+        CustomIcon,
+        HelpIcon,
     },
     data() {
         return {

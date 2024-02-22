@@ -1,14 +1,17 @@
 <template>
     <div
         v-if="userStore.isLoggedIn"
-        class="h-full relative"
+        class="z-50 flex gap-2 relative"
     >
         <div
             @click="showLogout = !showLogout"
             class="h-full flex items-center cursor-pointer select-none"
         >
             <span class="font-bold">
-                {{ userDisplayName }}
+                <template v-if="!isMobile">
+                    {{ userDisplayName }}
+                </template>
+                <span class="material-symbols-outlined align-middle ml-1">account_circle</span>
             </span>
         </div>
         <!-- Background -->
@@ -18,12 +21,12 @@
             @click="showLogout = false"
         ></div>
         <!-- Popup -->
-        <div v-if="showLogout">
+        <template v-if="showLogout">
             <!-- Popup triangle -->
-            <div class="absolute -bottom-1 right-5
+            <div class="absolute -bottom-2 right-1
                 border-l-transparent border-t-transparent border-r-transparent border-b-main-400 border-8"></div>
             <!-- Content -->
-            <div class="absolute w-screen right-0 pl-10 pt-1 max-w-[20rem]">
+            <div class="absolute w-screen top-7 -right-2 pl-4 pt-1 max-w-[20rem]">
                 <div class="flex flex-col bg-main-300 border-2 border-main-400 rounded-lg [&>*]:p-4 shadow-md">
                     <button @click="onLogout" class="hover:bg-main-400 transition-colors text-left">
                         Log out
@@ -51,7 +54,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </template>
     </div>
 </template>
 
@@ -76,6 +79,7 @@ export default {
     data() {
         return {
             showLogout: false,
+            isMobile: true,
         }
     },
     computed: {
@@ -93,7 +97,20 @@ export default {
             this.userStore.onLogout();
             this.showLogout = false;
             this.$router.push("/");
-        }
-    }
+        },
+        checkScreenSize() {
+            this.isMobile = window.innerWidth <= 400;
+            window.innerWidth <= 400 ? this.isMobile = true : this.isMobile = false;
+        },
+    },
+    mounted() {
+        window.addEventListener('resize', this.checkScreenSize);
+        this.$nextTick(() => {
+            this.checkScreenSize();
+        });
+    },
+    unmounted() {
+        window.removeEventListener('resize', this.checkScreenSize);
+    },
 }
 </script>

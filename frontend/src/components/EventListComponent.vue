@@ -6,29 +6,35 @@
             cursor-pointer shadow-md transition-all hover:-translate-y-1 hover:bg-main-200"
             @click="$router.push(`/event/${event.IDEvent}`)"
         >
-            <div>
+            <div class="flex gap-1">
                 <b>{{ event.Name }}</b>
                 <template v-if="!userIsOrganiser">
                     -
                     <abbr title="Organizer">
                         {{ event.Organizer?.first_name }} {{ event.Organizer?.last_name }}
                     </abbr>
+                    <custom-icon class="text-base" icon="engineering" />
                 </template>
             </div>
             <div>
-                <abbr
+                <div
                     v-if="userIsOrganiser && event.SelectedDate === null"
-                    title="Event deadline"
+                    class="flex gap-2"
                 >
-                    {{ formatDateDayMonthYear(new Date(event.Deadline)) }}
-                </abbr>
-                <abbr
-                    v-else
-                    title="Selected date"
-                    class="font-bold"
+                    <abbr title="Event deadline">
+                        {{ formatDateDayMonthYear(new Date(event.Deadline)) }}
+                    </abbr>
+                    <custom-icon class="text-base" icon="event_upcoming" />
+                </div>
+                <div
+                    v-else-if="event.SelectedDate !== null"
+                    class="flex gap-2 font-bold"
                 >
-                    {{ event.SelectedDate }}
-                </abbr>
+                    <abbr title="Selected date">
+                        {{ event.SelectedDate }}
+                    </abbr>
+                    <custom-icon class="text-base" icon="event_available" />
+                </div>
             </div>
         </div>
     </div>
@@ -39,7 +45,13 @@ import { PropType } from "vue";
 import { formatDateDayMonthYear } from "@/utils/dates";
 import { Event } from "@/types/event";
 
+import CustomIcon from "@/components/ui/CustomIcon.vue";
+
 export default {
+    name: "EventListComponent",
+    components: {
+        CustomIcon,
+    },
     props: {
         events: {
             type: Array as PropType<Event[]>,

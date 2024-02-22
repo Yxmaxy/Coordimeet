@@ -67,7 +67,7 @@
                                 :small="true"
                                 @click="copyLink"
                             >
-                                Copy invite link to clipboard
+                                Copy invite link to clipboard <custom-icon class="text-base" icon="person_add" />
                             </custom-button>
                         </template>
                     </event-data>
@@ -96,13 +96,13 @@
                             v-model="isOrganiserMode"
                         >
                             <template v-slot:left>
-                                <span class="font-bold mr-1">
-                                    Invitee
+                                <span class="flex items-center gap-1 font-bold mr-1">
+                                    Invitee <custom-icon class="text-base" icon="person" />
                                 </span>
                             </template>
                             <template v-slot:right>
-                                <span class="font-bold ml-1">
-                                    Organiser
+                                <span class="flex items-center gap-1 font-bold ml-1">
+                                    Organiser <custom-icon class="text-base" icon="engineering" />
                                 </span>
                             </template>
                         </custom-toggle>
@@ -115,7 +115,7 @@
                         :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
                         :click="finishEvent"
                     >
-                        Submit and finish
+                        Submit and finish <custom-icon class="text-base" icon="event_available" />
                     </custom-button>
                     <custom-button
                         v-else
@@ -123,7 +123,7 @@
                         :click="submitSelection"
                         :disabled="!isSelectedDateRangesSet || gettingParticipantData"
                     >
-                        Submit
+                        Submit <custom-icon class="text-base" icon="event" />
                     </custom-button>
                 </div>
                 <!-- Calendar -->
@@ -142,6 +142,8 @@
 </template>
 
 <script lang="ts">
+import { AxiosResponse } from "axios";
+
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
 
@@ -161,22 +163,25 @@ import Calendar from "@/components/Calendar.vue";
 import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomToggle from "@/components/ui/CustomToggle.vue";
-import { AxiosResponse } from "axios";
+import CustomIcon from "@/components/ui/CustomIcon.vue";
 
 const tabs = [
     {
         name: "Event",
         slot_name: "event",
         narrow: "sm",
+        icon: "description",
     },
     {
         name: "Responses",
         slot_name: "responses",
         narrow: "sm",
+        icon: "group",
     },
     {
         name: "Calendar",
         slot_name: "calendar",
+        icon: "calendar_today",
     },
 ] as Tab[];
 
@@ -184,9 +189,10 @@ export default {
     components: {
         Calendar,
         TabController,
+        EventData,
         CustomButton,
         CustomToggle,
-        EventData,
+        CustomIcon,
     },
     setup() {
         const { user } = useStoreUser();

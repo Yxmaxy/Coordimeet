@@ -2,7 +2,7 @@
     <div class="flex flex-col">
         <!-- Header -->
         <div class="flex z-20 sticky top-14 w-full shadow-md">
-            <!-- Tab design -->
+            <!-- Mobile design -->
             <div
                 v-if="isMobile"
                 v-for="(tab, index) in tabs" :key="`mobile_header_${index}`"
@@ -10,11 +10,22 @@
                     'bg-main-300 text-main-100': activeTab !== index,
                     'bg-main-200': activeTab === index,
                 },
-                'flex-1 flex items-center justify-center cursor-pointer select-none h-14',
+                'flex-1 flex gap-2 items-center justify-center cursor-pointer select-none h-14',
                 'transition-colors border-r-2 last:border-r-0 border-main-200']"
                 @click="activeTab = index"
+                :ref="index === 0 ? 'mobile_tab' : undefined"
             >
-                {{ tab.name }}
+                <!-- Tab content -->
+                <span
+                    v-if="!showOnlyIcon"
+                    class="text-inherit"
+                >
+                    {{ tab.name }}
+                </span>
+                <custom-icon
+                    v-if="tab.icon"
+                    :icon="tab.icon"
+                />
             </div>
             <!-- Desktop design -->
             <div
@@ -23,12 +34,17 @@
                 :class="[{
                     'max-w-[20rem]': !isMobile && tab.narrow === 'sm',
                     'max-w-[25rem]': !isMobile && tab.narrow === 'md',
-                }, 'flex-1 flex items-center h-14 bg-main-100 shadow-md',
+                }, 'flex-1 flex items-center justify-between h-14 bg-main-100 shadow-md',
                    'border-r-2 last:border-r-0 border-main-200',
                    'font-bold text-xl px-4'
                 ]"
             >
+                <!-- Tab content -->
                 {{ tab.name }}
+                <custom-icon
+                    v-if="tab.icon"
+                    :icon="tab.icon"
+                />
             </div>
         </div>
         <!-- Content -->
@@ -56,8 +72,13 @@ import { PropType } from "vue";
 
 import { Tab } from "@/types/tabs";
 
+import CustomIcon from "@/components/ui/CustomIcon.vue";
+
 export default {
     name: "TabController",
+    components: {
+        CustomIcon,
+    },
     props: {
         tabs: {
             type: Array as PropType<Tab[]>,
@@ -70,21 +91,35 @@ export default {
     },
     data() {
         return {
-            isMobile: false,
+            isMobile: true,
+            showOnlyIcon: false,
             activeTab: 0,
         }
     },
+    computed: {
+        doAllTabsHaveIcons(): boolean {
+            return this.tabs.every(tab => tab.icon);
+        },
+    },
     methods: {
-        checkIsMobile() {
+        checkScreenSize() {
             this.isMobile = window.innerWidth <= this.breakpoint;
+            if (this.$refs.mobile_tab) {
+                const mobileTab = (this.$refs.mobile_tab as HTMLDivElement[])[0];
+                if (mobileTab) {
+                    this.showOnlyIcon = mobileTab.offsetWidth < 220 && this.doAllTabsHaveIcons;
+                }
+            }
         },
     },
     mounted() {
-        window.addEventListener('resize', this.checkIsMobile);
-        this.checkIsMobile();
+        window.addEventListener('resize', this.checkScreenSize);
+        this.$nextTick(() => {
+            this.checkScreenSize();
+        });
     },
     unmounted() {
-        window.removeEventListener('resize', this.checkIsMobile);
+        window.removeEventListener('resize', this.checkScreenSize);
     },
 }
 </script>
