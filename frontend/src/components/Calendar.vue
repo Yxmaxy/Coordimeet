@@ -42,19 +42,19 @@
                 </custom-toggle>
             </div>
             <div
-                v-if="calendarType === CalendarType.DateTime"
+                v-if="calendarType === CalendarType.DateHour"
                 class="flex gap-2 items-center"
             >
-                Week: {{ selectedWeek + 1 }} / {{ numberOfAllWeeks + 1 }}
+                {{ unitDisplay }}: {{ selectedUnit + 1 }} / {{ numberOfAllUnits + 1 }}
                 <div class="flex gap-1">
                     <custom-button
-                        @click="prevWeek"
+                        @click="prevUnit"
                         :small="true"
                     >
                         Prev
                     </custom-button>
                     <custom-button
-                        @click="nextWeek"
+                        @click="nextUnit"
                         :small="true"
                     >
                         Next
@@ -75,11 +75,11 @@
         <!-- Calendar -->
         <div :class="[{
             'grid-cols-7': calendarType === CalendarType.Date,
-            'grid-flow-col grid-rows-24': calendarType === CalendarType.DateTime,
+            'grid-flow-col grid-rows-24': calendarType === CalendarType.DateHour,
         }, 'grid']">
             <div
                 v-for="calendarDate in getCalendarDates"
-                class="p-[0.075rem] h-full"
+                class="p-[1px] h-full"
                 @mousedown="onDateMouseDown(calendarDate.date)"
                 @mouseup="onDateMouseUp(calendarDate.date)"
                 @mouseenter="event => onDateMouseEnter(event, calendarDate.date)"
@@ -175,7 +175,7 @@ export default {
             selectUnavailable: false,  // is user selecting unavailable dates
             longpressTimeout: null as null | ReturnType<typeof setTimeout>,
 
-            selectedWeek: 0,  // current selected week
+            selectedUnit: 0,  // current selected unit
         }
     },
     computed: {
@@ -185,7 +185,12 @@ export default {
             if (!this.roughEventDateRange)
                 return [];
             const calendarDates: CalendarDate[] = [];
-            const datesLimit = this.calendarType === CalendarType.Date ? 371 : 24 * 7;
+
+            const calendarTypeLimits = {
+                [CalendarType.Date]: 371,
+                [CalendarType.DateHour]: 24 * 7,
+            };
+            const datesLimit = calendarTypeLimits[this.calendarType];
             
             // functions for calculating the correct padding for from and to dates
             const rangeConversion = {
@@ -207,14 +212,14 @@ export default {
                         return newDate;
                     },
                 },
-                [CalendarType.DateTime]: {
+                [CalendarType.DateHour]: {
                     from: (date: Date) => {
                         // get current day of the week (0-6)
                         const currentDayOfWeek = date.getDay();
                         // get first day of the week (Monday)
                         const newDate = new Date(date.setDate(
                             date.getDate() - (currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1)));
-                        newDate.setDate(newDate.getDate() + this.selectedWeek * 7);
+                        newDate.setDate(newDate.getDate() + this.selectedUnit * 7);
                         newDate.setHours(0, 0);
                         return newDate;
                     },
@@ -224,7 +229,7 @@ export default {
                         // get last day of the week (Sunday)
                         const newDate = new Date(date.setDate(
                             date.getDate() + (currentDayOfWeek === 0 ? 0 : 7 - currentDayOfWeek)));
-                        newDate.setDate(newDate.getDate() + this.selectedWeek * 7);
+                        newDate.setDate(newDate.getDate() + this.selectedUnit * 7);
                         newDate.setHours(23, 59);
                         return newDate;
                     },
@@ -257,11 +262,11 @@ export default {
         },
         getCalendarHeader(): string[] {
             const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
-            if (this.calendarType === CalendarType.Date)
-                return days;
-            return this.getCalendarDates
-                .filter((_, index) => index % 24 === 0)
-                .map((calendarDate, index) => `${days[index]}<br/>${formatDateDayMonth(calendarDate.date)}`);
+            if (this.calendarType === CalendarType.DateHour)
+                return this.getCalendarDates
+                    .filter((_, index) => index % 24 === 0)
+                    .map((calendarDate, index) => `${days[index]}<br/>${formatDateDayMonth(calendarDate.date)}`);
+            return days;
         },
         maxHeatmapValue(): number {
             // finds the maximum heatmap value
@@ -274,23 +279,35 @@ export default {
             }, 1);
         },
 
-        // weeks
-        isPrevWeekEnabled(): boolean {
-            return this.selectedWeek > 0;
+        // units
+        unitDisplay(): string {
+            if (this.calendarType === CalendarType.DateHour)
+                return "Week";
+            return "Days";
         },
-        isNextWeekEnabled(): boolean {
-            return this.selectedWeek < this.numberOfAllWeeks;
+        isPrevUnitEnabled(): boolean {
+            return this.selectedUnit > 0;
         },
-        numberOfAllWeeks(): number {
+        isNextUnitEnabled(): boolean {
+            return this.selectedUnit < this.numberOfAllUnits;
+        },
+        numberOfAllUnits(): number {
             const { from, to } = this.roughEventDateRange;
-            return Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24 * 7));
+            const allUnitsConversion = {
+                [CalendarType.DateHour]: 1000 * 60 * 60 * 24 * 7,
+                [CalendarType.Date]: 1,
+            }
+
+            return Math.ceil((to.getTime() - from.getTime()) / allUnitsConversion[this.calendarType]);
         },
 
         // dates
         dateDisplayFunction() {
-            if (this.calendarType === CalendarType.DateTime)
-                return formatDateHour;
-            return formatDateDayMonth;
+            const formatFunctions = {
+                [CalendarType.DateHour]: formatDateHour,
+                [CalendarType.Date]: formatDateDayMonth,
+            };
+            return formatFunctions[this.calendarType];
         },
         creatingDateRange(): DateRange | null {
             // used when the user is interacting with the calendar
@@ -312,7 +329,7 @@ export default {
             // prepare the roughEventDateRange for processing
             const fromDate = new Date(this.roughEventDateRange.from);
             const toDate = new Date(this.roughEventDateRange.to);
-            if (this.calendarType === CalendarType.DateTime) {
+            if (this.calendarType === CalendarType.DateHour) {
                 fromDate.setHours(0, 0);
                 toDate.setHours(23, 59);
             }
@@ -502,7 +519,7 @@ export default {
         addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
             if (calendarType === CalendarType.Date)
                 date.setDate(date.getDate() + units);
-            else if (calendarType === CalendarType.DateTime)
+            else if (calendarType === CalendarType.DateHour)
                 date.setHours(date.getHours() + units);
             return date;
         },
@@ -535,14 +552,14 @@ export default {
             })
         },
 
-        // weeks
-        prevWeek() {
-            if (this.isPrevWeekEnabled)
-                this.selectedWeek--;
+        // units
+        prevUnit() {
+            if (this.isPrevUnitEnabled)
+                this.selectedUnit--;
         },
-        nextWeek() {
-            if (this.isNextWeekEnabled)
-                this.selectedWeek++;
+        nextUnit() {
+            if (this.isNextUnitEnabled)
+                this.selectedUnit++;
         },
 
         // calendar colors

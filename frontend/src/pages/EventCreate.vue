@@ -25,8 +25,8 @@
                         <custom-radio
                             type="radio"
                             v-model="calendarType"
-                            :value="CalendarType.DateTime"
-                            text="Date and time"
+                            :value="CalendarType.DateHour"
+                            text="Date and hour"
                         />
                     </div>
                 </div>
@@ -166,7 +166,7 @@ export default {
             name: "",
             length: 1,
             customFields: "",
-            deadline: initializeDateInput(CalendarType.DateTime),
+            deadline: initializeDateInput(CalendarType.DateHour),
             
             calendarType: CalendarType.Date,
             selectedDateRanges: [] as DateRange[],

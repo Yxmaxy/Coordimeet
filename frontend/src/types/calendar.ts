@@ -4,7 +4,7 @@ export interface DateRange {
 }
 
 export enum CalendarType {
-    DateTime = 0,
+    DateHour = 0,
     Date = 1,
 }
 
