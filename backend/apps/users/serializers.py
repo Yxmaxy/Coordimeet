@@ -1,4 +1,4 @@
-from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
 from rest_framework_simplejwt.serializers import TokenObtainSlidingSerializer
 
 
@@ -18,7 +18,7 @@ class CustomTokenObtainSlidingSerializer(TokenObtainSlidingSerializer):
         return data
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(ModelSerializer):
     """
     Serializer for the user object.
     """

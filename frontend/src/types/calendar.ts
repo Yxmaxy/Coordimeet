@@ -1,6 +1,6 @@
 export interface DateRange {
-    from: Date,
-    to: Date,
+    start_date: Date,
+    end_date: Date,
 }
 
 export enum CalendarType {

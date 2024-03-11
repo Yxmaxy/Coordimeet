@@ -29,7 +29,7 @@ class Event(models.Model):
     organiser = models.ForeignKey(get_user_model(), related_name="organiser_events", null=True, blank=True, on_delete=models.SET_NULL)
     organiser_group = models.ForeignKey(Group, related_name="organiser_group_events", null=True, blank=True, on_delete=models.SET_NULL)
 
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     event_length = models.IntegerField()  # event length in units based on the event_calendar_type
     event_type = models.IntegerField(choices=EventTypeChoices.choices, default=EventTypeChoices.PUBLIC)
     deadline = models.DateTimeField()

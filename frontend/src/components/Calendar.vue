@@ -236,7 +236,7 @@ export default {
                 },
             }
 
-            const { from: roughFrom, to: roughTo } = this.roughEventDateRange;
+            const { start_date: roughFrom, end_date: roughTo } = this.roughEventDateRange;
             const from = rangeConversion[this.calendarType].from(roughFrom);
             const to = rangeConversion[this.calendarType].to(roughTo);
 
@@ -292,13 +292,13 @@ export default {
             return this.selectedUnit < this.numberOfAllUnits;
         },
         numberOfAllUnits(): number {
-            const { from, to } = this.roughEventDateRange;
+            const { start_date, end_date } = this.roughEventDateRange;
             const allUnitsConversion = {
                 [CalendarType.DateHour]: 1000 * 60 * 60 * 24 * 7,
                 [CalendarType.Date]: 1,
             }
 
-            return Math.ceil((to.getTime() - from.getTime()) / allUnitsConversion[this.calendarType]);
+            return Math.ceil((end_date.getTime() - start_date.getTime()) / allUnitsConversion[this.calendarType]);
         },
 
         // dates
@@ -317,8 +317,8 @@ export default {
             const from = this.fromDate < this.toDate ? this.fromDate : this.toDate;
             const to = this.fromDate > this.toDate ? this.fromDate : this.toDate;
             return {
-                from: from,
-                to: to,
+                start_date: from,
+                end_date: to,
             } as DateRange;
         },
         defaultDateRanges(): DateRange[] {
@@ -327,16 +327,16 @@ export default {
                 return this.selectableDateRanges;
 
             // prepare the roughEventDateRange for processing
-            const fromDate = new Date(this.roughEventDateRange.from);
-            const toDate = new Date(this.roughEventDateRange.to);
+            const fromDate = new Date(this.roughEventDateRange.start_date);
+            const toDate = new Date(this.roughEventDateRange.end_date);
             if (this.calendarType === CalendarType.DateHour) {
                 fromDate.setHours(0, 0);
                 toDate.setHours(23, 59);
             }
             
             return [{
-                from: fromDate,
-                to: toDate
+                start_date: fromDate,
+                end_date: toDate
             } as DateRange]
         },
 
@@ -367,8 +367,8 @@ export default {
             const to = this.fromDate > date ? this.fromDate : date;
 
             const newDateRange = {
-                from: from,
-                to: to,
+                start_date: from,
+                end_date: to,
             } as DateRange;
 
             let updateSelectedDateRanges = this.selectedDateRanges;
@@ -378,7 +378,7 @@ export default {
             } else if (this.fromMode === "add") {  // date range started on a non-selected date
                 // remove "eaten up" ranges
                 updateSelectedDateRanges = updateSelectedDateRanges.filter(x => {
-                    return !(x.from >= newDateRange.from && x.to <= newDateRange.to);
+                    return !(x.start_date >= newDateRange.start_date && x.end_date <= newDateRange.end_date);
                 });
                 // check for new gaps in selectableDateRanges
                 if (this.selectableDateRanges) {
@@ -386,14 +386,14 @@ export default {
                         const selectableDateRange = this.selectableDateRanges[i];
                         const nextSelctableDateRange = this.selectableDateRanges[i + 1];
                         // new date range from is inside a selected date range and to is outside
-                        if (this.isDateInDateRange(newDateRange.from, selectableDateRange) && newDateRange.to > selectableDateRange.to) {
+                        if (this.isDateInDateRange(newDateRange.start_date, selectableDateRange) && newDateRange.end_date > selectableDateRange.end_date) {
                             // insert a date range for the first selectable part
                             const previousDateRange = {
-                                from: newDateRange.from,
-                                to: selectableDateRange.to
+                                start_date: newDateRange.start_date,
+                                end_date: selectableDateRange.end_date
                             } as DateRange
                             // modify the new date range to start on the next selectable date range
-                            newDateRange.from = nextSelctableDateRange.from;
+                            newDateRange.start_date = nextSelctableDateRange.start_date;
                             updateSelectedDateRanges.push(previousDateRange);
                         }
                     }
@@ -401,18 +401,18 @@ export default {
                 // append new date range
                 updateSelectedDateRanges.push(newDateRange);
                 // sort date ranges
-                updateSelectedDateRanges = updateSelectedDateRanges.sort((a, b) => a.from.getTime() - b.from.getTime());
+                updateSelectedDateRanges = updateSelectedDateRanges.sort((a, b) => a.start_date.getTime() - b.start_date.getTime());
                 // cleanup - join ranges
                 for (const dateRange of updateSelectedDateRanges) {
                     for (const siblingDateRange of updateSelectedDateRanges) {
                         // skip duplicates; dateRange is always smaller than siblingDateRange
-                        if (dateRange.from >= siblingDateRange.from)
+                        if (dateRange.start_date >= siblingDateRange.start_date)
                             continue;
                         // join sibling ranges
-                        const nextDate = new Date(dateRange.to);
+                        const nextDate = new Date(dateRange.end_date);
                         this.addUnitsToDate(nextDate, this.calendarType, 1);
-                        if (nextDate.getTime() === siblingDateRange.from.getTime()) {
-                            dateRange.to = siblingDateRange.to;
+                        if (nextDate.getTime() === siblingDateRange.start_date.getTime()) {
+                            dateRange.end_date = siblingDateRange.end_date;
                             updateSelectedDateRanges = updateSelectedDateRanges.filter(x => x !== siblingDateRange);
                         }
                     }
@@ -458,44 +458,44 @@ export default {
         deleteDateRangeFromDateRanges(deleteDateRange: DateRange, dateRanges: DateRange[]): DateRange[] {
             // remove "eaten up" ranges
             dateRanges = dateRanges.filter(x => {
-                return !(x.from >= deleteDateRange.from && x.to <= deleteDateRange.to);
+                return !(x.start_date >= deleteDateRange.start_date && x.end_date <= deleteDateRange.end_date);
             });
             
             for (const dateRange of dateRanges) {
-                if (dateRange.from <= deleteDateRange.from && deleteDateRange.to <= dateRange.to) {
+                if (dateRange.start_date <= deleteDateRange.start_date && deleteDateRange.end_date <= dateRange.end_date) {
                     // selection splits existing range
-                    if (deleteDateRange.from > dateRange.from && deleteDateRange.to < dateRange.to) {
+                    if (deleteDateRange.start_date > dateRange.start_date && deleteDateRange.end_date < dateRange.end_date) {
                         // add current selection to date range
-                        const newDateFrom = new Date(deleteDateRange.from);
-                        const newDateTo = new Date(deleteDateRange.to);
+                        const newDateFrom = new Date(deleteDateRange.start_date);
+                        const newDateTo = new Date(deleteDateRange.end_date);
                         // add padding
                         this.addUnitsToDate(newDateFrom, this.calendarType, -1);
                         this.addUnitsToDate(newDateTo, this.calendarType, 1);
 
                         // create new date range for last part
                         dateRanges.push({
-                            from: newDateTo,
-                            to: dateRange.to,
+                            start_date: newDateTo,
+                            end_date: dateRange.end_date,
                         });
                         // update current range for first part
-                        dateRange.to = new Date(newDateFrom);
+                        dateRange.end_date = new Date(newDateFrom);
                         continue;
                     }
                     // remove from start
-                    if (deleteDateRange.from.getTime() === dateRange.from.getTime()) {
-                        const newDateTo = new Date(deleteDateRange.to);
+                    if (deleteDateRange.start_date.getTime() === dateRange.start_date.getTime()) {
+                        const newDateTo = new Date(deleteDateRange.end_date);
                         // add padding
                         this.addUnitsToDate(newDateTo, this.calendarType, 1)
 
-                        dateRange.from = newDateTo;
+                        dateRange.start_date = newDateTo;
                     }
                     // remove from end
-                    if (deleteDateRange.to.getTime() === dateRange.to.getTime()) {
-                        const newDateFrom = new Date(deleteDateRange.from);
+                    if (deleteDateRange.end_date.getTime() === dateRange.end_date.getTime()) {
+                        const newDateFrom = new Date(deleteDateRange.start_date);
                         // add padding
                         this.addUnitsToDate(newDateFrom, this.calendarType, -1)
 
-                        dateRange.to = newDateFrom;
+                        dateRange.end_date = newDateFrom;
                     }
                 }
             }
@@ -508,7 +508,7 @@ export default {
                 .some(dateRange => this.isDateInDateRange(date, dateRange));
         },
         isDateInDateRange(date: Date, dateRange: DateRange) {
-            return date >= dateRange.from && date <= dateRange.to;
+            return date >= dateRange.start_date && date <= dateRange.end_date;
         },
         isDateInSelectableDateRanges(date: Date): boolean {
             if (this.selectableDateRanges.length === 0)
@@ -525,8 +525,8 @@ export default {
         },
         deepCopyDateRange(dateRange: DateRange): DateRange {
             return {
-                from: new Date(dateRange.from),
-                to: new Date(dateRange.to),
+                start_date: new Date(dateRange.start_date),
+                end_date: new Date(dateRange.end_date),
             } as DateRange
         },
         invertSelectedDateRanges() {
@@ -542,8 +542,8 @@ export default {
             this.$emit('update:selectedDateRanges', updateSelectedDateRanges)
         },
         getDateRangeLength(dateRange: DateRange): number {
-            const from = new Date(dateRange.from);
-            const to = new Date(dateRange.to);
+            const from = new Date(dateRange.start_date);
+            const to = new Date(dateRange.end_date);
             return from.getTime() - to.getTime();
         },
         areDateRangesSameLengths(dateRange1: DateRange[], dateRange2: DateRange[]): boolean {

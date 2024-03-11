@@ -6,11 +6,11 @@
                 bg-main-100 min-h-[calc(100vh-7rem)]"
             >
                 <label class="flex flex-col gap-2">
-                    <b class="ml-4">Event name</b>
+                    <b class="ml-4">Event title</b>
                     <custom-input
                         type="text"
-                        placeholder="Enter a name for your event"
-                        v-model="name"
+                        placeholder="Enter a title for your event"
+                        v-model="title"
                     />
                 </label>
                 <div class="ml-4 mb-4">
@@ -72,13 +72,11 @@
                     </label>
                 </div>
                 <label class="flex flex-col gap-2">
-                    <b class="ml-4">Additional values</b>
+                    <b class="ml-4">Description</b>
                     <custom-input
                         type="textarea"
-                        v-model="customFields"
-                        placeholder="Enter custom fields eg.
-Formal attire: Yes
-Ticket price: 5€"
+                        v-model="description"
+                        placeholder="Enter a description of the event"
                     />
                 </label>
                 <label class="flex flex-col gap-2">
@@ -126,6 +124,7 @@ import TabController from "@/components/TabController.vue";
 
 import { useStoreUser } from "@/stores/storeUser";
 
+import { Event } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
 import { Tab } from "@/types/tabs";
 
@@ -163,9 +162,9 @@ export default {
     },
     data() {
         return {
-            name: "",
+            title: "",
+            description: "",
             length: 1,
-            customFields: "",
             deadline: initializeDateInput(CalendarType.DateHour),
             
             calendarType: CalendarType.Date,
@@ -186,35 +185,24 @@ export default {
             return "datetime-local";
         },
         areDatesInvalid(): boolean {
-            return this.roughEventDateRange.from.getTime() > this.roughEventDateRange.to.getTime();
+            return this.roughEventDateRange.start_date.getTime() > this.roughEventDateRange.end_date.getTime();
         },
         roughEventDateRange(): DateRange {
             return {
-                from: new Date(this.fromDate),
-                to: new Date(this.toDate),
+                start_date: new Date(this.fromDate),
+                end_date: new Date(this.toDate),
             }
         },
     },
     methods: {
         onCreateEvent() {
-            if (this.name.length === 0) {
-                alert("You must enter a name for the event");
+            if (this.title.length === 0) {
+                alert("You must enter a title for the event");
                 return;
             }
             if (this.length < 0) {
                 alert("Event length must me bigger or equal to 1");
                 return;
-            }
-            
-            // calculate config
-            const config: any = {}
-            if (this.customFields.length > 0) {
-                for (const line of this.customFields.split("\n")) {
-                    const splitted = line.split(":");
-                    if (splitted.length === 2) {
-                        config[splitted[0].trim()] = splitted[1].trim();
-                    }
-                }
             }
 
             // check if dates were selected
@@ -223,18 +211,16 @@ export default {
                 return;
             }
 
-            ApiService.post("event.php", {
-                Event: {
-                    IDOrganizer: this.user!.GoogleID,
-                    Name: this.name,
-                    Length: this.length,
-                    CalendarType: this.calendarType,
-                    Deadline: formatDateForBackend(new Date(this.deadline)),
-                    Config: config,
-                    SelectedDate: null,
-                },
-                EventRanges: convertDateRangesForBackend(this.selectedDateRanges),
-            })
+            const event = {
+                title: this.title,
+                description: this.description,
+                event_calendar_type: this.calendarType,
+                event_length: this.length,
+                deadline: new Date(this.deadline),
+                event_availability_options: this.selectedDateRanges,
+            } as Event;
+            console.log(event);
+            ApiService.post(`/events/event/`, event)
             .then(res => {
                 const IDEvent = res.data.IDEvent;
                 alert(`Event successfuly created. You will now be redirected to your event page.`)
