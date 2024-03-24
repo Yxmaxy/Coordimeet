@@ -11,7 +11,7 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         { path: "/", component: Home, name: "home" },
-        { path: "/event/:id", component: Event, name: "event"},
+        { path: "/event/:uuid", component: Event, name: "event"},
         { path: "/event/new", component: EventCreate, name: "new" },
         { path: "/event/list", component: EventList, name: "list" },
         { path: "/:catchAll(.*)", redirect: () => "/" },

@@ -65,18 +65,13 @@ export default {
     },
     methods: {
         getEvents() {
-            ApiService.get("eventUser.php", {
-                params: {
-                    IDUser: this.user!.GoogleID,
-                }
-            }).then(res => {
-                if (res.data.error) {
-                    alert(`Pri pridobivanju podatkov je prišlo do napake: ${res.data.error}`)
-                    this.$router.push("/");
-                    return;
-                }
-                this.eventsInvited = res.data.Invited;
-                this.eventsCreated = res.data.Created;
+            ApiService.get("/events/event/")
+            .then(res => {
+                this.eventsInvited = res.data.filter((event: Event) => event.organiser?.id !== this.user?.id);
+                this.eventsCreated = res.data.filter((event: Event) => event.organiser?.id === this.user?.id);
+            })
+            .catch(() => {
+                alert(`Pri pridobivanju podatkov je prišlo do napake.`)
             });
         },
     },

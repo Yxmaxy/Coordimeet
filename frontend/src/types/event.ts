@@ -28,6 +28,9 @@ export interface Event {
     event_type: EventTypeChoices,
     deadline: Date,
 
+    selected_start_date: Date,
+    selected_end_date: Date,
+
     created_at: Date,
     updated_at: Date,
 
@@ -37,7 +40,7 @@ export interface Event {
 export enum EventPageType {
     NonConfirmed = 0,   // invitee sees just basic event data, confirm decline button
     Invitee = 1,        // calendar and all event data
-    Organizer = 2,      // data about user responses, ending data
+    Organiser = 2,      // data about user responses, ending data
     Finished = 3,       // Event has finished, show only the simplest information
 }
 

@@ -42,7 +42,7 @@
                         v-if="pageTypeIn(EventPageType.Finished)"
                         class="text-lg font-bold mt-4"
                     >
-                        The selected date is: {{ eventData.SelectedDate }}
+                        The selected date is: {{ eventData.selected_start_date }}
                     </div>
                 </template>
             </event-data>
@@ -62,7 +62,7 @@
                     >
                         <template v-slot:after>
                             <custom-button
-                                v-if="pageTypeIn(EventPageType.Organizer)"
+                                v-if="pageTypeIn(EventPageType.Organiser)"
                                 class="mt-5"
                                 :small="true"
                                 @click="copyLink"
@@ -92,7 +92,7 @@
                     <!-- Organiser mode toggle -->
                     <div>
                         <custom-toggle
-                            v-if="pageTypeIn(EventPageType.Organizer)"
+                            v-if="pageTypeIn(EventPageType.Organiser)"
                             v-model="isOrganiserMode"
                         >
                             <template v-slot:left>
@@ -110,7 +110,7 @@
 
                     <!-- Submit buttons -->
                     <custom-button
-                        v-if="pageTypeIn(EventPageType.Organizer) && isOrganiserMode"
+                        v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
                         :small="true"
                         :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
                         :click="finishEvent"
@@ -131,9 +131,9 @@
                     v-if="eventData"
                     v-model:selectedDateRanges="selectedDateRanges"
                     :roughEventDateRange="roughEventDateRange"
-                    :selectableDateRanges="eventData.EventDates"
+                    :selectableDateRanges="eventData.event_availability_options"
                     :heatmapDateRanges="selectedEventParticipantDateRanges"
-                    :calendarType="eventData.CalendarType"
+                    :calendarType="eventData.event_calendar_type"
                     :enableOptions="!isOrganiserMode"
                 />
             </template>
@@ -223,11 +223,11 @@ export default {
             if (this.eventData === null)
                 return {} as DateRange
             return {
-                from: new Date(this.eventData.EventDates.reduce(
-                    (prev, min) => prev.from < min.from ? prev : min).from
+                start_date: new Date(this.eventData.event_availability_options.reduce(
+                    (prev, min) => prev.start_date < min.start_date ? prev : min).start_date
                 ),
-                to: new Date(this.eventData.EventDates.reduce(
-                    (prev, max) => prev.to > max.to ? prev : max).to
+                end_date: new Date(this.eventData.event_availability_options.reduce(
+                    (prev, max) => prev.end_date > max.end_date ? prev : max).end_date
                 ),
             }
         },
@@ -255,28 +255,16 @@ export default {
         // event
         getEventData() {
             // gets the event data and sets page type
-            ApiService.get("event.php", {
-                params: {
-                    IDEvent: this.$route.params.id,
-                }
-            }).then(res => {
-                // convert
-                const eventData = {
-                    ...res.data,
-                    EventDates: res.data.EventDates.map((eventDate: any) => {
-                        return {
-                            from: new Date(eventDate.StartDate),
-                            to: new Date(eventDate.EndDate)
-                        } as DateRange
-                    })
-                } as Event
+            ApiService.get(`events/event/${this.$route.params.uuid}/`)
+            .then(res => {
+                const eventData = res.data as Event;
 
                 // the event has finished
-                if (eventData.SelectedDate !== null) {
+                if (eventData.selected_start_date !== null) {
                     this.eventPageType = EventPageType.Finished;
-                // the current user is the organizer
-                } else if (this.user!.GoogleID === eventData.Organizer.GoogleID) {
-                    this.eventPageType = EventPageType.Organizer;
+                // the current user is the organiser
+                } else if (this.user!.id === eventData.organiser?.id) {
+                    this.eventPageType = EventPageType.Organiser;
                 }
                 this.eventData = eventData;
             })
@@ -286,8 +274,8 @@ export default {
             // also "upgrades" the user to invitee if needed
             ApiService.get("eventUser.php", {
                 params: {
-                    IDEvent: this.$route.params.id,
-                    IDUser: this.user!.GoogleID,
+                    IDEvent: this.$route.params.uuid,
+                    IDUser: this.user!.id,
                 }
             }).then(res => {
                 if (res.data.error) {
@@ -315,7 +303,7 @@ export default {
             this.gettingParticipantData = true;
             ApiService.get("eventUser.php", {
                 params: {
-                    IDEvent: this.$route.params.id,
+                    IDEvent: this.$route.params.uuid,
                 }
             }).then(res => {
                 if (res.data.error) {
@@ -354,14 +342,14 @@ export default {
 
             if (!this.isPreviousSelectedDateRangesSet) {
                 ApiService.post("eventUser.php", {
-                    IDEvent: this.$route.params.id,
-                    IDUser: this.user!.GoogleID,
+                    IDEvent: this.$route.params.uuid,
+                    IDUser: this.user!.id,
                     AvailabilityDates: convertDateRangesForBackend(this.selectedDateRanges),
                 }).then(handleResponse)
             } else {  // update date that was selected before
-                ApiService.put(`eventUser.php?IDEvent=${this.$route.params.id}&IDUser=${this.user!.GoogleID}`, {
-                    IDEvent: this.$route.params.id,
-                    IDUser: this.user!.GoogleID,
+                ApiService.put(`eventUser.php?IDEvent=${this.$route.params.uuid}&IDUser=${this.user!.id}`, {
+                    IDEvent: this.$route.params.uuid,
+                    IDUser: this.user!.id,
                     AvailabilityDates: convertDateRangesForBackend(this.selectedDateRanges),
                 }).then(handleResponse)
             }
@@ -372,7 +360,7 @@ export default {
                 return;
             
             const selectedDateRange = this.selectedDateRanges[0];  // get the selected date range
-            ApiService.put(`eventDate.php?IDEvent=${this.$route.params.id}`, {
+            ApiService.put(`eventDate.php?IDEvent=${this.$route.params.uuid}`, {
                 SelectedDate: this.displayDateRange(selectedDateRange)
             }).then(() => {
                 alert("Event date successfully selected!\nYou will now be returned to the event list");
@@ -392,21 +380,21 @@ export default {
             return types.includes(this.eventPageType);
         },
         copyLink() {
-            navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/#/event/${this.$route.params.id}`);
+            navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/event/${this.$route.params.uuid}`);
         },
         displayDateRange(range: DateRange): string {
             // converts date range to a readable format
-            const convertFunc = this.eventData?.CalendarType === CalendarType.Date ?
+            const convertFunc = this.eventData?.event_calendar_type === CalendarType.Date ?
                 formatDateDayMonthYear : formatDateDayMonthHour;
-            if (convertFunc(range.from) === convertFunc(range.to))
-                return convertFunc(range.from);
-            return `${convertFunc(range.from)} - ${convertFunc(range.to)}`;
+            if (convertFunc(range.start_date) === convertFunc(range.end_date))
+                return convertFunc(range.start_date);
+            return `${convertFunc(range.start_date)} - ${convertFunc(range.end_date)}`;
         },
     },
     mounted() {
         this.getEventData();
-        this.getPreviousSelectedDateRanges();
-        this.getParticipants();
+        // this.getPreviousSelectedDateRanges();
+        // this.getParticipants();
     },
     watch: {
         isOrganiserMode(isOrganiser: boolean) {

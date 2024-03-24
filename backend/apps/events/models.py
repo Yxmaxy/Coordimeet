@@ -34,20 +34,23 @@ class Event(models.Model):
     event_type = models.IntegerField(choices=EventTypeChoices.choices, default=EventTypeChoices.PUBLIC)
     deadline = models.DateTimeField()
 
+    selected_start_date = models.DateTimeField(null=True, blank=True)
+    selected_end_date = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.title
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """Ensure that either organiser or organiser_group is set"""
 
         if self.organiser and self.organiser_group:
             raise ValueError("Event can't have both organiser and organiser_group")
         if not self.organiser and not self.organiser_group:
             raise ValueError("Event must have either organiser or organiser_group")
-        super().save()
+        super().save(*args, **kwargs)
 
 
 class EventNotificationTypeChoices(models.IntegerChoices):

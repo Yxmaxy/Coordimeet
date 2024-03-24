@@ -215,17 +215,22 @@ export default {
                 title: this.title,
                 description: this.description,
                 event_calendar_type: this.calendarType,
+                organiser: this.user?.id,
                 event_length: this.length,
                 deadline: new Date(this.deadline),
                 event_availability_options: this.selectedDateRanges,
             } as Event;
-            console.log(event);
-            ApiService.post(`/events/event/`, event)
+
+            ApiService.post("/events/event/", event)
             .then(res => {
-                const IDEvent = res.data.IDEvent;
+                const eventUUID = res.data.event_uuid;
                 alert(`Event successfuly created. You will now be redirected to your event page.`)
-                this.$router.push(`/event/${IDEvent}`);
+                this.$router.push(`/event/${eventUUID}`);
             })
+            .catch(err => {
+                alert("An error occurred while creating the event. Please try again later.");
+                console.error(err);
+            });
         },
     },
     watch: {

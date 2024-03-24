@@ -1,14 +1,18 @@
 <template>
     <div v-if="event">
         <slot name="before"></slot>
-        <div class="text-2xl font-bold">{{ event.Name }}</div>
+        <div class="text-2xl font-bold">{{ event.title }}</div>
         <div class="flex flex-col gap-1 mt-3">
-            <div>Organizer: {{ event.Organizer?.first_name }} {{ event.Organizer?.last_name }}</div>
-            <div>Deadline: {{ formatDateDayMonthYear(new Date(event.Deadline)) }}</div>
-            <div>Duration: {{ event.Length }} {{ readableCalendarUnits }}</div>
-            <div v-for="value, key in event.Config">
-                {{ key }}:
-                {{ value }}
+            <div>Organiser: {{ event.organiser?.first_name }} {{ event.organiser?.last_name }}</div>
+            <div>
+                Deadline:
+                <template v-if="event.deadline">{{ formatDateDayMonthYear(event.deadline) }}</template>
+                <template v-else>Not set</template>
+            </div>
+            <div>
+                Deadline:
+                <template v-if="event.event_length">{{ event.event_length }} {{ readableCalendarUnits }}</template>
+                <template v-else>Not set</template>
             </div>
         </div>
         <slot name="after"></slot>
@@ -33,7 +37,7 @@ export default {
     },
     computed: {
         readableCalendarUnits(): string {
-            if (this.event.CalendarType === CalendarType.Date)
+            if (this.event.event_calendar_type === CalendarType.Date)
                 return "days";
             return "hours";
         },

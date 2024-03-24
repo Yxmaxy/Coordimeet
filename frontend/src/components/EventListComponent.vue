@@ -4,34 +4,37 @@
             v-for="event in events"
             class="flex-1 flex justify-between bg-main-100 m-2 px-8 py-6 rounded-2xl
             cursor-pointer shadow-md transition-all hover:-translate-y-1 hover:bg-main-200"
-            @click="$router.push(`/event/${event.IDEvent}`)"
+            @click="$router.push(`/event/${event.event_uuid}`)"
         >
             <div class="flex gap-1">
-                <b>{{ event.Name }}</b>
+                <b>{{ event.title }}</b>
                 <template v-if="!userIsOrganiser">
                     -
-                    <abbr title="Organizer">
-                        {{ event.Organizer?.first_name }} {{ event.Organizer?.last_name }}
+                    <abbr title="Organiser">
+                        {{ event.organiser?.first_name }} {{ event.organiser?.last_name }}
                     </abbr>
                     <custom-icon class="text-base" icon="engineering" />
                 </template>
             </div>
             <div>
                 <div
-                    v-if="userIsOrganiser && event.SelectedDate === null"
+                    v-if="userIsOrganiser && event.selected_start_date && event.selected_end_date"
                     class="flex gap-2"
                 >
                     <abbr title="Event deadline">
-                        {{ formatDateDayMonthYear(new Date(event.Deadline)) }}
+                        {{ formatDateDayMonthYear(new Date(event.deadline)) }}
                     </abbr>
                     <custom-icon class="text-base" icon="event_upcoming" />
                 </div>
                 <div
-                    v-else-if="event.SelectedDate !== null"
+                    v-else-if="event.selected_start_date && event.selected_end_date"
                     class="flex gap-2 font-bold"
                 >
                     <abbr title="Selected date">
-                        {{ event.SelectedDate }}
+                        {{ formatDateDayMonthYear(event.selected_start_date) }}
+                        <template v-if="event.selected_start_date !== event.selected_end_date">
+                            - {{ formatDateDayMonthYear(event.selected_end_date) }}
+                        </template>
                     </abbr>
                     <custom-icon class="text-base" icon="event_available" />
                 </div>
