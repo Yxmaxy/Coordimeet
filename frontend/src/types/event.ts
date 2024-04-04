@@ -28,8 +28,8 @@ export interface Event {
     event_type: EventTypeChoices,
     deadline: Date,
 
-    selected_start_date: Date,
-    selected_end_date: Date,
+    selected_start_date: Date | null,
+    selected_end_date: Date | null,
 
     created_at: Date,
     updated_at: Date,

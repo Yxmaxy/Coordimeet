@@ -152,7 +152,6 @@ import { Event, EventPageType, EventParticipant } from "@/types/event";
 import { Tab } from "@/types/tabs";
 
 import {
-    formatDateDayMonth,
     formatDateDayMonthYear,
     formatDateDayMonthHour,
     convertDateRangesFromBackend,
@@ -248,16 +247,27 @@ export default {
         }
     },
     methods: {
-        // imported
-        formatDateDayMonth,
-        formatDateDayMonthYear,
-
         // event
         getEventData() {
             // gets the event data and sets page type
             ApiService.get(`events/event/${this.$route.params.uuid}/`)
             .then(res => {
-                const eventData = res.data as Event;
+                // parse all dates
+                const parseDate = (date: string) => new Date(date);
+                const parseDateNull = (date: string) => date ? parseDate(date) : null;
+                
+                const eventData = {
+                    ...res.data,
+                    deadline: parseDate(res.data.deadline),
+                    selected_start_date: parseDateNull(res.data.selected_start_date),
+                    selected_end_date: parseDateNull(res.data.selected_end_date),
+                    event_availability_options: res.data.event_availability_options.map(
+                        (dateRange: any) => ({
+                            start_date: parseDate(dateRange.start_date),
+                            end_date: parseDate(dateRange.end_date),
+                        })
+                    ),
+                } as Event;
 
                 // the event has finished
                 if (eventData.selected_start_date !== null) {
@@ -400,7 +410,7 @@ export default {
         isOrganiserMode(isOrganiser: boolean) {
             if (isOrganiser) {
                 // get participant data
-                this.getParticipants();
+                // this.getParticipants();
                 this.selectedDateRanges = [];
             } else {
                 // initialize invitee selection to previous selection
