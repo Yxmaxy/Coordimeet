@@ -15,8 +15,8 @@
             <div class="w-9 h-3 bg-main-300 rounded-full"></div>
             <!-- Circle -->
             <div :class="[{
-                'left-0': !modelValue,
-                'translate-x-4': modelValue,
+                'left-0': !isRight,
+                'translate-x-4': isRight,
             }, 'w-5 h-5 bg-main-400 rounded-full absolute transition-transform']"></div>
         </div>
         <div @click="onToggle('right')">
@@ -31,24 +31,40 @@ export default {
     emits: [ "update:modelValue" ],
     props: {
         modelValue: {
-            type: Boolean,
+            type: [String, Number, Boolean],
             required: true
         },
         disabled: {
             type: Boolean,
             default: false,
         },
+        leftValue: {
+            type: [String, Number, Boolean],
+            default: false,
+        },
+        rightValue: {
+            type: [String, Number, Boolean],
+            default: true,
+        },
+    },
+    computed: {
+        isRight() {
+            return this.modelValue === this.rightValue;
+        },
     },
     methods: {
         onToggle(direction: "left" | "right" | "toggle") {
             if (this.disabled)
                 return;
-            const conversion = {
-                "left": false,
-                "right": true,
-                "toggle": !this.modelValue,
+            
+            if (direction === "left")
+                this.$emit("update:modelValue", this.leftValue);
+            else if (direction === "right")
+                this.$emit("update:modelValue", this.rightValue);
+            else {
+                this.$emit("update:modelValue", this.isRight ? this.leftValue : this.rightValue);
             }
-            this.$emit("update:modelValue", conversion[direction])
+
         },
     },
 }

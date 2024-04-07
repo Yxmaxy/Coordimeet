@@ -3,17 +3,24 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useStoreUser } from "@/stores/storeUser";
 
 import Home from "@/pages/Home.vue";
+
 import Event from "@/pages/Event.vue";
 import EventCreate from "@/pages/EventCreate.vue";
 import EventList from "@/pages/EventList.vue";
+
+import GroupCreate from "@/pages/GroupCreate.vue";
+import GroupList from "@/pages/GroupList.vue";
 
 const router = createRouter({
     history: createWebHistory(),
     routes: [
         { path: "/", component: Home, name: "home" },
         { path: "/event/:uuid", component: Event, name: "event"},
-        { path: "/event/new", component: EventCreate, name: "new" },
-        { path: "/event/list", component: EventList, name: "list" },
+        { path: "/event/new", component: EventCreate, name: "event_new" },
+        { path: "/event/list", component: EventList, name: "event_list" },
+        { path: "/group/new", component: GroupCreate, name: "group_new" },
+        { path: "/group/edit/:id", component: GroupCreate, name: "group_edit" },
+        { path: "/group/list", component: GroupList, name: "group_list" },
         { path: "/:catchAll(.*)", redirect: () => "/" },
     ]
 });

@@ -2,7 +2,8 @@ import uuid
 
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+
+from apps.users.models import CoordimeetGroup
 
 
 class EventTypeChoices(models.IntegerChoices):
@@ -27,7 +28,7 @@ class Event(models.Model):
 
     # set either the organiser or the organiser_group
     organiser = models.ForeignKey(get_user_model(), related_name="organiser_events", null=True, blank=True, on_delete=models.SET_NULL)
-    organiser_group = models.ForeignKey(Group, related_name="organiser_group_events", null=True, blank=True, on_delete=models.SET_NULL)
+    organiser_group = models.ForeignKey(CoordimeetGroup, related_name="organiser_group_events", null=True, blank=True, on_delete=models.SET_NULL)
 
     description = models.TextField(null=True, blank=True)
     event_length = models.IntegerField()  # event length in units based on the event_calendar_type
@@ -47,9 +48,9 @@ class Event(models.Model):
         """Ensure that either organiser or organiser_group is set"""
 
         if self.organiser and self.organiser_group:
-            raise ValueError("Event can't have both organiser and organiser_group")
+            raise ValueError("Event can't set both organiser and organiser_group")
         if not self.organiser and not self.organiser_group:
-            raise ValueError("Event must have either organiser or organiser_group")
+            raise ValueError("Event must set either organiser or organiser_group")
         super().save(*args, **kwargs)
 
 

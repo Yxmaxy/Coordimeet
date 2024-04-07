@@ -7,12 +7,7 @@
             @click="showLogout = !showLogout"
             class="h-full flex items-center cursor-pointer select-none"
         >
-            <span class="font-bold">
-                <template v-if="!isMobile">
-                    {{ userDisplayName }}
-                </template>
-                <span class="material-symbols-outlined align-middle ml-1">account_circle</span>
-            </span>
+            <span class="material-symbols-outlined align-middle ml-1">menu</span>
         </div>
         <!-- Background -->
         <div
@@ -27,11 +22,24 @@
                 border-l-transparent border-t-transparent border-r-transparent border-b-main-400 border-8"></div>
             <!-- Content -->
             <div class="absolute w-screen top-7 -right-2 pl-4 pt-1 max-w-[20rem]">
-                <div class="flex flex-col bg-main-300 border-2 border-main-400 rounded-lg [&>*]:p-4 shadow-md">
-                    <button @click="onLogout" class="hover:bg-main-400 transition-colors text-left">
-                        Log out
+                <div class="flex flex-col bg-main-300 border-2 border-main-400 rounded-lg [&>*]:py-3 [&>*]:px-4 shadow-md">
+                    <button @click="onMenuClick('/event/list')" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                        Events
+                        <span class="material-symbols-outlined align-middle text-lg">calendar_today</span>
                     </button>
-                    <div class="flex justify-between">
+                    <button @click="onMenuClick('/group/list')" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                        Groups
+                        <span class="material-symbols-outlined align-middle text-lg">groups</span>
+                    </button>
+                    <button @click="onMenuClick('/')" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                        My profile
+                        <span class="material-symbols-outlined align-middle text-lg">person</span>
+                    </button>
+                    <button @click="onLogout" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                        Log out
+                        <span class="material-symbols-outlined align-middle text-lg">logout</span>
+                    </button>
+                    <div class="flex items-center justify-between">
                         Theme
                         <div class="flex gap-1 [&>*]:h-5 [&>*]:w-5 [&>*]:rounded-sm [&>*]:border-2 [&>*]:border-main-600 [&>*]:cursor-pointer">
                             <div
@@ -97,6 +105,10 @@ export default {
             this.userStore.onLogout();
             this.showLogout = false;
             this.$router.push("/");
+        },
+        onMenuClick(path: string) {
+            this.showLogout = false;
+            this.$router.push(path);
         },
         checkScreenSize() {
             this.isMobile = window.innerWidth <= 400;
