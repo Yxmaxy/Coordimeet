@@ -1,7 +1,8 @@
-from rest_framework.serializers import ModelSerializer, ValidationError
+from rest_framework.serializers import ModelSerializer
 from rest_framework_simplejwt.serializers import TokenObtainSlidingSerializer
 
 from django.contrib.auth import get_user_model
+from django.core.validators import EmailValidator
 
 from apps.users.models import CoordimeetGroup, Member, MemberRole
 
@@ -27,6 +28,11 @@ class UserSerializer(ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ["id", "first_name", "last_name", "email"]
+        extra_kwargs = {
+            "email": {
+                "validators": [EmailValidator],
+            },
+        }
 
 
 class MemberSerializer(ModelSerializer):
@@ -76,8 +82,21 @@ class GroupSerializer(ModelSerializer):
         instance.name = validated_data.get("name", instance.name)
         instance.save()
 
-        # TODO: update all members
+        current_member_ids = []
+
+        # update all still existing members
+        for member_data in members_data:
+            user_data = member_data.pop("user")
+            user, created = get_user_model().objects.get_or_create(**user_data)
+            if created:
+                member = Member.objects.create(user=user, group=instance, **member_data)
+            else:
+                member, _ = instance.members.get_or_create(user=user)
+            member.role = member_data.get("role", member.role)
+            member.save()
+            current_member_ids.append(member.id)
         
-        # TODO: delete all members that are not in the updated list
+        # remove all members that are not in the new list
+        instance.members.exclude(user__in=current_member_ids).exclude(role=MemberRole.OWNER).delete()
 
         return instance

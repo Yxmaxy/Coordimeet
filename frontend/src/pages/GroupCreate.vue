@@ -204,6 +204,8 @@ export default {
             } as Group;
 
             ApiService.post("/users/group/", data).then((response) => {
+                if (response.status !== 201)
+                    throw new Error("Failed to create group");
                 alert("Group created successfully");
                 this.$router.push("/group/list");
             }).catch(() => {
@@ -220,7 +222,7 @@ export default {
             } as Group;
 
             ApiService.put(`/users/group/${this.$route.params.id}/`, data).then((response) => {
-                if (response.status !== 204)
+                if (response.status !== 200)
                     throw new Error("Failed to update group");
                 alert("Group updated successfully");
                 this.$router.push("/group/list");
