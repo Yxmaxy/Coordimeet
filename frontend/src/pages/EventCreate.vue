@@ -14,6 +14,44 @@
                     />
                 </label>
                 <div class="ml-4 mb-4">
+                    <b class="flex gap-1 items-center">
+                        Event type
+                        <help-icon class="text-base font-normal">
+                            The event type determines who can see and respond to the event:
+                            <ul>
+                                <li class="ml-5 list-disc">Public - anyone with the invite link can join</li>
+                                <!-- <li class="ml-5 list-disc">Closed - only invited people can join</li> -->
+                                <li class="ml-5 list-disc">Group - only group members can join</li>
+                            </ul>
+                        </help-icon>
+                    </b>
+                    <div class="flex flex-col gap-2 mt-3">
+                        <custom-radio
+                            type="radio"
+                            v-model="eventType"
+                            :value="EventType.Public"
+                            text="Public"
+                        />
+                        <custom-radio
+                            type="radio"
+                            v-model="eventType"
+                            :value="EventType.Group"
+                            text="Group"
+                        />
+                    </div>
+                </div>
+                <div
+                    v-if="eventType === EventType.Group"
+                    class="flex flex-col gap-2 mb-4"
+                >
+                    <b class="ml-4">Group</b>
+                    <custom-select
+                        v-model="groupInvited"
+                        :options="groupOptions"
+                        placeholder="Please select a group"
+                    ></custom-select>
+                </div>
+                <div class="ml-4 mb-4">
                     <b>Select calendar type</b>
                     <div class="flex flex-col gap-2 mt-3">
                         <custom-radio
@@ -41,9 +79,9 @@
                     />
                 </label>
                 <div>
-                    <b class="ml-4 flex gap-2 items-center">
+                    <b class="ml-4 flex gap-1 items-center">
                         Rough event duration
-                        <help-icon class="text-base">
+                        <help-icon class="text-base font-normal">
                             The rough event duration is used for generating the calendar,
                             where you can select the detailed {{ calendarTypeDisplay }} of the event.
                         </help-icon>
@@ -117,6 +155,7 @@ import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomRadio from "@/components/ui/CustomRadio.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
+import CustomSelect from "@/components/ui/CustomSelect.vue";
 import HelpIcon from "@/components/ui/HelpIcon.vue";
 
 import Calendar from "@/components/Calendar.vue";
@@ -124,8 +163,10 @@ import TabController from "@/components/TabController.vue";
 
 import { useStoreUser } from "@/stores/storeUser";
 
-import { Event } from "@/types/event";
+import { Event, EventType } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
+import { Group } from "@/types/user";
+import { SelectOption } from "@/types/ui";
 import { Tab } from "@/types/tabs";
 
 const tabs = [
@@ -148,6 +189,7 @@ export default {
         return {
             user,
             CalendarType,
+            EventType,
             tabs,
         }
     },
@@ -158,6 +200,7 @@ export default {
         CustomButton,
         CustomRadio,
         CustomIcon,
+        CustomSelect,
         HelpIcon,
     },
     data() {
@@ -166,11 +209,15 @@ export default {
             description: "",
             length: 1,
             deadline: initializeDateInput(CalendarType.DateHour),
+            eventType: EventType.Public,
             
             calendarType: CalendarType.Date,
             selectedDateRanges: [] as DateRange[],
             fromDate: initializeDateInput(CalendarType.Date),
             toDate: initializeDateInput(CalendarType.Date, undefined, 14),
+
+            groupOptions: [] as SelectOption[],
+            groupInvited: undefined as number|undefined,
         }
     },
     computed: {
@@ -232,6 +279,21 @@ export default {
                 console.error(err);
             });
         },
+        getGroups() {
+            ApiService.get("/users/group/").then((response) => {
+                this.groupOptions = response.data.map((group: Group) => {
+                    return {
+                        value: group.id,
+                        text: group.name,
+                    } as SelectOption;
+                });
+            }).catch(() => {
+                alert("Failed to fetch user's groups.");
+            });
+        },
+    },
+    mounted() {
+        this.getGroups();
     },
     watch: {
         calendarType(newType: CalendarType) {

@@ -30,7 +30,7 @@
 import { formatDateYMD, formatDateTimeYMD } from "@/utils/dates";
 
 export default {
-    name: "InputElement",
+    name: "CustomInput",
     props: {
         modelValue: {
             type: [String, Number],

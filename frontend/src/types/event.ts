@@ -8,6 +8,12 @@ enum EventTypeChoices {
     Private = 3,
 }
 
+export enum EventType {
+    Public = 1,
+    Closed = 2,
+    Group = 3,
+}
+
 export interface EventAvailabilityOption extends DateRange {
     pk?: number,
     event?: Event,
