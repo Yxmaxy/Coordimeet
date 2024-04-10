@@ -48,8 +48,8 @@ export function initializeDateInput(type: CalendarType, date?: string, padding?:
 
 export function convertDateRangeForBackend(dateRange: DateRange): any {
     return {
-        StartDate: formatDateForBackend(dateRange.from),
-        EndDate: formatDateForBackend(dateRange.to),
+        StartDate: formatDateForBackend(dateRange.start_date),
+        EndDate: formatDateForBackend(dateRange.end_date),
     }
 }
 
@@ -59,8 +59,8 @@ export function convertDateRangesForBackend(dateRanges: DateRange[]) {
 
 export function convertDateRangeFromBackend(dateRange: any): DateRange {
     return {
-        from: new Date(dateRange.StartDate),
-        to: new Date(dateRange.EndDate)
+        start_date: new Date(dateRange.start_date),
+        end_date: new Date(dateRange.end_date)
     } as DateRange
 }
 
