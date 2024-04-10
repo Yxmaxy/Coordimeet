@@ -1,17 +1,9 @@
 import { CalendarType, DateRange } from "@/types/calendar";
-import { User } from "@/types/user";
-
-enum EventTypeChoices {
-    // same as in apps.events.models
-    Public = 1,
-    Closed = 2,
-    Private = 3,
-}
+import { User, Group } from "@/types/user";
 
 export enum EventType {
     Public = 1,
-    Closed = 2,
-    Group = 3,
+    Group = 2,
 }
 
 export interface EventAvailabilityOption extends DateRange {
@@ -25,13 +17,15 @@ export interface Event {
     title: string,
     event_uuid?: string,
     event_calendar_type: CalendarType,
+    event_type: EventType,
 
     organiser?: User,
-    // TODO: organiser_group
+    organiser_group?: Group,
+
+    invited_group?: Group,
 
     description?: string,
     event_length: number,
-    event_type: EventTypeChoices,
     deadline: Date,
 
     selected_start_date: Date | null,

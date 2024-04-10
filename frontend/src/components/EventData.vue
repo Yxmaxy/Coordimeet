@@ -3,7 +3,7 @@
         <slot name="before"></slot>
         <div class="text-2xl font-bold">{{ event.title }}</div>
         <div class="flex flex-col gap-1 mt-3">
-            <div>Organiser: {{ event.organiser?.first_name }} {{ event.organiser?.last_name }}</div>
+            <div>Organiser: {{ organiserDisplay }}</div>
             <div>
                 Deadline:
                 <template v-if="event.deadline">{{ formatDateDayMonthYear(event.deadline) }}</template>
@@ -41,10 +41,18 @@ export default {
                 return "days";
             return "hours";
         },
+        organiserDisplay(): string {
+            if (this.event.organiser) {
+                if (this.event.organiser.first_name && this.event.organiser.last_name)
+                    return `${this.event.organiser?.first_name} ${this.event.organiser?.last_name}`;
+                return this.event.organiser.email;
+            }
+            return "";
+        }
     },
     methods: {
         // imported
         formatDateDayMonthYear,
-    }
+    },
 }
 </script>

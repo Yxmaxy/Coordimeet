@@ -1,5 +1,11 @@
 <template>
     <div class="w-full relative">
+        <div
+            v-if="isOpen"
+            class="fixed top-0 right-0 left-0 bottom-0"
+            @click="isOpen = false"
+        ></div>
+
         <label :class="[{
             'rounded-t-xl': isOpen,
             'rounded-xl': !isOpen,
@@ -20,7 +26,7 @@
         </label>
         <div
             v-if="isOpen"
-            class="absolute top-10 right-0 left-0 overflow-hidden
+            class="absolute top-10 right-0 left-0 overflow-hidden z-10
             bg-white border-2 border-t-0 rounded-b-xl border-main-300 bg-main-000"
         >
             <div class="flex flex-col overflow-auto max-h-40">

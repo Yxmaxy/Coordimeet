@@ -49,7 +49,30 @@
                         v-model="groupInvited"
                         :options="groupOptions"
                         placeholder="Please select a group"
-                    ></custom-select>
+                        :disabled="eventType !== EventType.Group"
+                    />
+                    <b class="mt-4 ml-4 flex gap-1 items-center">
+                        Ownership
+                        <help-icon class="text-base font-normal">
+                            The ownership determines who can edit and finish the event:
+                            <ul>
+                                <li class="ml-5 list-disc">Event creator - only you can change and edit the event</li>
+                                <li class="ml-5 list-disc">Group - all event administrators can edit the event</li>
+                            </ul>
+                        </help-icon>
+                    </b>
+                    <custom-toggle
+                        class="ml-4"
+                        v-model="eventByGroup"
+                        :disabled="eventType !== EventType.Group"
+                    >
+                        <template v-slot:left>
+                            <span class="mr-2">Event creator</span>
+                        </template>
+                        <template v-slot:right>
+                            <span class="ml-2">Group</span>
+                        </template>
+                    </custom-toggle>
                 </div>
                 <div class="ml-4 mb-4">
                     <b>Select calendar type</b>
@@ -115,14 +138,115 @@
                         type="textarea"
                         v-model="description"
                         placeholder="Enter a description of the event"
+                        :ignoreValidity="true"
                     />
                 </label>
                 <label class="flex flex-col gap-2">
-                    <b class="ml-4">Deadline</b>
+                    <b class="ml-4">Response deadline</b>
                     <custom-input
                         type="datetime-local"
                         v-model="deadline"
                     />
+                </label>
+                <label class="flex flex-col gap-2">
+                    <b class="ml-4">Notifications</b>
+                    <!-- 
+                        Notifications:
+                        - Notify after creating
+                        - X before deadline if not submitted
+                        - When event date is selected + send .ics file
+                        - Remind X before event
+                    -->
+                    <div class="ml-4">
+                        Notify group members after creation
+                        <div class="flex flex-col gap-1 mt-1.5 mb-4 ml-2">
+                            <custom-toggle
+                                v-model="eventByGroup"
+                            >
+                                <template v-slot:right>
+                                    <span class="ml-2">via email</span>
+                                </template>
+                            </custom-toggle>
+                            <custom-toggle
+                                v-model="eventByGroup"
+                            >
+                                <template v-slot:right>
+                                    <span class="ml-2">via push notifications</span>
+                                </template>
+                            </custom-toggle>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        Remind group
+                        <custom-input
+                            class="w-20 inline-block"
+                            type="number"
+                            v-model="length"
+                            :ignoreValidity="true"
+                        />
+                        {{ calendarTypeDisplay }} before deadline
+                        <div class="flex flex-col gap-1 mt-1.5 mb-4 ml-2">
+                            <custom-toggle
+                                v-model="eventByGroup"
+                            >
+                                <template v-slot:right>
+                                    <span class="ml-2">via email</span>
+                                </template>
+                            </custom-toggle>
+                            <custom-toggle
+                                v-model="eventByGroup"
+                            >
+                                <template v-slot:right>
+                                    <span class="ml-2">via push notifications</span>
+                                </template>
+                            </custom-toggle>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        Notify when event is finished
+                        <div class="flex flex-col gap-1 mt-1.5 mb-4 ml-2">
+                            <custom-toggle
+                                v-model="eventByGroup"
+                            >
+                                <template v-slot:right>
+                                    <span class="ml-2">via email</span>
+                                </template>
+                            </custom-toggle>
+                            <custom-toggle
+                                v-model="eventByGroup"
+                            >
+                                <template v-slot:right>
+                                    <span class="ml-2">via push notifications</span>
+                                </template>
+                            </custom-toggle>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        Remind
+                        <custom-input
+                            class="w-20 inline-block"
+                            type="number"
+                            v-model="length"
+                            :ignoreValidity="true"
+                        />
+                        {{ calendarTypeDisplay }} before event
+                        <div class="flex flex-col gap-1 mt-1.5 mb-4 ml-2">
+                            <custom-toggle
+                                v-model="eventByGroup"
+                            >
+                                <template v-slot:right>
+                                    <span class="ml-2">via email</span>
+                                </template>
+                            </custom-toggle>
+                            <custom-toggle
+                                v-model="eventByGroup"
+                            >
+                                <template v-slot:right>
+                                    <span class="ml-2">via push notifications</span>
+                                </template>
+                            </custom-toggle>
+                        </div>
+                    </div>
                 </label>
                 <custom-button
                     class="mt-3 mb-6"
@@ -146,16 +270,14 @@
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
-import {
-    initializeDateInput,
-    formatDateForBackend,
-    convertDateRangesForBackend } from "@/utils/dates";
+import { initializeDateInput } from "@/utils/dates";
 
 import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomRadio from "@/components/ui/CustomRadio.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
 import CustomSelect from "@/components/ui/CustomSelect.vue";
+import CustomToggle from "@/components/ui/CustomToggle.vue";
 import HelpIcon from "@/components/ui/HelpIcon.vue";
 
 import Calendar from "@/components/Calendar.vue";
@@ -201,6 +323,7 @@ export default {
         CustomRadio,
         CustomIcon,
         CustomSelect,
+        CustomToggle,
         HelpIcon,
     },
     data() {
@@ -215,6 +338,7 @@ export default {
             selectedDateRanges: [] as DateRange[],
             fromDate: initializeDateInput(CalendarType.Date),
             toDate: initializeDateInput(CalendarType.Date, undefined, 14),
+            eventByGroup: false,
 
             groupOptions: [] as SelectOption[],
             groupInvited: undefined as number|undefined,
@@ -260,11 +384,17 @@ export default {
 
             const event = {
                 title: this.title,
-                description: this.description,
                 event_calendar_type: this.calendarType,
+                event_type: this.eventType,
+
                 organiser: this.user?.id,
+                organiser_group: this.eventByGroup ? this.groupInvited : null,
+                invited_group: this.groupInvited,
+
+                description: this.description,
                 event_length: this.length,
                 deadline: new Date(this.deadline),
+
                 event_availability_options: this.selectedDateRanges,
             } as Event;
 

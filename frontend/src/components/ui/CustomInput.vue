@@ -18,7 +18,9 @@
             @blur="checkRequired = true"
         ></component>
 
-        <div class="flex justify-end text-invalid-dark text-sm h-5">
+        <div
+            v-if="!ignoreValidity"
+            class="flex justify-end text-invalid-dark text-sm h-5">
             <template v-if="forceInvalidMessage || isInvalid">
                 {{ invalidMessage }}
             </template>
@@ -55,7 +57,11 @@ export default {
         forceInvalidMessage: {
             type: Boolean,
             default: false,
-        }
+        },
+        ignoreValidity: {
+            type: Boolean,
+            default: false,
+        },
     },
     data() {
         return {
@@ -64,6 +70,8 @@ export default {
     },
     computed: {
         isInvalid(): boolean {
+            if (this.ignoreValidity)
+                return false;
             const pattern = new RegExp(this.pattern);
             return this.checkRequired && !pattern.test(String(this.modelValue));
         },
