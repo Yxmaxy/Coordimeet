@@ -26,9 +26,6 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -42,11 +39,13 @@ INSTALLED_APPS = [
     # external apps
     "rest_framework",
     "corsheaders",
+    "webpush",
 
     # internal apps
     "apps.users",
     "apps.utils",
     "apps.events",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [
@@ -90,8 +89,8 @@ DATABASES = {
         "NAME": os.getenv("DB_DATABASE"),
         "USER": os.getenv("DB_USERNAME"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": os.getenv("DB_HOSTNAME"),
-        "PORT": os.getenv("DB_PORT"),
+        "HOST": "127.0.0.1", # os.getenv("DB_HOSTNAME"),
+        "PORT": "5454", # os.getenv("DB_PORT"),
     }
 }
 
@@ -114,6 +113,27 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+WEBPUSH_SETTINGS = {
+    "VAPID_PUBLIC_KEY": os.getenv("VAPID_PUBLIC_KEY"),
+    "VAPID_PRIVATE_KEY": os.getenv("VAPID_PRIVATE_KEY"),
+    "VAPID_ADMIN_EMAIL": os.getenv("VAPID_ADMIN_EMAIL"),
+}
+
+def clean_url(url):
+    """Remove the protocol and resource path from the URL."""
+    return url.replace("https://", "").replace("http://", "").split("/")[0]
+
+def clean_url_and_ports(url):
+    """Remove the protocol, resource path and the port number from the URL."""
+    return clean_url(url).split(":")[0]
+
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    ".ngrok-free.app",
+    clean_url_and_ports(os.getenv("VITE_FRONTEND_URL")),
+    clean_url(os.getenv("VITE_BACKEND_URL")),
+]
+# print(ALLOWED_HOSTS)
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -150,15 +170,13 @@ REST_FRAMEWORK = {
 # Simple JWT settings
 SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.SlidingToken",),
-    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_LIFETIME": timedelta(days=365),  # NOTE: don't commit!
 }
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    os.environ.get("VITE_FRONTEND_URL"),
-    # TODO: fix this to read from the environment variable
-    "http://127.0.0.1:3000",
-    "http://localhost:3000",
-
+    os.getenv("VITE_FRONTEND_URL"),
+    os.getenv("VITE_BACKEND_URL"),
 ]
+print(CORS_ALLOWED_ORIGINS)

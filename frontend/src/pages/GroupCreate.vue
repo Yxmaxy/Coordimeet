@@ -188,10 +188,6 @@ export default {
                 alert("You must enter a group name");
                 return false;
             }
-            if (this.members.length === 0) {
-                alert("You must add at least one member to the group");
-                return false;
-            }
             return true;
         },
         createGroup() {

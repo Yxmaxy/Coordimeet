@@ -21,12 +21,16 @@ export const useStoreUser = defineStore("storeUser", {
             const userID = retrieveUserID();
             if (!userID)
                 return undefined;
-            const userResponse = await ApiService.get(`/users/user/${userID}/`);
-            if (userResponse.status === 200) {
-                this.user = userResponse.data;
-                return this.user;
+            try {
+                const userResponse: any = await ApiService.get(`/users/user/${userID}/`);
+                if (userResponse!.status === 200) {
+                    this.user = userResponse.data;
+                    return this.user;
+                }
+                return undefined;
+            } catch (error) {
+                console.error(error);
             }
-            return undefined;
         },
         async onLogin(email: string, password: string): Promise<boolean> {
             // retrieve access token

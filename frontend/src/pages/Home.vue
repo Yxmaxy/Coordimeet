@@ -24,6 +24,13 @@
                 Log in
             </custom-button>
         </form>
+
+        <custom-button
+                class="mt-4"
+                :click="notify"
+        >
+            Notify
+        </custom-button>
     </div>
 </template>
 
@@ -57,6 +64,16 @@ export default {
             if (successful) {
                 this.$router.push("/event/list");
             }
+        },
+        notify() {
+            Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                    new Notification("Hello, world!", {
+                        body: "This is a notification from CoordiMeet.",
+                        icon: "/images/logo.png",
+                    });
+                }
+            });
         }
     }
 }

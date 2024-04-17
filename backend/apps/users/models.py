@@ -1,6 +1,11 @@
+import uuid
+
+from webpush.models import Group as WebpushGroup
+
 from django.utils import timezone
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import Group
 
 from apps.users.managers import CoordimeetUserManager
 
@@ -39,12 +44,23 @@ class CoordimeetGroup(models.Model):
     """
 
     name = models.CharField(max_length=150)
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    webpush_group = models.ForeignKey(WebpushGroup, on_delete=models.CASCADE, null=True, blank=True)
 
     def __repr__(self):
         return self.name
     
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if not self.group or not self.webpush_group:
+            self.group = Group.objects.create(name=self.name)
+            self.webpush_group = WebpushGroup.objects.create(name=self.name)
+            self.save()
 
 
 class MemberRole(models.IntegerChoices):
