@@ -1,9 +1,6 @@
 <template>
     <div class="bg-main-000">
-        <PushNotificationsTest />
-
-
-        <!-- <tab-controller :tabs="tabs" :breakpoint="750">
+        <tab-controller :tabs="tabs" :breakpoint="750">
             <template v-slot:events_invited>
                 <event-list-component :events="eventsInvited" />
             </template>
@@ -16,7 +13,7 @@
             :click="() => $router.push('/event/new')"
         >
             <custom-icon icon="add"/> New event
-        </custom-button> -->
+        </custom-button>
     </div>
 </template>
 
@@ -31,8 +28,6 @@ import EventListComponent from "@/components/EventListComponent.vue";
 import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
-
-import PushNotificationsTest from "@/components/PushNotificationsTest.vue";
 
 const tabs = [
     {
@@ -54,8 +49,6 @@ export default {
         TabController,
         CustomButton,
         CustomIcon,
-
-        PushNotificationsTest,
     },
     setup() {
         const { user } = useStoreUser();

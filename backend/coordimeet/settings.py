@@ -128,12 +128,9 @@ def clean_url_and_ports(url):
     return clean_url(url).split(":")[0]
 
 ALLOWED_HOSTS = [
-    "127.0.0.1",
-    ".ngrok-free.app",
     clean_url_and_ports(os.getenv("VITE_FRONTEND_URL")),
-    clean_url(os.getenv("VITE_BACKEND_URL")),
+    clean_url_and_ports(os.getenv("VITE_BACKEND_URL")),
 ]
-# print(ALLOWED_HOSTS)
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
@@ -179,4 +176,3 @@ CORS_ALLOWED_ORIGINS = [
     os.getenv("VITE_FRONTEND_URL"),
     os.getenv("VITE_BACKEND_URL"),
 ]
-print(CORS_ALLOWED_ORIGINS)
