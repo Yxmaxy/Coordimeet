@@ -1,6 +1,8 @@
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching"
 import { clientsClaim } from "workbox-core"
 
+import { retrieveAccessToken } from "@/utils/tokens";
+
 declare let self: ServiceWorkerGlobalScope;
 
 clientsClaim();
@@ -81,15 +83,22 @@ async function sendSubscriptionData(subscription: PushSubscription, userID: Numb
     };
 
     try {
-        await fetch(`${import.meta.env.VITE_BACKEND_URL}/notifications/save_information`, {
+        const token = await retrieveAccessToken();
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/notifications/save_information/`, {
             method: "POST",
             body: JSON.stringify(data),
             headers: {
-                "content-type": "application/json"
+                "content-type": "application/json",
+                "Authorization": `Bearer ${token}`,
             },
             credentials: "include"
         });
-        console.log("Subscribed successfully!");
+        if (!response.ok) {
+            console.error("Failed to subscribe user to notifications", response.statusText);
+            return;
+        } else {
+            console.log("Subscribed successfully!");
+        }
     } catch (error) {
         console.error(error);
     }

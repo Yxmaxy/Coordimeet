@@ -18,7 +18,7 @@ export const useStoreUser = defineStore("storeUser", {
             if (this.user)
                 return this.user;
             // retrieve user information from the API
-            const userID = retrieveUserID();
+            const userID = await retrieveUserID();
             if (!userID)
                 return undefined;
             try {
@@ -38,7 +38,7 @@ export const useStoreUser = defineStore("storeUser", {
                 email, password
             });
             if (response.status === 200) {
-                saveTokens(response.data.token, response.data.id);
+                await saveTokens(response.data.token, response.data.id);
                 if ("serviceWorker" in navigator) {
                     // retrieve notification permissions
                     const notificationPermission = await Notification.requestPermission();
@@ -55,8 +55,8 @@ export const useStoreUser = defineStore("storeUser", {
             }
             return false;
         },
-        onLogout() {
-            removeTokens();
+        async onLogout() {
+            await removeTokens();
             this.user = undefined;
         }
     }

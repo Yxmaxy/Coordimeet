@@ -7,8 +7,8 @@ axios.defaults.withCredentials = true;
 axios.defaults.headers.post["X-CSRFToken"] = getCookie("csrftoken");
 
 // append token to request header
-axios.interceptors.request.use(config => {
-    const token = retrieveAccessToken();
+axios.interceptors.request.use(async config => {
+    const token = await retrieveAccessToken();
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
@@ -18,7 +18,7 @@ axios.interceptors.request.use(config => {
 // sliding access token expired, redirect to login
 axios.interceptors.response.use(undefined, async error => {
     if (error.config && error.response && error.response.status === 401) {
-        removeTokens();
+        await removeTokens();
         window.location.href = "/";
     }
 });

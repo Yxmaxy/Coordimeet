@@ -101,8 +101,8 @@ export default {
     },
     methods: {
         setTheme,
-        onLogout() {
-            this.userStore.onLogout();
+        async onLogout() {
+            await this.userStore.onLogout();
             this.showLogout = false;
             this.$router.push("/");
         },

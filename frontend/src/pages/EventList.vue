@@ -67,9 +67,8 @@ export default {
         getEvents() {
             ApiService.get("/events/event/")
             .then(res => {
-                console.log(res.data)
-                // this.eventsInvited = res.data.filter((event: Event) => event.organiser?.id !== this.user?.id);
-                // this.eventsCreated = res.data.filter((event: Event) => event.organiser?.id === this.user?.id);
+                this.eventsInvited = res.data.filter((event: Event) => event.organiser?.id !== this.user?.id);
+                this.eventsCreated = res.data.filter((event: Event) => event.organiser?.id === this.user?.id);
             })
             .catch(e => {
                 throw e
