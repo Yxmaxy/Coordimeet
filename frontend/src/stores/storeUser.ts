@@ -39,6 +39,18 @@ export const useStoreUser = defineStore("storeUser", {
             });
             if (response.status === 200) {
                 saveTokens(response.data.token, response.data.id);
+                if ("serviceWorker" in navigator) {
+                    // retrieve notification permissions
+                    const notificationPermission = await Notification.requestPermission();
+                    if (notificationPermission === "granted") {
+                        // send message to service worker to register user to notifications
+                        const registration = await navigator.serviceWorker.ready;
+                        registration.active?.postMessage({
+                            user_id: response.data.id,
+                            type: "REGISTER_NOTIFICATIONS",
+                        });
+                    }
+                }
                 return await this.retrieveUser() !== undefined;
             }
             return false;
