@@ -174,5 +174,6 @@ SIMPLE_JWT = {
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     os.getenv("VITE_FRONTEND_URL"),
+    "http://localhost:3001",  # for npm run preview; probably remove this at some point
     os.getenv("VITE_BACKEND_URL"),
 ]

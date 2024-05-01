@@ -1,5 +1,5 @@
-import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching"
 import { clientsClaim } from "workbox-core"
+import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching"
 
 import { retrieveAccessToken } from "@/utils/tokens";
 
@@ -134,4 +134,26 @@ self.addEventListener("message", (event: any) => {
         }
         registerNotifications(userID);
     }
+});
+
+// Handle fetch events
+async function handleNetworkFirstRequest(request: Request) {
+    const cache = await caches.open("coordimeet-cache");
+    try {
+        const response = await fetch(request);
+        cache.put(request, response.clone());
+        console.log("Normal response");
+        return response;
+    } catch (error) {
+        const cachedResponse = await cache.match(request);
+        if (cachedResponse) {
+            console.log("Serving cached response");
+            return cachedResponse;
+        }
+        throw error;
+    }
+}
+
+self.addEventListener("fetch", (event: FetchEvent) => {
+    event.respondWith(handleNetworkFirstRequest(event.request));
 });

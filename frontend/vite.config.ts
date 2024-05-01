@@ -20,7 +20,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       injectManifest: {
         globPatterns: [
-          "**/*.{js,css,html,png,svg}",
+          "**/*.{js,css,html,png,svg,jpg,jpeg,gif,webp,woff,woff2,ttf,eot}",
         ],
       },
       manifest: {
