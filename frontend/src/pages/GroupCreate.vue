@@ -42,12 +42,12 @@
                                 If the account does not yet exist, the user will be added to the group when they create an account.
                                 <br /><br />
                                 You can send them the following link to create an account:
-                                <code
-                                    class="cursor-pointer"
+                                <div
+                                    class="cursor-pointer font-mono"
                                     @click="copyInviteLink"
                                 >
                                     {{ inviteLink }}
-                                </code>
+                                </div>
                             </help-icon>
                         </b>
                         <div class="flex gap-2">
@@ -122,6 +122,7 @@
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
+import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Tab } from "@/types/tabs";
 import { Member, Group, Role } from "@/types/user";
@@ -159,10 +160,12 @@ export default {
     },
     setup() {
         const { user } = useStoreUser();
+        const storeMessages = useStoreMessages();
         return {
             user,
             tabs,
             Role,
+            storeMessages,
             inviteLink: `${import.meta.env.VITE_FRONTEND_URL}/register`,
         }
     },
@@ -188,12 +191,12 @@ export default {
                 this.groupName = response.data.name;
                 this.members = response.data.members;
             }).catch(() => {
-                alert("Failed to fetch group information");
+                this.storeMessages.showMessageError("Failed to fetch group information");
             });
         },
         validateData() {
             if (this.groupName.length === 0) {
-                alert("You must enter a group name");
+                this.storeMessages.showMessageError("You must enter a group name");
                 return false;
             }
             return true;
@@ -210,10 +213,10 @@ export default {
             ApiService.post("/users/group/", data).then((response) => {
                 if (response.status !== 201)
                     throw new Error("Failed to create group");
-                alert("Group created successfully");
+                this.storeMessages.showMessage("Group created successfully");
                 this.$router.push("/group/list");
             }).catch(() => {
-                alert("Failed to create group");
+                this.storeMessages.showMessageError("Failed to create group");
             });
         },
         editGroup() {
@@ -228,10 +231,10 @@ export default {
             ApiService.put(`/users/group/${this.$route.params.id}/`, data).then((response) => {
                 if (response.status !== 200)
                     throw new Error("Failed to update group");
-                alert("Group updated successfully");
+                this.storeMessages.showMessage("Group updated successfully");
                 this.$router.push("/group/list");
             }).catch(() => {
-                alert("Failed to update group");
+                this.storeMessages.showMessageError("Failed to update group");
             });
         },
         addMember() {
@@ -270,7 +273,7 @@ export default {
         },
         async copyInviteLink() {
             navigator.clipboard.writeText(this.inviteLink);
-            alert("Invite link copied to clipboard")
+            this.storeMessages.showMessage("Invite link copied to clipboard", 3000);
         }
     },
     mounted() {
