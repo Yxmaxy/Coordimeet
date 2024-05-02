@@ -5,16 +5,18 @@ import { retrieveAccessToken } from "@/utils/tokens";
 
 declare let self: ServiceWorkerGlobalScope;
 
+const DEBUG = true;
+
 clientsClaim();
 
+// cache assets defined in globPatterns
 precacheAndRoute(self.__WB_MANIFEST);
-
 cleanupOutdatedCaches();
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", () => self.clients.claim());
 
-console.log("Service worker is running");
+if (DEBUG) console.log("Service worker is running");
 
 // Helpers
 function __urlB64ToUint8Array(base64String: any) {
@@ -97,7 +99,7 @@ async function sendSubscriptionData(subscription: PushSubscription, userID: Numb
             console.error("Failed to subscribe user to notifications", response.statusText);
             return;
         } else {
-            console.log("Subscribed successfully!");
+            if (DEBUG) console.log("Subscribed successfully!");
         }
     } catch (error) {
         console.error(error);
@@ -125,7 +127,7 @@ self.addEventListener("push", async (event: PushEvent) => {
 
 // Handle messages from main thread
 self.addEventListener("message", (event: any) => {
-    console.log("received message!")
+    if (DEBUG) console.log("Received message!")
     if (event.data?.type === "REGISTER_NOTIFICATIONS") {
         const userID = event.data.user_id;
         if (!userID) {
@@ -142,12 +144,12 @@ async function handleNetworkFirstRequest(request: Request) {
     try {
         const response = await fetch(request);
         cache.put(request, response.clone());
-        // console.log("Normal response");
+        if (DEBUG) console.log("Normal response");
         return response;
     } catch (error) {
         const cachedResponse = await cache.match(request);
         if (cachedResponse) {
-            // console.log("Serving cached response");
+            if (DEBUG) console.log("Serving cached response");
             return cachedResponse;
         }
         throw error;

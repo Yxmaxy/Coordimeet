@@ -5,17 +5,13 @@
                 <div class="flex flex-col mt-2">
                     <div
                         v-for="group in groups"
-                        class="flex-1 flex justify-between bg-main-100 m-2 px-8 py-6 rounded-2xl shadow-md"
+                        :class="[{
+                            'cursor-pointer': isAdmin(group) || isOwner(group),
+                        }, 'flex-1 flex justify-between bg-main-100 m-2 px-8 py-6 rounded-2xl shadow-md']"
+                        @click="() => editGroup(group)"
                     >
                         <b class="flex items-center">{{ group.name }}</b>
                         <div class="flex gap-2 items-center">
-                            <custom-button
-                                v-if="isAdmin(group) || isOwner(group)"
-                                class="h-8 w-8 rounded-full"
-                                :click="() => $router.push(`/group/edit/${group.id}`)"
-                            >
-                                <custom-icon icon="edit" />
-                            </custom-button>
                             <custom-button
                                 v-if="isOwner(group)"
                                 class="h-8 w-8 rounded-full"
@@ -116,6 +112,11 @@ export default {
                 alert("Failed to delete group.");
             });
         },
+        editGroup(group: Group) {
+            if (this.isAdmin(group) || this.isOwner(group)) {
+                this.$router.push(`/group/edit/${group.id}`);
+            }
+        }
     },
     mounted() {
         this.getGroups();

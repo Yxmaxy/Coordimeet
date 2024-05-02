@@ -37,10 +37,17 @@
                     <label class="flex flex-col gap-2">
                         <b class="ml-4 flex gap-2 items-center">
                             Member's email
-                            <help-icon class="text-base">
+                            <help-icon class="text-base font-normal">
                                 Enter the email address of a member you want to add to the group.
-                                <br />
-                                They will receive an invitation via email.
+                                If the account does not yet exist, the user will be added to the group when they create an account.
+                                <br /><br />
+                                You can send them the following link to create an account:
+                                <code
+                                    class="cursor-pointer"
+                                    @click="copyInviteLink"
+                                >
+                                    {{ inviteLink }}
+                                </code>
                             </help-icon>
                         </b>
                         <div class="flex gap-2">
@@ -156,6 +163,7 @@ export default {
             user,
             tabs,
             Role,
+            inviteLink: `${import.meta.env.VITE_FRONTEND_URL}/register`,
         }
     },
     data() {
@@ -260,6 +268,10 @@ export default {
             this.memberEmail = member.user?.email?.toString() || "";
             this.deleteMember(member);
         },
+        async copyInviteLink() {
+            navigator.clipboard.writeText(this.inviteLink);
+            alert("Invite link copied to clipboard")
+        }
     },
     mounted() {
         if (this.isEditing) {
