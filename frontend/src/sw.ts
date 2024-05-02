@@ -142,12 +142,12 @@ async function handleNetworkFirstRequest(request: Request) {
     try {
         const response = await fetch(request);
         cache.put(request, response.clone());
-        console.log("Normal response");
+        // console.log("Normal response");
         return response;
     } catch (error) {
         const cachedResponse = await cache.match(request);
         if (cachedResponse) {
-            console.log("Serving cached response");
+            // console.log("Serving cached response");
             return cachedResponse;
         }
         throw error;

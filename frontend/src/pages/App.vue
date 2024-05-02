@@ -10,17 +10,20 @@
             />
             <user-component />
         </header>
+        <offline-component />
         <router-view class="min-h-[calc(100vh-3.5rem)] h-full" />
     </div>
 </template>
 
 <script lang="ts">
 import UserComponent from "@/components/UserComponent.vue";
+import OfflineComponent from "@/components/OfflineComponent.vue";
 
 export default {
     name: "App",
     components: {
-        "user-component": UserComponent,
+        UserComponent,
+        OfflineComponent,
     },
 }
 </script>
