@@ -157,5 +157,7 @@ async function handleNetworkFirstRequest(request: Request) {
 }
 
 self.addEventListener("fetch", (event: FetchEvent) => {
+    if (event.request.method !== "GET")
+        return;
     event.respondWith(handleNetworkFirstRequest(event.request));
 });

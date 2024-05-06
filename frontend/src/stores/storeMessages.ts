@@ -9,32 +9,30 @@ export const useStoreMessages = defineStore("storeMessages", {
         }
     },
     actions: {
-        showMessage(message: string, timeout: number|null = null) {
+        showMessage(message: string, timeout: number = 5000) {
             this._showMessage(message, MessageType.INFO, timeout);
         },
-        showMessageError(message: string, timeout: number|null = null) {
+        showMessageError(message: string, timeout: number = 5000) {
             this._showMessage(message, MessageType.ERROR, timeout);
         },
-        showMessageSuccess(message: string, timeout: number|null = null) {
+        showMessageSuccess(message: string, timeout: number = 5000) {
             this._showMessage(message, MessageType.SUCCESS, timeout);
         },
-        _showMessage(message: string, messageType: MessageType = MessageType.INFO, timeout: number|null = null) {
+        _showMessage(message: string, messageType: MessageType = MessageType.INFO, timeout: number = 5000) {
             this.message = {
                 content: message,
                 type: messageType,
             } as Message;
 
-            if (timeout) {
-                // clear previous timeout
-                if (this._messageTimeout) {
-                    clearTimeout(this._messageTimeout);
-                }
-                // add new timeout
-                this._messageTimeout = setTimeout(() => {
-                    this.hideMessage();
-                    this._messageTimeout = null;
-                }, timeout);
+            // clear previous timeout
+            if (this._messageTimeout) {
+                clearTimeout(this._messageTimeout);
             }
+            // add new timeout
+            this._messageTimeout = setTimeout(() => {
+                this.hideMessage();
+                this._messageTimeout = null;
+            }, timeout);
         },
         hideMessage() {
             if (this.message) {

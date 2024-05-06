@@ -149,103 +149,51 @@
                     />
                 </label>
                 <label class="flex flex-col gap-2">
-                    <b class="ml-4">Notifications</b>
-                    <!-- 
-                        Notifications:
-                        - Notify after creating
-                        - X before deadline if not submitted
-                        - When event date is selected + send .ics file
-                        - Remind X before event
-                    -->
-                    <div class="ml-4">
-                        Notify group members after creation
-                        <div class="flex flex-col gap-1 mt-1.5 mb-4 ml-2">
-                            <custom-toggle
-                                v-model="eventByGroup"
-                            >
-                                <template v-slot:right>
-                                    <span class="ml-2">via email</span>
-                                </template>
-                            </custom-toggle>
-                            <custom-toggle
-                                v-model="eventByGroup"
-                            >
-                                <template v-slot:right>
-                                    <span class="ml-2">via push notifications</span>
-                                </template>
-                            </custom-toggle>
-                        </div>
-                    </div>
-                    <div class="ml-4">
-                        Remind group
-                        <custom-input
-                            class="w-20 inline-block"
-                            type="number"
-                            v-model="length"
-                            :ignoreValidity="true"
-                        />
-                        {{ calendarTypeDisplay }} before deadline
-                        <div class="flex flex-col gap-1 mt-1.5 mb-4 ml-2">
-                            <custom-toggle
-                                v-model="eventByGroup"
-                            >
-                                <template v-slot:right>
-                                    <span class="ml-2">via email</span>
-                                </template>
-                            </custom-toggle>
-                            <custom-toggle
-                                v-model="eventByGroup"
-                            >
-                                <template v-slot:right>
-                                    <span class="ml-2">via push notifications</span>
-                                </template>
-                            </custom-toggle>
-                        </div>
-                    </div>
-                    <div class="ml-4">
-                        Notify when event is finished
-                        <div class="flex flex-col gap-1 mt-1.5 mb-4 ml-2">
-                            <custom-toggle
-                                v-model="eventByGroup"
-                            >
-                                <template v-slot:right>
-                                    <span class="ml-2">via email</span>
-                                </template>
-                            </custom-toggle>
-                            <custom-toggle
-                                v-model="eventByGroup"
-                            >
-                                <template v-slot:right>
-                                    <span class="ml-2">via push notifications</span>
-                                </template>
-                            </custom-toggle>
-                        </div>
-                    </div>
-                    <div class="ml-4">
-                        Remind
-                        <custom-input
-                            class="w-20 inline-block"
-                            type="number"
-                            v-model="length"
-                            :ignoreValidity="true"
-                        />
-                        {{ calendarTypeDisplay }} before event
-                        <div class="flex flex-col gap-1 mt-1.5 mb-4 ml-2">
-                            <custom-toggle
-                                v-model="eventByGroup"
-                            >
-                                <template v-slot:right>
-                                    <span class="ml-2">via email</span>
-                                </template>
-                            </custom-toggle>
-                            <custom-toggle
-                                v-model="eventByGroup"
-                            >
-                                <template v-slot:right>
-                                    <span class="ml-2">via push notifications</span>
-                                </template>
-                            </custom-toggle>
-                        </div>
+                    <b class="ml-4">Send notifications</b>
+                    <div class="ml-3 flex flex-col gap-4">
+                        <custom-toggle
+                            class="mt-2"
+                            v-model="eventNotifications.afterCreation"
+                            :right-value="EventNotificationType.Creation"
+                        >
+                            <template v-slot:right>
+                                <span class="ml-2">after event creation</span>
+                            </template>
+                        </custom-toggle>
+                        <custom-toggle
+                            v-model="eventNotifications.afterUpdate"
+                            :right-value="EventNotificationType.Update"
+                        >
+                            <template v-slot:right>
+                                <span class="ml-2">when the event is updated</span>
+                            </template>
+                        </custom-toggle>
+                        <custom-toggle
+                            v-model="eventNotifications.beforeDeadline"
+                            :right-value="EventNotificationType.Deadline"
+                        >
+                            <template v-slot:right>
+                                <span class="ml-2">before the deadline</span>
+                                <!-- NOTE: Only if not submitted -->
+                            </template>
+                        </custom-toggle>
+                        <custom-toggle
+                            v-model="eventNotifications.beforeDateSelected"
+                            :right-value="EventNotificationType.EventDateSelected"
+                        >
+                            <template v-slot:right>
+                                <span class="ml-2">when the event date is selected</span>
+                                <!-- TODO: send .ics file -->
+                            </template>
+                        </custom-toggle>
+                        <custom-toggle
+                            v-model="eventNotifications.beforeEventStart"
+                            :right-value="EventNotificationType.EventStart"
+                        >
+                            <template v-slot:right>
+                                <span class="ml-2">before the event starts</span>
+                            </template>
+                        </custom-toggle>
                     </div>
                 </label>
                 <custom-button
@@ -285,7 +233,7 @@ import TabController from "@/components/TabController.vue";
 
 import { useStoreUser } from "@/stores/storeUser";
 
-import { Event, EventType } from "@/types/event";
+import { Event, EventType, EventNotification, EventNotificationType } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
 import { Group } from "@/types/user";
 import { SelectOption } from "@/types/ui";
@@ -312,6 +260,7 @@ export default {
             user,
             CalendarType,
             EventType,
+            EventNotificationType,
             tabs,
         }
     },
@@ -339,6 +288,14 @@ export default {
             fromDate: initializeDateInput(CalendarType.Date),
             toDate: initializeDateInput(CalendarType.Date, undefined, 14),
             eventByGroup: false,
+
+            eventNotifications: {
+                afterCreation: false as false|EventNotificationType,
+                afterUpdate: false as false|EventNotificationType,
+                beforeDeadline: false as false|EventNotificationType,
+                beforeEventStart: false as false|EventNotificationType,
+                beforeDateSelected: false as false|EventNotificationType,
+            },
 
             groupOptions: [] as SelectOption[],
             groupInvited: undefined as number|undefined,
@@ -382,6 +339,11 @@ export default {
                 return;
             }
 
+            const eventNotifications = Object.keys(this.eventNotifications)
+                .filter((key) => this.eventNotifications[key as keyof typeof this.eventNotifications])
+                .map((key) => ({notification_type: this.eventNotifications[key as keyof typeof this.eventNotifications]})
+            ) as EventNotification[];
+
             const event = {
                 title: this.title,
                 event_calendar_type: this.calendarType,
@@ -396,6 +358,7 @@ export default {
                 deadline: new Date(this.deadline),
 
                 event_availability_options: this.selectedDateRanges,
+                event_notifications: eventNotifications,
             } as Event;
 
             ApiService.post("/events/event/", event)

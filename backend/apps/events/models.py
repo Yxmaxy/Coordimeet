@@ -44,29 +44,57 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
-
-    def save(self, *args, **kwargs):
+    
+    def _validate_organiser(self):
         """Ensure that either organiser or organiser_group is set"""
 
         if self.organiser and self.organiser_group:
             raise ValueError("Event can't set both organiser and organiser_group")
         if not self.organiser and not self.organiser_group:
             raise ValueError("Event must set either organiser or organiser_group")
+
+    def _send_event_notifications(self):
+        """Register the notifications if event is for group"""
+
+        if not self.invited_group:
+            return
+
+        from apps.notifications.services import NotificationServices
+
+        if not self.pk and self.event_notifications.filter(notification_type=EventNotificationTypeChoices.CREATION).exists():
+            print("Created!")
+        if self.pk and self.event_notifications.filter(notification_type=EventNotificationTypeChoices.UPDATE).exists():
+            print("Updated!")
+        if deadline_notification := self.event_notifications.filter(notification_type=EventNotificationTypeChoices.DEADLINE):
+            print("Deadline!", deadline_notification.first())
+        if self.selected_start_date and self.event_notifications.filter(notification_type=EventNotificationTypeChoices.EVENT_DATE_SELECT).exists():
+            print("Selected date!")
+        if self.selected_start_date and self.event_notifications.filter(notification_type=EventNotificationTypeChoices.EVENT_START).exists():
+            print("Event start register!")
+
+
+    def save(self, *args, **kwargs):
+        self._validate_organiser()
         super().save(*args, **kwargs)
+        self._send_event_notifications()
 
 
 class EventNotificationTypeChoices(models.IntegerChoices):
     """Choices for the notification types"""
-    EMAIL = 1, "Email"
-    PUSH = 2, "Push"
+    CREATION = 1, "After creation"
+    UPDATE = 2, "After update"
+    DEADLINE = 3, "Before deadline"
+    EVENT_DATE_SELECT = 4, "After event date selected"
+    EVENT_START = 5, "Before event starts"
 
 
 class EventNotification(models.Model):
     """Model for event notifications"""
 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     event = models.ForeignKey(Event, related_name="event_notifications", on_delete=models.CASCADE)
-    notification_type = models.IntegerField(choices=EventNotificationTypeChoices.choices, default=EventNotificationTypeChoices.EMAIL)
-    notification_time = models.DateTimeField()
+    notification_type = models.IntegerField(choices=EventNotificationTypeChoices.choices)
+    notification_time = models.DateTimeField(null=True, blank=True)
 
 
 class EventAvailabilityOption(models.Model):

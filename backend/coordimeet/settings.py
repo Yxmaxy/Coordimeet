@@ -177,3 +177,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3001",  # for npm run preview; probably remove this at some point
     os.getenv("VITE_BACKEND_URL"),
 ]
+
+# Celery
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND")
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True

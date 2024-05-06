@@ -11,6 +11,21 @@ export interface EventAvailabilityOption extends DateRange {
     event?: Event,
 }
 
+export enum EventNotificationType {
+    Creation = 1,
+    Update = 2,
+    Deadline = 3,
+    EventDateSelected = 4,
+    EventStart = 5,
+}
+
+export interface EventNotification {
+    pk?: number,
+    uuid?: string,
+    notification_type: EventNotificationType,
+    notification_time?: Date,
+}
+
 export interface Event {
     pk?: number,
 
@@ -35,6 +50,7 @@ export interface Event {
     updated_at: Date,
 
     event_availability_options: EventAvailabilityOption[],
+    event_notifications: EventNotification[],
 }
 
 export enum EventPageType {
