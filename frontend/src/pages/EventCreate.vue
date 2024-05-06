@@ -232,6 +232,7 @@ import Calendar from "@/components/Calendar.vue";
 import TabController from "@/components/TabController.vue";
 
 import { useStoreUser } from "@/stores/storeUser";
+import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Event, EventType, EventNotification, EventNotificationType } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
@@ -256,11 +257,15 @@ const tabs = [
 export default {
     setup() {
         const { user } = useStoreUser();
+        const storeMessages = useStoreMessages();
         return {
-            user,
             CalendarType,
             EventType,
             EventNotificationType,
+
+            user,
+            storeMessages,
+
             tabs,
         }
     },
@@ -325,17 +330,17 @@ export default {
     methods: {
         onCreateEvent() {
             if (this.title.length === 0) {
-                alert("You must enter a title for the event");
+                this.storeMessages.showMessageError("You must enter a title for the event");
                 return;
             }
             if (this.length < 0) {
-                alert("Event length must me bigger or equal to 1");
+                this.storeMessages.showMessageError("Event length must me bigger or equal to 1");
                 return;
             }
 
             // check if dates were selected
             if (this.selectedDateRanges.length === 0) {
-                alert(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
+                this.storeMessages.showMessageError(`Please select the ${this.calendarTypeDisplay} on the calendar, on which you would like the event to happen.`)
                 return;
             }
 
@@ -364,11 +369,11 @@ export default {
             ApiService.post("/events/event/", event)
             .then(res => {
                 const eventUUID = res.data.event_uuid;
-                alert(`Event successfuly created. You will now be redirected to your event page.`)
+                this.storeMessages.showMessage(`Event successfuly created. You will now be redirected to your event page.`)
                 this.$router.push(`/event/${eventUUID}`);
             })
             .catch(err => {
-                alert("An error occurred while creating the event. Please try again later.");
+                this.storeMessages.showMessageError("An error occurred while creating the event. Please try again later.");
                 console.error(err);
             });
         },
@@ -381,7 +386,7 @@ export default {
                     } as SelectOption;
                 });
             }).catch(() => {
-                alert("Failed to fetch user's groups.");
+                this.storeMessages.showMessageError("Failed to fetch user's groups.");
             });
         },
     },

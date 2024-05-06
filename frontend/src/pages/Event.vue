@@ -146,6 +146,7 @@ import { AxiosResponse } from "axios";
 
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
+import { useStoreMessages } from "@/stores/storeMessages";
 
 import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventPageType, EventParticipant } from "@/types/event";
@@ -195,10 +196,13 @@ export default {
     },
     setup() {
         const { user } = useStoreUser();
+        const storeMessages = useStoreMessages();
 
         return {
             user,
             tabs,
+
+            storeMessages,
 
             EventPageType,
             CalendarType,
@@ -289,7 +293,7 @@ export default {
                 }
             }).then(res => {
                 if (res.data.error) {
-                    alert(`An error occured while fetching your previous selection: ${res.data.error}`)
+                    this.storeMessages.showMessageError(`An error occured while fetching your previous selection: ${res.data.error}`)
                     return;
                 }
                 // empty response
@@ -317,7 +321,7 @@ export default {
                 }
             }).then(res => {
                 if (res.data.error) {
-                    alert(`An error occured while fetching the participants: ${res.data.error}`)
+                    this.storeMessages.showMessageError(`An error occured while fetching the participants: ${res.data.error}`)
                     return;
                 }
                 if (res.data.length === 0)
@@ -347,7 +351,7 @@ export default {
                 if (response.status !== 201)
                     return;
                 this.previousSelectedDateRanges = this.selectedDateRanges;
-                alert("Your response has been submitted");
+                this.storeMessages.showMessage("Your response has been submitted");
             }
 
             if (!this.isPreviousSelectedDateRangesSet) {
@@ -373,7 +377,7 @@ export default {
             ApiService.put(`eventDate.php?IDEvent=${this.$route.params.uuid}`, {
                 SelectedDate: this.displayDateRange(selectedDateRange)
             }).then(() => {
-                alert("Event date successfully selected!\nYou will now be returned to the event list");
+                this.storeMessages.showMessage("Event date successfully selected!\nYou will now be returned to the event list");
                 this.$router.push("/event/list");
             })
         },

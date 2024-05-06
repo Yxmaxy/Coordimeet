@@ -43,6 +43,7 @@
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
+import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Group, Role } from "@/types/user";
 import { Tab } from "@/types/tabs";
@@ -68,9 +69,12 @@ export default {
     },
     setup() {
         const { user } = useStoreUser();
+        const storeMessages = useStoreMessages();
         return {
             user,
             tabs,
+
+            storeMessages,
         }
     },
     data() {
@@ -84,7 +88,7 @@ export default {
             ApiService.get("/users/group/").then((response) => {
                 this.groups = response.data;
             }).catch(() => {
-                alert("Failed to fetch user's groups.");
+                this.storeMessages.showMessageError("Failed to fetch user's groups.");
             });
         },
         isRole(group: Group, role: Role) {
@@ -98,18 +102,18 @@ export default {
         },
         leaveGroup(group: Group) {
             ApiService.post(`/users/group/leave/${group.id}/`).then(() => {
-                alert("Successfully left the group.");
+                this.storeMessages.showMessage("Successfully left the group.");
                 this.getGroups();
             }).catch(() => {
-                alert("Failed to leave group.");
+                this.storeMessages.showMessageError("Failed to leave group.");
             });
         },
         deleteGroup(group: Group) {
             ApiService.delete(`/users/group/delete/${group.id}/`).then(() => {
-                alert("Group successfully deleted.");
+                this.storeMessages.showMessage("Group successfully deleted.");
                 this.getGroups();
             }).catch(() => {
-                alert("Failed to delete group.");
+                this.storeMessages.showMessageError("Failed to delete group.");
             });
         },
         editGroup(group: Group) {

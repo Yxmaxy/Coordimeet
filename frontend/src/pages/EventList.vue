@@ -20,6 +20,7 @@
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
+import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Event } from "@/types/event";
 import { Tab } from "@/types/tabs";
@@ -52,9 +53,12 @@ export default {
     },
     setup() {
         const { user } = useStoreUser();
+        const storeMessages = useStoreMessages();
         return {
             user,
             tabs,
+
+            storeMessages,
         }
     },
     data() {
@@ -71,8 +75,8 @@ export default {
                 this.eventsCreated = res.data.filter((event: Event) => event.organiser?.id === this.user?.id);
             })
             .catch(e => {
-                throw e
-                alert(`Pri pridobivanju podatkov je prišlo do napake.`)
+                this.storeMessages.showMessageError(`Pri pridobivanju podatkov je prišlo do napake.`)
+                throw e;
             });
         },
     },
