@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import { useStoreUser } from "@/stores/storeUser";
 
 import Home from "@/pages/Home.vue";
+import Login from "@/pages/Login.vue";
 
 import Event from "@/pages/Event.vue";
 import EventCreate from "@/pages/EventCreate.vue";
@@ -15,6 +16,7 @@ const router = createRouter({
     history: createWebHistory(),
     routes: [
         { path: "/", component: Home, name: "home" },
+        { path: "/login", component: Login, name: "login" },
         { path: "/event/:uuid", component: Event, name: "event"},
         { path: "/event/new", component: EventCreate, name: "event_new" },
         { path: "/event/list", component: EventList, name: "event_list" },
@@ -41,9 +43,9 @@ router.beforeEach(async (to, from) => {
         }
         return true;
     }
-    if (to.name === "home" && userStore.isLoggedIn)
+    if (userStore.isLoggedIn && ["login", "home"].includes(to.name as string))
         return "/event/list";
-    if (to.name !== "home" && !userStore.isLoggedIn)
+    if (!userStore.isLoggedIn && !["login", "home"].includes(to.name as string))
         return "/";
     return true;
 });

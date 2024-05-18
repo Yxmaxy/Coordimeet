@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia';
 import { User } from '@/types/user';
+
 import ApiService from "@/utils/ApiService";
 import { saveTokens, retrieveUserID, removeTokens } from "@/utils/tokens";
+
+import { useStoreMessages } from "@/stores/storeMessages";
 
 export const useStoreUser = defineStore("storeUser", {
     state: () => {
@@ -52,6 +55,21 @@ export const useStoreUser = defineStore("storeUser", {
                     }
                 }
                 return await this.retrieveUser() !== undefined;
+            }
+            return false;
+        },
+        async onSignup(email: string, password: string): Promise<boolean> {
+            // create a new user
+            try {
+                const response = await ApiService.post("/users/user/", {
+                    email, password
+                });
+                if (response.status === 201) {
+                    return await this.onLogin(email, password);
+                }
+            } catch (error: any) {
+                const storeMessages = useStoreMessages();
+                storeMessages.showMessageError("A user with this email already exists!");
             }
             return false;
         },

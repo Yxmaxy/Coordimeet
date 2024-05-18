@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from rest_framework.serializers import ModelSerializer
 from rest_framework_simplejwt.serializers import TokenObtainSlidingSerializer
 
@@ -15,8 +17,10 @@ class CustomTokenObtainSlidingSerializer(TokenObtainSlidingSerializer):
         data = super().validate(attrs)
 
         user = self.user
-        data["id"] = user.id
+        user.last_login = datetime.now()
+        user.save()
 
+        data["id"] = user.id
         return data
 
 
@@ -33,6 +37,49 @@ class UserSerializer(ModelSerializer):
                 "validators": [EmailValidator],
             },
         }
+
+
+class UserCreateSerializer(ModelSerializer):
+    """
+    Serializer for creating the user object.
+    """
+
+    class Meta:
+        model = get_user_model()
+        fields = ["first_name", "last_name", "email", "password"]
+        extra_kwargs = {
+            "email": {
+                "validators": [EmailValidator],
+            },
+            "password": {
+                "write_only": True,
+            },
+        }
+
+    def create(self, validated_data):
+        """
+        Creates a user. The following cases are possible:
+        1. The user with this email doesn't exist yet -> create a new user.
+        2. The user with this email exists and has logged in -> return None.
+        3. the user with this email exists and has not logged in yet -> set the password and save the user.
+        """
+        email = validated_data.get("email")
+        password = validated_data.get("password")
+
+        try:
+            user = get_user_model().objects.get(email=email)
+
+            if user.last_login is None:  # Case 3
+                user.set_password(password)
+                user.save()
+            else:  # Case 2
+                return None
+
+        except get_user_model().DoesNotExist:
+            # Case 1
+            user = get_user_model().objects.create_user(email=email, password=password)
+
+        return user
 
 
 class MemberSerializer(ModelSerializer):

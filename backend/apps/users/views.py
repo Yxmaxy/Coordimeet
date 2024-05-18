@@ -10,9 +10,12 @@ from django.contrib.auth import get_user_model
 from apps.users import serializers
 from apps.users.models import CoordimeetGroup
 
+from apps.utils.permissions import HasGroupOwnerOrAdminPermission, HasGroupOwnerPermission
+
 
 class CustomTokenObtainSlidingView(TokenObtainSlidingView):
     serializer_class = serializers.CustomTokenObtainSlidingSerializer
+    # TODO: check that the user has last_login
 
 
 class UserRetrieveAPIView(RetrieveAPIView):
@@ -21,6 +24,18 @@ class UserRetrieveAPIView(RetrieveAPIView):
     queryset = get_user_model().objects.all()
     serializer_class = serializers.UserSerializer
     lookup_field = "pk"
+
+
+class UserCreateAPIView(APIView):
+    def post(self, request):
+        serializer = serializers.UserCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            serializer.save()
+        except Exception:
+            return Response({"error": "User already exists"}, status=400)
+
+        return Response(serializer.data, status=201)
 
 
 class UserExistsAPIView(APIView):
@@ -41,7 +56,7 @@ class GroupListCreateAPIView(ListCreateAPIView):
 
 
 class GroupRetrieveUpdateAPIView(RetrieveUpdateAPIView):
-    permission_classes = [IsAuthenticated]  # TODO: group admin or owner
+    permission_classes = [IsAuthenticated, HasGroupOwnerOrAdminPermission]
     serializer_class = serializers.GroupSerializer
     lookup_field = "pk"
 
@@ -50,7 +65,7 @@ class GroupRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
 
 class GroupDestroyAPIView(DestroyAPIView):
-    permission_classes = [IsAuthenticated]  # TODO: group owner
+    permission_classes = [IsAuthenticated, HasGroupOwnerPermission]
     serializer_class = serializers.GroupSerializer
     lookup_field = "pk"
 
