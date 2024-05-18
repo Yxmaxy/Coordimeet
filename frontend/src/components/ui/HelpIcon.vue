@@ -3,7 +3,7 @@
         <!-- Help icon -->
         <custom-icon
             class="cursor-pointer size-inherit"
-            icon="help"
+            :icon="icon"
             @click="showPopup = true"
         />
         <!-- Popup -->
@@ -35,6 +35,12 @@ export default {
     name: "HelpIcon",
     components: {
         CustomIcon,
+    },
+    props: {
+        icon: {
+            type: String,
+            default: "help",
+        },
     },
     data() {
         return {

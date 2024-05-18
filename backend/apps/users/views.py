@@ -23,6 +23,14 @@ class UserRetrieveAPIView(RetrieveAPIView):
     lookup_field = "pk"
 
 
+class UserExistsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, email):
+        exists = get_user_model().objects.filter(email=email).exists()
+        return Response({"exists": exists})
+
+
 class GroupListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 

@@ -74,7 +74,20 @@
                             v-for="member in members"
                             class="flex justify-between items-center bg-main-100 px-6 py-4 rounded-2xl shadow-md"
                         >
-                            <b class="flex items-center h-8">{{ member.user?.email }}</b>
+                            <div class="flex gap-1 items-center">
+                                <b class="flex items-center h-8">{{ member.user?.email }}</b>
+                                <help-icon class="text-base font-normal text-main-700" icon="info">
+                                    This user doesn't exist yet.
+                                    <br /><br />
+                                    You can send them the following link to create an account:
+                                    <div
+                                        class="cursor-pointer font-mono"
+                                        @click="copyInviteLink"
+                                    >
+                                        {{ inviteLink }}
+                                    </div>
+                                </help-icon>
+                            </div>    
                             <div class="flex gap-2">
                                 <div class="flex items-center gap-1 ml-1" v-if="member.role === Role.OWNER">
                                     Owner <custom-icon icon="shield_person" class="text-base" />
@@ -134,6 +147,10 @@ import CustomToggle from "@/components/ui/CustomToggle.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
 import HelpIcon from "@/components/ui/HelpIcon.vue";
 
+interface MemberCreate extends Member {
+    exists: boolean;
+}
+
 const tabs = [
     {
         name: "Group information",
@@ -177,7 +194,7 @@ export default {
             memberForceInvalidMessage: false,
             memberInvalidMessage: "",
 
-            members: [] as Member[],
+            members: [] as MemberCreate[],
         }
     },
     computed: {
@@ -255,19 +272,24 @@ export default {
             this.memberForceInvalidMessage = false;
             this.memberInvalidMessage = "";
 
-            // add member to list
-            this.members.push({
-                user: {
-                    email: this.memberEmail,
-                },
-                role: Role.MEMBER,
+            ApiService.get(`/users/user/exists/${this.memberEmail}/`).then((response: any) => {
+                this.members.push({
+                    user: {
+                        email: this.memberEmail,
+                    },
+                    role: Role.MEMBER,
+                    exists: response.data.exists,
+                });
+            }).catch(() => {
+                this.storeMessages.showMessageError("Failed to add user to group");
+            }).finally(() => {
+                this.memberEmail = "";
             });
-            this.memberEmail = "";
         },
-        deleteMember(member: Member) {
+        deleteMember(member: MemberCreate) {
             this.members = this.members.filter(m => m !== member);
         },
-        editMember(member: Member) {
+        editMember(member: MemberCreate) {
             this.memberEmail = member.user?.email?.toString() || "";
             this.deleteMember(member);
         },
