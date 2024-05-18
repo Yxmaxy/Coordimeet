@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from django.db import models
@@ -55,6 +56,10 @@ class Event(models.Model):
             notification_type=EventNotificationTypeChoices.UPDATE
         ).exists()
 
+    @property
+    def frontend_url(self) -> str:
+        return f"{os.environ.get('VITE_FRONTEND_URL')}/event/{self.event_uuid}"
+
     def __str__(self):
         return self.title
     
@@ -71,7 +76,6 @@ class Event(models.Model):
         super().save(*args, **kwargs)
     
     def handle_notifications_create(self):
-        
         if not self.invited_group:
             return
 
@@ -79,7 +83,8 @@ class Event(models.Model):
             NotificationServices.send_group_notification(
                 group=self.invited_group,
                 head=f"New invitation!",
-                body=f"You have been invited to participate in {self}"
+                body=f"You have been invited to participate in {self}",
+                url=self.frontend_url,
             )
         
         # handle deadline
@@ -91,7 +96,8 @@ class Event(models.Model):
                 group=self.invited_group,
                 head=f"Event deadline!",
                 body=f"{self} deadline is coming up!",
-                time=notification.notification_time
+                time=notification.notification_time,
+                url=self.frontend_url,
             ).id
             notification.save()
 
@@ -104,6 +110,7 @@ class Event(models.Model):
                 group=self.invited_group,
                 head=f"Event updated!",
                 body=f"{self} has been updated, check it out!",
+                url=self.frontend_url,
             )
 
         # handle deadline
@@ -122,7 +129,8 @@ class Event(models.Model):
                 group=self.invited_group,
                 head=f"Event deadline!",
                 body=f"{self} deadline is coming up!",
-                time=self.deadline
+                time=self.deadline,
+                url=self.frontend_url,
             ).id
             last_notification.save()
 

@@ -117,12 +117,19 @@ self.addEventListener("push", async (event: PushEvent) => {
     event.waitUntil(self.registration.showNotification(notificationData.head, {
         body: notificationData.body,
         icon: notificationData.icon,
-        // TODO: implement actions
-        // actions: [
-        //     { action: "open_url", title: "Open" },
-        //     { action: "close", title: "Close" }
-        // ]
+        badge: notificationData.badge,
+        data: {
+            url: notificationData.url,
+        },
     }));
+});
+self.addEventListener("notificationclick", (event: NotificationEvent) => {
+    const notification = event.notification;
+    const url = notification.data.url;
+    if (url) {
+        event.waitUntil(self.clients.openWindow(url));
+        notification.close();
+    }
 });
 
 // Handle messages from main thread
