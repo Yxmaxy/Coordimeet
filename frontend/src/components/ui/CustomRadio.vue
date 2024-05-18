@@ -1,7 +1,9 @@
 <template>
     <div
-        class="flex items-center cursor-pointer select-none gap-2"
-        @click="$emit('update:modelValue', value)"
+        :class="[{
+            'opacity-50 !cursor-not-allowed': disabled,
+        }, 'flex items-center cursor-pointer select-none gap-2']"
+        @click="onClick"
     >
         <div
             class="w-4 h-4 flex justify-center items-center
@@ -32,6 +34,16 @@ export default {
         text: {
             type: String,
             default: "",
+        },
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
+    },
+    methods: {
+        onClick() {
+            if (this.disabled) return
+            this.$emit('update:modelValue', this.value)
         }
     }
 }

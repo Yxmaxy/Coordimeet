@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 
 from apps.users.models import CoordimeetGroup
+from apps.notifications.services import NotificationServices
 
 
 class EventTypeChoices(models.IntegerChoices):
@@ -42,6 +43,18 @@ class Event(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def send_notification_on_create(self) -> bool:
+        return self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.CREATION
+        ).exists()
+
+    @property
+    def send_notification_on_update(self) -> bool:
+        return self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.UPDATE
+        ).exists()
+
     def __str__(self):
         return self.title
     
@@ -53,30 +66,65 @@ class Event(models.Model):
         if not self.organiser and not self.organiser_group:
             raise ValueError("Event must set either organiser or organiser_group")
 
-    def _send_event_notifications(self):
-        """Register the notifications if event is for group"""
-
-        if not self.invited_group:
-            return
-
-        from apps.notifications.services import NotificationServices
-
-        if not self.pk and self.event_notifications.filter(notification_type=EventNotificationTypeChoices.CREATION).exists():
-            print("Created!")
-        if self.pk and self.event_notifications.filter(notification_type=EventNotificationTypeChoices.UPDATE).exists():
-            print("Updated!")
-        if deadline_notification := self.event_notifications.filter(notification_type=EventNotificationTypeChoices.DEADLINE):
-            print("Deadline!", deadline_notification.first())
-        if self.selected_start_date and self.event_notifications.filter(notification_type=EventNotificationTypeChoices.EVENT_DATE_SELECT).exists():
-            print("Selected date!")
-        if self.selected_start_date and self.event_notifications.filter(notification_type=EventNotificationTypeChoices.EVENT_START).exists():
-            print("Event start register!")
-
-
     def save(self, *args, **kwargs):
         self._validate_organiser()
         super().save(*args, **kwargs)
-        self._send_event_notifications()
+    
+    def handle_notifications_create(self):
+        
+        if not self.invited_group:
+            return
+
+        if self.send_notification_on_create:
+            NotificationServices.send_group_notification(
+                group=self.invited_group,
+                head=f"New invitation!",
+                body=f"You have been invited to participate in {self}"
+            )
+        
+        # handle deadline
+        if deadline_notifications := self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.DEADLINE
+        ):
+            notification = deadline_notifications.first()
+            notification.task_id = NotificationServices.send_group_notification_at_time(
+                group=self.invited_group,
+                head=f"Event deadline!",
+                body=f"{self} deadline is coming up!",
+                time=notification.notification_time
+            ).id
+            notification.save()
+
+    def handle_notifications_update(self):
+        if not self.invited_group:
+            return
+
+        if self.send_notification_on_update:
+            NotificationServices.send_group_notification(
+                group=self.invited_group,
+                head=f"Event updated!",
+                body=f"{self} has been updated, check it out!",
+            )
+
+        # handle deadline
+        deadline_notifications = self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.DEADLINE
+        )
+        
+        if deadline_notifications:
+            # remove the extra notifications
+            last_notification = deadline_notifications.last()
+            for notification in deadline_notifications.exclude(id=last_notification.id):
+                NotificationServices.cancel_async_notification(notification.task_id)
+                notification.delete()
+
+            last_notification.task_id = NotificationServices.send_group_notification_at_time(
+                group=self.invited_group,
+                head=f"Event deadline!",
+                body=f"{self} deadline is coming up!",
+                time=self.deadline
+            ).id
+            last_notification.save()
 
 
 class EventNotificationTypeChoices(models.IntegerChoices):
@@ -91,10 +139,14 @@ class EventNotificationTypeChoices(models.IntegerChoices):
 class EventNotification(models.Model):
     """Model for event notifications"""
 
+    class Meta:
+        unique_together = ["event", "notification_type"]
+
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     event = models.ForeignKey(Event, related_name="event_notifications", on_delete=models.CASCADE)
     notification_type = models.IntegerField(choices=EventNotificationTypeChoices.choices)
     notification_time = models.DateTimeField(null=True, blank=True)
+    task_id = models.CharField(max_length=255, null=True, blank=True)
 
 
 class EventAvailabilityOption(models.Model):

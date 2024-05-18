@@ -1,10 +1,12 @@
 import os
+from celery import shared_task
+from celery.worker.control import revoke
 from datetime import datetime
 
 from webpush import send_user_notification
 
 from apps.users.models import CoordimeetGroup
-from apps.notifications.tasks import send_async_group_notification
+
 
 class NotificationServices:
     @staticmethod
@@ -30,7 +32,17 @@ class NotificationServices:
     def send_group_notification_at_time(group: CoordimeetGroup, head: str, body: str, time: datetime):
         """Send a notification to all members of a group at a specific time."""
 
-        send_async_group_notification.apply_async(
+        return NotificationServices._send_async_group_notification.apply_async(
             args=[group.id, head, body],
             eta=time,
         )
+    
+    @staticmethod
+    @shared_task
+    def _send_async_group_notification(group_id: int, head: str, body: str):
+        group = CoordimeetGroup.objects.get(id=group_id)
+        NotificationServices.send_group_notification(group, head, body)
+    
+    @staticmethod
+    def cancel_async_notification(task_id: str):
+        revoke(task_id, terminate=True)

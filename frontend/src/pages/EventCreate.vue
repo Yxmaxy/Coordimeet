@@ -32,12 +32,21 @@
                             :value="EventType.Public"
                             text="Public"
                         />
-                        <custom-radio
-                            type="radio"
-                            v-model="eventType"
-                            :value="EventType.Group"
-                            text="Group"
-                        />
+                        <div class="flex flex-row items-center gap-2">
+                            <custom-radio
+                                type="radio"
+                                v-model="eventType"
+                                :value="EventType.Group"
+                                text="Group"
+                                :disabled="groupOptions.length === 0"
+                            />
+                            <help-icon
+                                v-if="groupOptions.length === 0"
+                                class="text-base font-normal"
+                            >
+                                You need to be a member of a group to create a group event.    
+                            </help-icon>
+                        </div>
                     </div>
                 </div>
                 <div
@@ -148,44 +157,62 @@
                         v-model="deadline"
                     />
                 </label>
-                <label class="flex flex-col gap-2">
+                <div v-if="eventType === EventType.Group" class="flex flex-col gap-2">
                     <b class="ml-4">Send notifications</b>
                     <div class="ml-3 flex flex-col gap-4">
                         <custom-toggle
                             class="mt-2"
                             v-model="eventNotifications.afterCreation"
-                            :right-value="EventNotificationType.Creation"
                         >
                             <template v-slot:right>
-                                <span class="ml-2">after event creation</span>
+                                <span class="ml-2">after the event is created</span>
                             </template>
                         </custom-toggle>
+
                         <custom-toggle
                             v-model="eventNotifications.afterUpdate"
-                            :right-value="EventNotificationType.Update"
                         >
                             <template v-slot:right>
                                 <span class="ml-2">when the event is updated</span>
                             </template>
                         </custom-toggle>
-                        <custom-toggle
-                            v-model="eventNotifications.beforeDeadline"
-                            :right-value="EventNotificationType.Deadline"
-                        >
-                            <template v-slot:right>
-                                <span class="ml-2">before the deadline</span>
-                                <!-- NOTE: Only if not submitted -->
-                            </template>
-                        </custom-toggle>
+
+                        <div class="flex flex-col gap-1">
+                            <custom-toggle
+                                v-model="eventNotifications.beforeDeadline"
+                            >
+                                <template v-slot:right>
+                                    <div class="ml-2 flex gap-1 items-center">
+                                        <div>before the deadline</div>
+                                        <help-icon @click.stop>
+                                            Notify the participants who haven't responded yet, that the deadline is approaching.
+                                        </help-icon>
+                                    </div>
+                                </template>
+                            </custom-toggle>
+                            <label
+                                v-if="eventNotifications.beforeDeadline"
+                                class="ml-8"
+                            >
+                                <custom-input
+                                    type="datetime-local"
+                                    v-model="eventNotificationsDeadline"
+                                    :required="eventNotifications.beforeDeadline"
+                                />
+                            </label>
+                        </div>
+
+                        <!-- Implement in the selection
                         <custom-toggle
                             v-model="eventNotifications.beforeDateSelected"
                             :right-value="EventNotificationType.EventDateSelected"
                         >
                             <template v-slot:right>
                                 <span class="ml-2">when the event date is selected</span>
-                                <!-- TODO: send .ics file -->
+                                TODO: send .ics file
                             </template>
                         </custom-toggle>
+
                         <custom-toggle
                             v-model="eventNotifications.beforeEventStart"
                             :right-value="EventNotificationType.EventStart"
@@ -193,9 +220,9 @@
                             <template v-slot:right>
                                 <span class="ml-2">before the event starts</span>
                             </template>
-                        </custom-toggle>
+                        </custom-toggle> -->
                     </div>
-                </label>
+                </div>
                 <custom-button
                     class="mt-3 mb-6"
                     @click="onCreateEvent"
@@ -285,7 +312,7 @@ export default {
             title: "",
             description: "",
             length: 1,
-            deadline: initializeDateInput(CalendarType.DateHour),
+            deadline: initializeDateInput(CalendarType.DateHour, undefined, 1),
             eventType: EventType.Public,
             
             calendarType: CalendarType.Date,
@@ -295,12 +322,11 @@ export default {
             eventByGroup: false,
 
             eventNotifications: {
-                afterCreation: false as false|EventNotificationType,
-                afterUpdate: false as false|EventNotificationType,
-                beforeDeadline: false as false|EventNotificationType,
-                beforeEventStart: false as false|EventNotificationType,
-                beforeDateSelected: false as false|EventNotificationType,
+                afterCreation: false,
+                afterUpdate: false,
+                beforeDeadline: false,
             },
+            eventNotificationsDeadline: initializeDateInput(CalendarType.DateHour, undefined, 1),
 
             groupOptions: [] as SelectOption[],
             groupInvited: undefined as number|undefined,
@@ -344,10 +370,34 @@ export default {
                 return;
             }
 
-            const eventNotifications = Object.keys(this.eventNotifications)
-                .filter((key) => this.eventNotifications[key as keyof typeof this.eventNotifications])
-                .map((key) => ({notification_type: this.eventNotifications[key as keyof typeof this.eventNotifications]})
-            ) as EventNotification[];
+            // check that the deadline is before the first selected date
+            if (new Date(this.deadline) > this.selectedDateRanges[0].start_date) {
+                this.storeMessages.showMessageError("The deadline must be before the event starts.");
+                return;
+            }
+
+            // check that the deadline notification is before the deadline
+            if (this.eventNotifications.beforeDeadline && new Date(this.eventNotificationsDeadline) > new Date(this.deadline)) {
+                this.storeMessages.showMessageError("The deadline notification must be sent before the deadline.");
+                return;
+            }
+
+            // if the event type is group, groupInvited must be selected
+            if (this.eventType === EventType.Group && !this.groupInvited) {
+                this.storeMessages.showMessageError("Please select a group to invite.");
+                return;
+            }
+
+            const eventNotifications = [] as EventNotification[];
+            if (this.eventNotifications.afterCreation)
+                eventNotifications.push({ notification_type: EventNotificationType.Creation });
+            if (this.eventNotifications.afterUpdate)
+                eventNotifications.push({ notification_type: EventNotificationType.Update });
+            if (this.eventNotifications.beforeDeadline)
+                eventNotifications.push({
+                    notification_type: EventNotificationType.Deadline,
+                    notification_time: new Date(this.eventNotificationsDeadline)
+                });
 
             const event = {
                 title: this.title,
@@ -385,6 +435,10 @@ export default {
                         text: group.name,
                     } as SelectOption;
                 });
+                if (this.groupOptions.length === 1 && !this.groupInvited) {
+                    this.groupInvited = this.groupOptions[0].value;
+                }
+
             }).catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch user's groups.");
             });

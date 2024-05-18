@@ -98,6 +98,16 @@ export default {
             this.isOpen = false;
             this.search = "";
         },
-    }
+    },
+    mounted() {
+        if (this.modelValue) {
+            const option = this.options.find(
+                (option) => option.value === this.modelValue
+            );
+            if (option) {
+                this.placeholderData = option.text;
+            }
+        }
+    },
 }
 </script>

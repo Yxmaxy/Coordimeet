@@ -64,7 +64,7 @@
         </div>
 
         <!-- Header -->
-        <div class="flex">
+        <div class="flex border border-transparent">
             <div
                 v-for="header in getCalendarHeader"
                 class="w-full text-main-000 bg-main-500 text-center font-bold py-2"
@@ -577,8 +577,14 @@ export default {
                 this.creatingDateRange !== null &&
                 this.isDateInDateRange(date, this.creatingDateRange)
         },
+        isDateInPast(date: Date): boolean {
+            const today = new Date()
+            if (this.calendarType === CalendarType.Date)
+                today.setHours(0, 0, 0, 0);
+            return date <= today;
+        },
         isDateDisabled(date: Date): boolean {
-            return !this.isDateInSelectableDateRanges(date);
+            return !this.isDateInSelectableDateRanges(date) || this.isDateInPast(date);
         },
 
         // heatmap
