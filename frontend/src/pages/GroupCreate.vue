@@ -76,7 +76,10 @@
                         >
                             <div class="flex gap-1 items-center">
                                 <b class="flex items-center h-8">{{ member.user?.email }}</b>
-                                <help-icon class="text-base font-normal text-main-700" icon="info">
+                                <help-icon
+                                    v-if="!member.exists"
+                                    class="text-base font-normal text-main-700" icon="info"
+                                >
                                     This user doesn't exist yet.
                                     <br /><br />
                                     You can send them the following link to create an account:
@@ -206,7 +209,10 @@ export default {
         getGroup() {
             ApiService.get(`/users/group/${this.$route.params.id}/`).then((response) => {
                 this.groupName = response.data.name;
-                this.members = response.data.members;
+                this.members = response.data.members.map((member: MemberCreate) => ({
+                    ...member,
+                    exists: true,
+                }));
             }).catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch group information");
             });

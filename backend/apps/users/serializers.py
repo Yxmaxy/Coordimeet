@@ -136,7 +136,7 @@ class GroupSerializer(ModelSerializer):
                 member, _ = instance.members.get_or_create(user=user)
             member.role = member_data.get("role", member.role)
             member.save()
-            current_member_ids.append(member.id)
+            current_member_ids.append(member.user.id)
         
         # remove all members that are not in the new list
         instance.members.exclude(user__in=current_member_ids).exclude(role=MemberRole.OWNER).delete()
