@@ -6,7 +6,7 @@
                     <div
                         v-for="group in groups"
                         :class="[{
-                            'cursor-pointer': isAdmin(group) || isOwner(group),
+                            'cursor-pointer transition-all hover:-translate-y-1 hover:bg-main-200': isAdmin(group) || isOwner(group),
                         }, 'flex-1 flex justify-between bg-main-100 m-2 px-8 py-6 rounded-2xl shadow-md']"
                         @click="() => editGroup(group)"
                     >

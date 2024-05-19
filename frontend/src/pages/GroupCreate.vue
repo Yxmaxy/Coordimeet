@@ -96,7 +96,7 @@
                                     Owner <custom-icon icon="shield_person" class="text-base" />
                                 </div>
                                 <custom-toggle
-                                    v-else
+                                    v-if="isCurrentUserOwner && member.user?.id !== user?.id"
                                     v-model="member.role"
                                     :leftValue="Role.MEMBER"
                                     :rightValue="Role.ADMIN"
@@ -113,7 +113,7 @@
                                     </template>
                                 </custom-toggle>
                                 <custom-button
-                                    v-if="member.role !== Role.OWNER"
+                                    v-if="member.role !== Role.OWNER && member.user?.id !== user?.id"
                                     class="h-8 w-8 rounded-full"
                                     :click="() => deleteMember(member)"
                                 >
@@ -203,6 +203,9 @@ export default {
     computed: {
         isEditing() {
             return this.$route.params.id !== undefined;
+        },
+        isCurrentUserOwner() {
+            return this.members.find((member) => member.user?.id === this.user?.id)?.role === Role.OWNER;
         },
     },
     methods: {
@@ -302,7 +305,7 @@ export default {
         async copyInviteLink() {
             navigator.clipboard.writeText(this.inviteLink);
             this.storeMessages.showMessage("Invite link copied to clipboard", 3000);
-        }
+        },
     },
     mounted() {
         if (this.isEditing) {

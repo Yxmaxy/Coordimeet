@@ -3,6 +3,8 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from django.db.models import Q
+
 from apps.events.models import Event
 from apps.events.serializers import EventSerializer
 
@@ -13,7 +15,7 @@ class EventListCreateAPIView(ListCreateAPIView):
 
     def get_queryset(self):
         # TODO: extend with events I'm invited to
-        return Event.objects.filter(organiser=self.request.user)
+        return Event.objects.filter(organiser=self.request.user).order_by("-created_at")
 
 class EventManageAPIView(APIView):
     def get(self, request, event_uuid):
