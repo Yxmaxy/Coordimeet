@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from rest_framework.serializers import ModelSerializer
 from rest_framework_simplejwt.serializers import TokenObtainSlidingSerializer
 
@@ -17,9 +15,6 @@ class CustomTokenObtainSlidingSerializer(TokenObtainSlidingSerializer):
         data = super().validate(attrs)
 
         user = self.user
-        user.last_login = datetime.now()
-        user.save()
-
         data["id"] = user.id
         return data
 

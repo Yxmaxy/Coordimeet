@@ -3,7 +3,7 @@
         <tab-controller :tabs="tabs" :breakpoint="750">
             <template v-slot:login>
                 <div class="flex justify-center items-center h-full">
-                    <form @submit.prevent class="flex flex-col">
+                    <form @submit.prevent="onLogin" class="flex flex-col">
                         <h1 class="text-4xl font-bold text-center text-main-700 mb-5">Log in</h1>
 
                         <custom-input
@@ -19,7 +19,6 @@
 
                         <custom-button
                             class="mt-2"
-                            :click="onLogin"
                         >
                             Log in
                         </custom-button>
@@ -28,7 +27,7 @@
             </template>
             <template v-slot:signup>
                 <div class="flex justify-center items-center h-full">
-                    <form @submit.prevent class="flex flex-col">
+                    <form @submit.prevent="onSignup" class="flex flex-col">
                         <h1 class="text-4xl font-bold text-center text-main-700 mb-5">Sign up</h1>
 
                         <custom-input
@@ -51,7 +50,6 @@
 
                         <custom-button
                             class="mt-2"
-                            :click="onSignup"
                             :disabled="!signup.email || !signup.password || !signup.password2 || !passwordsMatch"
                         >
                             Create an account

@@ -17,10 +17,11 @@ axios.interceptors.request.use(async config => {
 
 // sliding access token expired, redirect to login
 axios.interceptors.response.use(undefined, async error => {
-    if (error.config && error.response && error.response.status === 401) {
+    if (error.config && error.response?.status === 401) {  // TODO: extend with detail ?
         await removeTokens();
         window.location.href = "/";
     }
+    return Promise.reject(error);
 });
 
 export default axios;

@@ -13,16 +13,10 @@ def _has_group_permission(request: Request, group: CoordimeetGroup, roles: list[
 
 
 class HasGroupOwnerOrAdminPermission(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return False
-
     def has_object_permission(self, request: Request, view, obj: CoordimeetGroup):
         return _has_group_permission(request, obj, [MemberRole.ADMIN, MemberRole.OWNER])
 
 
 class HasGroupOwnerPermission(permissions.BasePermission):
-    def has_permission(self, request, view):
-        return False
-
     def has_object_permission(self, request: Request, view, obj: CoordimeetGroup):
         return _has_group_permission(request, obj, [MemberRole.ADMIN, MemberRole.OWNER])

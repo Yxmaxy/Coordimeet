@@ -4,7 +4,7 @@
             :is="isTextArea ? 'textarea' : 'input'"
             :class="[{
                 'bg-invalid-light border-invalid-dark': forceInvalidMessage || isInvalid,
-            }, 'w-full pl-4 pr-4 pt-2 pb-2 rounded-xl',
+            }, 'w-full pl-4 pr-4 pt-2 pb-2 rounded-xl text-ellipsis',
                 'bg-main-000 border-2 border-main-300 focus:border-main-200 focus:outline-none']"
             :type="type"
             rows="3"

@@ -37,10 +37,11 @@ export const useStoreUser = defineStore("storeUser", {
         },
         async onLogin(email: string, password: string): Promise<boolean> {
             // retrieve access token
-            const response = await ApiService.post("/users/token/", {
-                email, password
-            });
-            if (response.status === 200) {
+            try {
+                const response = await ApiService.post("/users/token/", {
+                    email, password
+                });
+                
                 await saveTokens(response.data.token, response.data.id);
                 if ("serviceWorker" in navigator) {
                     // retrieve notification permissions
@@ -55,6 +56,9 @@ export const useStoreUser = defineStore("storeUser", {
                     }
                 }
                 return await this.retrieveUser() !== undefined;
+            } catch (error: any) {
+                const storeMessages = useStoreMessages();
+                storeMessages.showMessageError(error.response.data.error);
             }
             return false;
         },
