@@ -4,7 +4,9 @@
         class="z-50 flex gap-2 relative"
     >
         <div
+            tabindex="0"
             @click="showLogout = !showLogout"
+            @keydown.enter="showLogout = !showLogout"
             class="h-full flex items-center cursor-pointer select-none"
         >
             <span class="material-symbols-outlined align-middle ml-1">menu</span>
@@ -23,18 +25,18 @@
             <!-- Content -->
             <div class="absolute w-screen top-7 -right-2 pl-4 pt-1 max-w-[20rem]">
                 <div class="flex flex-col bg-main-300 border-2 border-main-400 rounded-lg [&>*]:py-3 [&>*]:px-4 shadow-md">
-                    <button @click="onMenuClick('/event/list')" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                    <router-link to="/event/list" class="hover:bg-main-400 transition-colors flex items-center justify-between">
                         Events
                         <span class="material-symbols-outlined align-middle text-lg">calendar_today</span>
-                    </button>
-                    <button @click="onMenuClick('/group/list')" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                    </router-link>
+                    <router-link to="/group/list" class="hover:bg-main-400 transition-colors flex items-center justify-between">
                         Groups
                         <span class="material-symbols-outlined align-middle text-lg">groups</span>
-                    </button>
-                    <button @click="onMenuClick('/')" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                    </router-link>
+                    <router-link to="/" class="hover:bg-main-400 transition-colors flex items-center justify-between">
                         My profile
                         <span class="material-symbols-outlined align-middle text-lg">person</span>
-                    </button>
+                    </router-link>
                     <button @click="onLogout" class="hover:bg-main-400 transition-colors flex items-center justify-between">
                         Log out
                         <span class="material-symbols-outlined align-middle text-lg">logout</span>

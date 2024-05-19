@@ -1,10 +1,10 @@
 <template>
     <div class="flex flex-col mt-2">
-        <div
+        <router-link
             v-for="event in events"
             class="flex-1 flex justify-between bg-main-100 m-2 px-8 py-6 rounded-2xl
             cursor-pointer shadow-md transition-all hover:-translate-y-1 hover:bg-main-200"
-            @click="$router.push(`/event/${event.event_uuid}`)"
+            :to="`/event/${event.event_uuid}`"
         >
             <div class="flex gap-1">
                 <b>{{ event.title }}</b>
@@ -39,12 +39,13 @@
                     <custom-icon class="text-base" icon="event_available" />
                 </div>
             </div>
-        </div>
+        </router-link>
     </div>
 </template>
 
 <script lang="ts">
 import { PropType } from "vue";
+import { RouterLink } from "vue-router";
 import { formatDateDayMonthYear } from "@/utils/dates";
 import { Event } from "@/types/event";
 
@@ -54,6 +55,7 @@ export default {
     name: "EventListComponent",
     components: {
         CustomIcon,
+        RouterLink,
     },
     props: {
         events: {
