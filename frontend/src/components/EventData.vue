@@ -10,7 +10,7 @@
                 <template v-else>Not set</template>
             </div>
             <div>
-                Deadline:
+                Length:
                 <template v-if="event.event_length">{{ event.event_length }} {{ readableCalendarUnits }}</template>
                 <template v-else>Not set</template>
             </div>

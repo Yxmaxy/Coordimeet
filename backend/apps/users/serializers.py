@@ -1,21 +1,32 @@
 from rest_framework.serializers import ModelSerializer
-from rest_framework_simplejwt.serializers import TokenObtainSlidingSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from django.contrib.auth import get_user_model
 from django.core.validators import EmailValidator
+from django.utils import timezone
 
 from apps.users.models import CoordimeetGroup, Member, MemberRole
 
 
-class CustomTokenObtainSlidingSerializer(TokenObtainSlidingSerializer):
-     """
-     Custom token serializer to include the `user_id` in the response.
-     """
-     def validate(self, attrs):
+class CustomTokenObtainSerializer(TokenObtainPairSerializer):
+    """
+    Custom token serializer to include the user's data in the response.
+    """
+
+    def get_token(self, user):
+        token = super().get_token(user)
+        token["email"] = user.email
+        token["first_name"] = user.first_name
+        token["last_name"] = user.last_name
+        return token
+
+    def validate(self, attrs):
         data = super().validate(attrs)
 
-        user = self.user
-        data["id"] = user.id
+        # set last login
+        self.user.last_login = timezone.now()
+        self.user.save()
+
         return data
 
 

@@ -5,11 +5,10 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 
-from rest_framework_simplejwt.views import TokenObtainSlidingView
+from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.exceptions import TokenError
 
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 from apps.users import serializers
 from apps.users.models import CoordimeetGroup
@@ -17,37 +16,8 @@ from apps.users.models import CoordimeetGroup
 from apps.utils.permissions import HasGroupOwnerOrAdminPermission, HasGroupOwnerPermission
 
 
-class CustomTokenObtainSlidingView(TokenObtainSlidingView):
-    serializer_class = serializers.CustomTokenObtainSlidingSerializer
-
-    def post(self, request: Request, *args, **kwargs) -> Response:
-        email = request.data.get("email")
-        user_with_email = get_user_model().objects.filter(email=email)
-        
-        if not user_with_email or not user_with_email[0].password:
-            return Response({
-                "error": "Your account was not found. You have to sign up first."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer = self.get_serializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-        except TokenError as e:
-            return Response({"error": e.args[0]}, status=status.HTTP_401_UNAUTHORIZED)
-
-        # set last login
-        user = get_user_model().objects.get(id=serializer.validated_data["id"])
-        user.last_login = timezone.now()
-        user.save()
-        return Response(serializer.validated_data, status=status.HTTP_200_OK)
-
-
-class UserRetrieveAPIView(RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
-
-    queryset = get_user_model().objects.all()
-    serializer_class = serializers.UserSerializer
-    lookup_field = "pk"
+class CustomTokenObtainView(TokenObtainPairView):
+    serializer_class = serializers.CustomTokenObtainSerializer
 
 
 class UserCreateAPIView(APIView):

@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
+import { jwtDecode } from "jwt-decode";
 import { User } from '@/types/user';
 
 import ApiService from "@/utils/ApiService";
-import { saveTokens, retrieveUserID, removeTokens } from "@/utils/tokens";
+import { retrieveTokens, saveTokens, removeTokens } from "@/utils/tokens";
 
 import { useStoreMessages } from "@/stores/storeMessages";
 
@@ -12,27 +13,22 @@ export const useStoreUser = defineStore("storeUser", {
             user: undefined as User | undefined,
         }
     },
-    getters: {
-        isLoggedIn: (state) => state.user !== undefined,
-    },
     actions: {
-        async retrieveUser(): Promise<User|undefined> {
-            // return the user if it's already retrieved
-            if (this.user)
-                return this.user;
-            // retrieve user information from the API
-            const userID = await retrieveUserID();
-            if (!userID)
-                return undefined;
-            try {
-                const userResponse: any = await ApiService.get(`/users/user/${userID}/`);
-                if (userResponse!.status === 200) {
-                    this.user = userResponse.data;
-                    return this.user;
-                }
-                return undefined;
-            } catch (error) {
-                console.error(error);
+        async isLoggedIn() {
+            await this.getUserFromToken();
+            return this.user !== undefined
+        },
+        async getUserFromToken() {
+            // retrieve user from token
+            const { refreshToken } = await retrieveTokens();
+            if (refreshToken) {
+                const userData = jwtDecode(refreshToken) as any;
+                this.user = {
+                    id: userData.user_id,
+                    email: userData.email,
+                    first_name: userData.first_name,
+                    last_name: userData.last_name,
+                } as User;
             }
         },
         async onLogin(email: string, password: string): Promise<boolean> {
@@ -42,7 +38,14 @@ export const useStoreUser = defineStore("storeUser", {
                     email, password
                 });
                 
-                await saveTokens(response.data.token, response.data.id);
+                if (response.status !== 200) {
+                    return false;
+                }
+
+                await saveTokens(response.data.access, response.data.refresh);
+                await this.getUserFromToken();
+
+                // register user to notifications
                 if ("serviceWorker" in navigator) {
                     // retrieve notification permissions
                     const notificationPermission = await Notification.requestPermission();
@@ -50,12 +53,12 @@ export const useStoreUser = defineStore("storeUser", {
                         // send message to service worker to register user to notifications
                         const registration = await navigator.serviceWorker.ready;
                         registration.active?.postMessage({
-                            user_id: response.data.id,
+                            user_id: this.user?.id,  // TODO: this could be read from the JWT
                             type: "REGISTER_NOTIFICATIONS",
                         });
                     }
                 }
-                return await this.retrieveUser() !== undefined;
+                return true;
             } catch (error: any) {
                 const storeMessages = useStoreMessages();
                 storeMessages.showMessageError(error.response.data.error);

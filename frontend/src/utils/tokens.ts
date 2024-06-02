@@ -1,5 +1,5 @@
 const ACCESS_TOKEN = "accessToken";
-const USER_ID = "userID";
+const REFRESH_TOKEN = "refreshToken";
 const DB_NAME = "tokenDatabase";
 const STORE_NAME = "tokens";
 
@@ -66,22 +66,22 @@ async function removeFromDB(key: string) {
     });
 }
 
-export async function saveTokens(accessToken: string, userID: number) {
+export async function saveTokens(accessToken: string, refreshToken: string) {
     await saveToDB(ACCESS_TOKEN, accessToken);
-    await saveToDB(USER_ID, userID.toString());
+    await saveToDB(REFRESH_TOKEN, refreshToken);
 }
 
-export async function retrieveAccessToken(): Promise<string|null> {
-    const token = await getFromDB(ACCESS_TOKEN);
-    return token ? token.toString() : null;
+export async function saveAccessToken(accessToken: string) {
+    await saveToDB(ACCESS_TOKEN, accessToken);
 }
 
-export async function retrieveUserID(): Promise<number|null> {
-    const id = await getFromDB(USER_ID);
-    return id ? parseInt(id.toString()) : null;
+export async function retrieveTokens(): Promise<{accessToken: string|null, refreshToken: string|null}> {
+    const accessToken = await getFromDB(ACCESS_TOKEN) as string|null;
+    const refreshToken = await getFromDB(REFRESH_TOKEN)as string|null;
+    return { accessToken, refreshToken };
 }
 
 export async function removeTokens() {
     await removeFromDB(ACCESS_TOKEN);
-    await removeFromDB(USER_ID);
+    await removeFromDB(REFRESH_TOKEN);
 }

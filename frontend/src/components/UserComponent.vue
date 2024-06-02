@@ -1,6 +1,6 @@
 <template>
     <div
-        v-if="userStore.isLoggedIn"
+        v-if="isLoggedIn"
         class="z-50 flex gap-2 relative"
     >
         <div
@@ -99,6 +99,7 @@ export default {
         return {
             showLogout: false,
             isMobile: true,
+            isLoggedIn: false,
         }
     },
     computed: {
@@ -116,6 +117,7 @@ export default {
             await this.userStore.onLogout();
             this.showLogout = false;
             this.$router.push("/");
+            this.isLoggedIn = false;
         },
         onMenuClick(path: string) {
             this.showLogout = false;
@@ -126,14 +128,20 @@ export default {
             window.innerWidth <= 400 ? this.isMobile = true : this.isMobile = false;
         },
     },
-    mounted() {
+    async mounted() {
         window.addEventListener('resize', this.checkScreenSize);
         this.$nextTick(() => {
             this.checkScreenSize();
         });
+        this.isLoggedIn = await this.userStore.isLoggedIn();
     },
     unmounted() {
         window.removeEventListener('resize', this.checkScreenSize);
+    },
+    watch: {
+        "userStore.user"(n) {
+            this.isLoggedIn = !!n;
+        }
     },
 }
 </script>

@@ -31,21 +31,23 @@ router.beforeEach(async (to, from) => {
     // scroll to top on route change
     window.scrollTo(0, 0);
 
-    // retrieve the user
-    const userStore = useStoreUser();
-    await userStore.retrieveUser();
     if (from.name === to.name)
         return false;
+
+    // retrieve is logged in
+    const userStore = useStoreUser();
+    const isLoggedIn = await userStore.isLoggedIn();
+
     if (to.name === "event") {
-        if (!userStore.isLoggedIn) {
+        if (!isLoggedIn) {
             alert("Please log in and re-visit this link");
             return "/";
         }
         return true;
     }
-    if (userStore.isLoggedIn && ["login", "home"].includes(to.name as string))
+    if (isLoggedIn && ["login", "home"].includes(to.name as string))
         return "/event/list";
-    if (!userStore.isLoggedIn && !["login", "home"].includes(to.name as string))
+    if (!isLoggedIn && !["login", "home"].includes(to.name as string))
         return "/";
     return true;
 });
