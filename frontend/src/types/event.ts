@@ -54,6 +54,7 @@ export interface Event {
 }
 
 export enum EventPageType {
+    NotLoggedIn = -1,   // user is not logged in - prompt to log in or use anonymous account
     NonConfirmed = 0,   // invitee sees just basic event data, confirm decline button
     Invitee = 1,        // calendar and all event data
     Organiser = 2,      // data about user responses, ending data

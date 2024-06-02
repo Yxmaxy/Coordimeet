@@ -120,7 +120,8 @@ export default {
         async onLogin() {
             const successful = await this.storeUser.onLogin(this.login.email, this.login.password);
             if (successful) {
-                this.$router.push("/event/list");
+                const redirectLink = this.storeUser.redirectAfterLogin || "/event/list";
+                this.$router.push(redirectLink);
             }
         },
         async onSignup() {
@@ -130,14 +131,10 @@ export default {
 
             const successful = await this.storeUser.onSignup(this.signup.email, this.signup.password);
             if (successful) {
-                this.$router.push("/event/list");
+                const redirectLink = this.storeUser.redirectAfterLogin || "/event/list";
+                this.$router.push(redirectLink);
             }
         }
     },
-    watch: {
-        checkPasswords(n) {
-            console.log(n)
-        }
-    }
 }
 </script>

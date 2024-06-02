@@ -38,16 +38,10 @@ router.beforeEach(async (to, from) => {
     const userStore = useStoreUser();
     const isLoggedIn = await userStore.isLoggedIn();
 
-    if (to.name === "event") {
-        if (!isLoggedIn) {
-            alert("Please log in and re-visit this link");
-            return "/";
-        }
-        return true;
-    }
+    // redirect to login if not logged in
     if (isLoggedIn && ["login", "home"].includes(to.name as string))
         return "/event/list";
-    if (!isLoggedIn && !["login", "home"].includes(to.name as string))
+    if (!isLoggedIn && !["login", "home", "event"].includes(to.name as string))
         return "/";
     return true;
 });

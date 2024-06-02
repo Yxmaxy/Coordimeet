@@ -1,9 +1,41 @@
 <template>
     <div class="bg-main-000 h-full">
+        <!-- NotLoggedIn -->
+        <div
+            v-if="pageTypeIn(EventPageType.NotLoggedIn) && eventData"
+            class="flex justify-center items-center min-h-[calc(100vh-3.5rem)]"
+        >
+            <div class="bg-main-100 px-16 py-10 rounded-lg shadow-lg">
+                <div class="text-xl font-bold">You've been invited to:</div>
+                <div class="text-2xl font-bold">{{ eventData.title }}</div>
+                <div class="mt-3">
+                    It seems like you are not logged in. You can choose to:
+                    <ul>
+                        <li class="ml-5 list-disc">Decline the invitation</li>
+                        <li class="ml-5 list-disc">Log in or Sign up</li>
+                        <li class="ml-5 list-disc">
+                            <div class="flex items-center gap-1.5">
+                                Submit anonymously
+                                <help-icon>
+                                    If you choose to submit an anonymous response, a temporary account will be created for you.
+                                    <br />
+                                    If you try to access the same event from another browser, you will not be able to see your previous response.
+                                </help-icon>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="flex justify-center gap-4 mt-4">
+                    <custom-button @click="$router.push('/')">Decline</custom-button>
+                    <custom-button @click="onLoginOrSignup">Log in or Sign up</custom-button>
+                    <custom-button @click="onSubmitAnon">Submit anonymously</custom-button>
+                </div>
+            </div>
+        </div>
 
         <!-- NonConfirmed and Finished -->
         <div
-            v-if="pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)"
+            v-else-if="pageTypeIn(EventPageType.NonConfirmed, EventPageType.Finished)"
             class="flex justify-center items-center min-h-[calc(100vh-3.5rem)]"
         >
             <event-data
@@ -164,6 +196,7 @@ import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomToggle from "@/components/ui/CustomToggle.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
+import HelpIcon from "@/components/ui/HelpIcon.vue";
 
 const tabs = [
     {
@@ -193,13 +226,14 @@ export default {
         CustomButton,
         CustomToggle,
         CustomIcon,
+        HelpIcon,
     },
     setup() {
-        const { user } = useStoreUser();
+        const storeUser = useStoreUser();
         const storeMessages = useStoreMessages();
 
         return {
-            user,
+            storeUser,
             tabs,
 
             storeMessages,
@@ -273,13 +307,14 @@ export default {
                     ),
                 } as Event;
 
-                // the event has finished
-                if (eventData.selected_start_date !== null) {
-                    this.eventPageType = EventPageType.Finished;
-                // the current user is the organiser
-                } else if (this.user!.id === eventData.organiser?.id) {
-                    this.eventPageType = EventPageType.Organiser;
-                }
+                // TODO: re-add this!
+                // // the event has finished
+                // if (eventData.selected_start_date !== null) {
+                //     this.eventPageType = EventPageType.Finished;
+                // // the current user is the organiser
+                // } else if (this.storeUser.user!.id === eventData.organiser?.id) {
+                //     this.eventPageType = EventPageType.Organiser;
+                // }
                 this.eventData = eventData;
             })
         },
@@ -289,7 +324,7 @@ export default {
             ApiService.get("eventUser.php", {
                 params: {
                     IDEvent: this.$route.params.uuid,
-                    IDUser: this.user!.id,
+                    IDUser: this.storeUser.user!.id,
                 }
             }).then(res => {
                 if (res.data.error) {
@@ -357,13 +392,13 @@ export default {
             if (!this.isPreviousSelectedDateRangesSet) {
                 ApiService.post("eventUser.php", {
                     IDEvent: this.$route.params.uuid,
-                    IDUser: this.user!.id,
+                    IDUser: this.storeUser.user!.id,
                     AvailabilityDates: convertDateRangesForBackend(this.selectedDateRanges),
                 }).then(handleResponse)
             } else {  // update date that was selected before
-                ApiService.put(`eventUser.php?IDEvent=${this.$route.params.uuid}&IDUser=${this.user!.id}`, {
+                ApiService.put(`eventUser.php?IDEvent=${this.$route.params.uuid}&IDUser=${this.storeUser.user!.id}`, {
                     IDEvent: this.$route.params.uuid,
-                    IDUser: this.user!.id,
+                    IDUser: this.storeUser.user!.id,
                     AvailabilityDates: convertDateRangesForBackend(this.selectedDateRanges),
                 }).then(handleResponse)
             }
@@ -404,8 +439,23 @@ export default {
                 return convertFunc(range.start_date);
             return `${convertFunc(range.start_date)} - ${convertFunc(range.end_date)}`;
         },
+
+        // not logged in actions
+        onLoginOrSignup() {
+            this.storeUser.redirectAfterLogin = this.$route.fullPath;
+            this.$router.push("/login");
+        },
+        onSubmitAnon() {
+            console.log("submit anonymously")
+            // TODO:
+            // - make an API point for creating an anonymous user which sets the token
+        },
     },
     mounted() {
+        if (!this.storeUser.user) {
+            this.eventPageType = EventPageType.NotLoggedIn;
+        }
+
         this.getEventData();
         // this.getPreviousSelectedDateRanges();
         // this.getParticipants();

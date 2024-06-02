@@ -10,7 +10,8 @@ import { useStoreMessages } from "@/stores/storeMessages";
 export const useStoreUser = defineStore("storeUser", {
     state: () => {
         return {
-            user: undefined as User | undefined,
+            user: undefined as User|undefined,
+            redirectAfterLogin: undefined as string|undefined,
         }
     },
     actions: {

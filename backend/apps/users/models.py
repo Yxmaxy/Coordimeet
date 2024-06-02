@@ -10,6 +10,15 @@ from django.dispatch import receiver
 from apps.users.managers import CoordimeetUserManager
 
 
+class UserTypes(models.IntegerChoices):
+    """
+    Enum to represent the type of user
+    """
+
+    DEFAULT = 1, "Default"
+    ANONYMOUS = 2, "Anonymous"
+
+
 class CoordimeetUser(AbstractBaseUser, PermissionsMixin):
     """
     Custom user model for Coordimeet
@@ -21,6 +30,7 @@ class CoordimeetUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField("Date joined", default=timezone.now)
+    user_type = models.IntegerField(choices=UserTypes.choices, default=UserTypes.DEFAULT)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
