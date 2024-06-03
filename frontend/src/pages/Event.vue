@@ -112,10 +112,10 @@
                     :class="[{
                         'text-main-200': !participant.isSelected,
                         'cursor-pointer hover:bg-main-100': isOrganiserMode,
-                    }, 'p-4 font-bold border-b-2 border-b-main-200 transition-colors']"
+                    }, 'p-[1.1rem] font-bold border-b-2 border-b-main-200 transition-colors']"
                     @click="toggleParticipant(participant)"
                 >
-                    {{ participant.FirstName }} {{ participant.LastName }}
+                    {{ participant.email }}
                 </div>
             </template>
 
@@ -278,7 +278,7 @@ export default {
                 return [];
             const participantDates = this.eventParticipants
                 .filter(participant => participant.isSelected)
-                .map(participant => participant.Dates)
+                .map(participant => participant.selected_ranges)
             const dateRanges = [] as DateRange[]
             return dateRanges.concat(...participantDates)
         }
@@ -345,32 +345,28 @@ export default {
                     }
                 });
         },
-        // getParticipants() {
-        //     this.gettingParticipantData = true;
-        //     ApiService.get("eventUser.php", {
-        //         params: {
-        //             IDEvent: this.$route.params.uuid,
-        //         }
-        //     }).then(res => {
-        //         if (res.data.error) {
-        //             this.storeMessages.showMessageError(`An error occured while fetching the participants: ${res.data.error}`)
-        //             return;
-        //         }
-        //         if (res.data.length === 0)
-        //             return;
+        getParticipants() {
+            this.gettingParticipantData = true;
+            ApiService.get(`/events/event/organiser/${this.$route.params.uuid}/`)
+                .then(res => {
+                    if (res.data.error) {
+                        this.storeMessages.showMessageError(`An error occured while fetching the participants: ${res.data.error}`)
+                        return;
+                    }
+                    if (res.data.length === 0)
+                        return;
 
-        //         // set the participants array
-        //         this.eventParticipants = res.data.map((participant: any) => {
-        //             return {
-        //                 ...participant,
-        //                 Dates: convertDateRangesFromBackend(participant.Dates),
-        //                 isSelected: true,
-        //             } as EventParticipant
-        //         })
-        //     }).finally(() => {
-        //         this.gettingParticipantData = false;
-        //     })
-        // },
+                    // set the participants array
+                    this.eventParticipants = res.data.map((participant: any) => {
+                        return {
+                            ...participant,
+                            isSelected: true,
+                        } as EventParticipant
+                    })
+                }).finally(() => {
+                    this.gettingParticipantData = false;
+                })
+        },
 
         // submit event
         submitSelection() {
@@ -419,6 +415,7 @@ export default {
         },
         copyLink() {
             navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/event/${this.$route.params.uuid}`);
+            this.storeMessages.showMessage("Link copied to clipboard", 1000);
         },
         displayDateRange(range: DateRange): string {
             // converts date range to a readable format
@@ -447,7 +444,7 @@ export default {
 
         this.getEventData();
         this.getPreviousSelectedDateRanges();
-        // this.getParticipants();
+        this.getParticipants();
     },
     watch: {
         isOrganiserMode(isOrganiser: boolean) {

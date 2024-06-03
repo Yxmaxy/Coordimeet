@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import serializers
 
-from apps.events.models import Event, EventAvailabilityOption, EventNotification
+from apps.events.models import Event, EventAvailabilityOption, EventNotification, EventParticipant
 from apps.users.models import CoordimeetGroup
 from apps.users.serializers import UserSerializer
 
@@ -66,3 +66,23 @@ class EventSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         self.fields["organiser"] = UserSerializer()
         return super(EventSerializer, self).to_representation(instance)
+
+
+class EventParticipantSelectedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventParticipant
+        fields = ["email", "selected_ranges"]
+    
+    def to_representation(self, instance: EventParticipant):
+        return {
+            "first_name": instance.user.first_name,
+            "last_name": instance.user.last_name,
+            "email": instance.user.email,
+            "not_comming": instance.not_comming,
+            "selected_ranges": [
+                {
+                    "start_date": instance.start_date,
+                    "end_date": instance.end_date,
+                }
+            ],
+        }

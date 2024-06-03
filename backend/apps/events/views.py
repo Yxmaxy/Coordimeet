@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.events.models import Event, EventParticipant
-from apps.events.serializers import EventSerializer
+from apps.events.serializers import EventSerializer, EventParticipantSelectedSerializer
 
 
 class EventListCreateAPIView(ListCreateAPIView):
@@ -74,9 +74,22 @@ class EventParticipantAPIView(APIView):
         return Response({"message": "Participation saved"})
 
 
-class EventFinishAPIView(APIView):
+class EventOrganiserAPIView(APIView):
+    permission_classes = [IsAuthenticated]  # TODO: add if user is event organiser
+
+    def get(self, request, event_uuid):
+        """Get participants for the event"""
+        event = Event.objects.get(event_uuid=event_uuid)
+        participants = EventParticipant.objects.filter(event=event)
+        serializer = EventParticipantSelectedSerializer(participants, many=True)
+        return Response(serializer.data)
+
     def post(self, request, event_uuid):
-        # TODO
-        # event = Event.objects.get(event_uuid=event_uuid)
-        # event.save()
-        return Response({"message": "Event finished"})
+        """Select the selected_start_date and selected_end_date for the event"""
+        event = Event.objects.get(event_uuid=event_uuid)
+
+        event.selected_start_date = request.data["selected_start_date"]
+        event.selected_end_date = request.data["selected_end_date"]
+        event.save()
+
+        return Response({"message": "Selected dates saved"})

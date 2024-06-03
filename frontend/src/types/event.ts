@@ -62,10 +62,12 @@ export enum EventPageType {
 }
 
 export interface EventParticipant {
-    GoogleID: string,
-    FirstName: string,
-    LastName: string,
-    Dates: DateRange[],
+    first_name: string,
+    last_name: string,
+    email: string,
+
+    not_comming: boolean,
+    selected_ranges: DateRange[],
 
     isSelected: boolean,
 }
