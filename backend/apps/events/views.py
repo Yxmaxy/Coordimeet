@@ -3,9 +3,7 @@ from rest_framework.generics import ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from django.db.models import Q
-
-from apps.events.models import Event
+from apps.events.models import Event, EventParticipant
 from apps.events.serializers import EventSerializer
 
 
@@ -30,3 +28,48 @@ class EventManageAPIView(APIView):
     
     def put(self, request, event_uuid):
         pass
+
+
+class EventParticipantAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, event_uuid):
+        event = Event.objects.get(event_uuid=event_uuid)
+        participants = EventParticipant.objects.filter(event=event, user=request.user)
+
+        return Response(
+            {
+                "selected_ranges": [
+                    {
+                        "start_date": participant.start_date,
+                        "end_date": participant.end_date,
+                    }
+                    for participant in participants
+                ],
+            }
+        )
+    
+    def post(self, request, event_uuid):
+        event = Event.objects.get(event_uuid=event_uuid)
+        # TODO: check if user is invited
+
+        # remove existing participations
+        EventParticipant.objects.filter(event=event, user=request.user).delete()
+
+        # create participant ranges
+        for selected_range in request.data["selected_ranges"]:
+            EventParticipant.objects.create(
+                event=event,
+                user=request.user,
+                start_date=selected_range["start_date"],
+                end_date=selected_range["end_date"],
+            )
+        return Response({"message": "Participation confirmed"})
+
+
+class EventFinishAPIView(APIView):
+    def post(self, request, event_uuid):
+        # TODO
+        # event = Event.objects.get(event_uuid=event_uuid)
+        # event.save()
+        return Response({"message": "Event finished"})

@@ -45,25 +45,3 @@ export function initializeDateInput(type: CalendarType, date?: string, padding?:
         return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}`;
     return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}T${padNumber(now.getHours())}:00`;
 }
-
-export function convertDateRangeForBackend(dateRange: DateRange): any {
-    return {
-        StartDate: formatDateForBackend(dateRange.start_date),
-        EndDate: formatDateForBackend(dateRange.end_date),
-    }
-}
-
-export function convertDateRangesForBackend(dateRanges: DateRange[]) {
-    return dateRanges.map(convertDateRangeForBackend);
-}
-
-export function convertDateRangeFromBackend(dateRange: any): DateRange {
-    return {
-        start_date: new Date(dateRange.start_date),
-        end_date: new Date(dateRange.end_date)
-    } as DateRange
-}
-
-export function convertDateRangesFromBackend(dateRanges: any[]): DateRange[] {
-    return dateRanges.map(convertDateRangeFromBackend);
-}

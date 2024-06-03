@@ -7,4 +7,5 @@ app_name = "events"
 urlpatterns = [
     path("event/", views.EventListCreateAPIView.as_view(), name="event_list_create_api"),
     path("event/<str:event_uuid>/", views.EventManageAPIView.as_view(), name="event_manage_api"),
+    path("event/participants/<str:event_uuid>/", views.EventParticipantAPIView.as_view(), name="event_participant_api"),
 ]

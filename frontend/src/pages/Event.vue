@@ -184,11 +184,7 @@ import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventPageType, EventParticipant } from "@/types/event";
 import { Tab } from "@/types/tabs";
 
-import {
-    formatDateDayMonthYear,
-    formatDateDayMonthHour,
-    convertDateRangesFromBackend,
-    convertDateRangesForBackend } from "@/utils/dates";
+import { formatDateDayMonthYear, formatDateDayMonthHour } from "@/utils/dates";
 
 import EventData from "@/components/EventData.vue";
 import Calendar from "@/components/Calendar.vue";
@@ -271,9 +267,6 @@ export default {
         isSelectedDateRangesSet(): boolean {
             return this.selectedDateRanges.length !== 0
         },
-        isPreviousSelectedDateRangesSet(): boolean {
-            return this.previousSelectedDateRanges.length !== 0
-        },
         selectedEventParticipantDateRanges(): DateRange[] {
             if (!this.isOrganiserMode)
                 return [];
@@ -307,73 +300,71 @@ export default {
                     ),
                 } as Event;
 
-                // TODO: re-add this!
-                // // the event has finished
-                // if (eventData.selected_start_date !== null) {
-                //     this.eventPageType = EventPageType.Finished;
-                // // the current user is the organiser
-                // } else if (this.storeUser.user!.id === eventData.organiser?.id) {
-                //     this.eventPageType = EventPageType.Organiser;
-                // }
+                // the event has finished
+                if (eventData.selected_start_date !== null) {
+                    this.eventPageType = EventPageType.Finished;
+                // the current user is the organiser
+                } else if (this.storeUser.user?.id === eventData.organiser?.id) {
+                    this.eventPageType = EventPageType.Organiser;
+                }
                 this.eventData = eventData;
             })
         },
         getPreviousSelectedDateRanges() {
             // gets the user's selected date ranges if they exist
             // also "upgrades" the user to invitee if needed
-            ApiService.get("eventUser.php", {
-                params: {
-                    IDEvent: this.$route.params.uuid,
-                    IDUser: this.storeUser.user!.id,
-                }
-            }).then(res => {
-                if (res.data.error) {
-                    this.storeMessages.showMessageError(`An error occured while fetching your previous selection: ${res.data.error}`)
-                    return;
-                }
-                // empty response
-                if (res.data.length === 0)
-                    return;
-                
-                if (res.data.Dates.length !== 0) {
-                    // "upgrade" user to invitee if the data was submitted
-                    if (this.eventPageType === EventPageType.NonConfirmed)
-                        this.eventPageType = EventPageType.Invitee;
+            ApiService.get(`/events/event/participants/${this.$route.params.uuid}/`)
+                .then((response: AxiosResponse) => {
+                    if (response.data.error) {
+                        this.storeMessages.showMessageError(`An error occured while fetching your previous selection: ${response.data.error}`)
+                        return;
+                    }
+                    // empty response
+                    if (response.data.length === 0)
+                        return;
+                    
+                    if (response.data.selected_ranges.length !== 0) {
+                        // "upgrade" user to invitee if the data was submitted
+                        if (this.eventPageType === EventPageType.NonConfirmed)
+                            this.eventPageType = EventPageType.Invitee;
 
-                    // update selectedDateRanges with previous response
-                    this.previousSelectedDateRanges = convertDateRangesFromBackend(res.data.Dates);
+                        // update selectedDateRanges with previous response
+                        this.previousSelectedDateRanges = response.data.selected_ranges.map((range: DateRange) => ({
+                            start_date: new Date(range.start_date),
+                            end_date: new Date(range.end_date),
+                        }));
 
-                    // intialize the selected date ranges
-                    this.selectedDateRanges = this.previousSelectedDateRanges;
-                }
-            });
+                        // intialize the selected date ranges
+                        this.selectedDateRanges = this.previousSelectedDateRanges;
+                    }
+                });
         },
-        getParticipants() {
-            this.gettingParticipantData = true;
-            ApiService.get("eventUser.php", {
-                params: {
-                    IDEvent: this.$route.params.uuid,
-                }
-            }).then(res => {
-                if (res.data.error) {
-                    this.storeMessages.showMessageError(`An error occured while fetching the participants: ${res.data.error}`)
-                    return;
-                }
-                if (res.data.length === 0)
-                    return;
+        // getParticipants() {
+        //     this.gettingParticipantData = true;
+        //     ApiService.get("eventUser.php", {
+        //         params: {
+        //             IDEvent: this.$route.params.uuid,
+        //         }
+        //     }).then(res => {
+        //         if (res.data.error) {
+        //             this.storeMessages.showMessageError(`An error occured while fetching the participants: ${res.data.error}`)
+        //             return;
+        //         }
+        //         if (res.data.length === 0)
+        //             return;
 
-                // set the participants array
-                this.eventParticipants = res.data.map((participant: any) => {
-                    return {
-                        ...participant,
-                        Dates: convertDateRangesFromBackend(participant.Dates),
-                        isSelected: true,
-                    } as EventParticipant
-                })
-            }).finally(() => {
-                this.gettingParticipantData = false;
-            })
-        },
+        //         // set the participants array
+        //         this.eventParticipants = res.data.map((participant: any) => {
+        //             return {
+        //                 ...participant,
+        //                 Dates: convertDateRangesFromBackend(participant.Dates),
+        //                 isSelected: true,
+        //             } as EventParticipant
+        //         })
+        //     }).finally(() => {
+        //         this.gettingParticipantData = false;
+        //     })
+        // },
 
         // submit event
         submitSelection() {
@@ -382,26 +373,18 @@ export default {
                 return;
 
             // handler if the event succeedes
-            const handleResponse = (response: AxiosResponse) => {
-                if (response.status !== 201)
+            ApiService.post(`/events/event/participants/${this.$route.params.uuid}/`, {
+                selected_ranges: this.selectedDateRanges.map(range => ({
+                    start_date: range.start_date.toISOString(),
+                    end_date: range.end_date.toISOString(),
+                }))
+            }).then((response: AxiosResponse) => {
+                if (response.status !== 200)
                     return;
                 this.previousSelectedDateRanges = this.selectedDateRanges;
                 this.storeMessages.showMessage("Your response has been submitted");
-            }
-
-            if (!this.isPreviousSelectedDateRangesSet) {
-                ApiService.post("eventUser.php", {
-                    IDEvent: this.$route.params.uuid,
-                    IDUser: this.storeUser.user!.id,
-                    AvailabilityDates: convertDateRangesForBackend(this.selectedDateRanges),
-                }).then(handleResponse)
-            } else {  // update date that was selected before
-                ApiService.put(`eventUser.php?IDEvent=${this.$route.params.uuid}&IDUser=${this.storeUser.user!.id}`, {
-                    IDEvent: this.$route.params.uuid,
-                    IDUser: this.storeUser.user!.id,
-                    AvailabilityDates: convertDateRangesForBackend(this.selectedDateRanges),
-                }).then(handleResponse)
-            }
+            })
+            
         },
         finishEvent() {
             // finish the event as the organiser
@@ -457,7 +440,7 @@ export default {
         }
 
         this.getEventData();
-        // this.getPreviousSelectedDateRanges();
+        this.getPreviousSelectedDateRanges();
         // this.getParticipants();
     },
     watch: {

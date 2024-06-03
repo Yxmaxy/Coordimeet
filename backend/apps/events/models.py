@@ -176,13 +176,11 @@ class EventParticipantAvailabilityLevelChoices(models.IntegerChoices):
 class EventParticipant(models.Model):
     """
     Model for event participants.
-    If the user is not logged in, the user_uuid is used to identify the user.
     """
 
     event = models.ForeignKey(Event, related_name="event_participants", on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), related_name="user_events", null=True, blank=True, on_delete=models.SET_NULL)
-    user_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    availability_level = models.IntegerField(choices=EventParticipantAvailabilityLevelChoices.choices, default=EventParticipantAvailabilityLevelChoices.AVAILABLE)
+    # availability_level = models.IntegerField(choices=EventParticipantAvailabilityLevelChoices.choices, default=EventParticipantAvailabilityLevelChoices.AVAILABLE)
 
     not_comming = models.BooleanField(default=False)
     start_date = models.DateTimeField(null=True, blank=True)
