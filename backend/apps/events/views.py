@@ -35,7 +35,7 @@ class EventParticipantAPIView(APIView):
 
     def get(self, request, event_uuid):
         event = Event.objects.get(event_uuid=event_uuid)
-        participants = EventParticipant.objects.filter(event=event, user=request.user)
+        participants = EventParticipant.objects.filter(event=event, user=request.user, not_comming=False)
 
         return Response(
             {
@@ -56,15 +56,22 @@ class EventParticipantAPIView(APIView):
         # remove existing participations
         EventParticipant.objects.filter(event=event, user=request.user).delete()
 
-        # create participant ranges
-        for selected_range in request.data["selected_ranges"]:
+        if "not_comming" in request.data:
             EventParticipant.objects.create(
                 event=event,
                 user=request.user,
-                start_date=selected_range["start_date"],
-                end_date=selected_range["end_date"],
+                not_comming=True,
             )
-        return Response({"message": "Participation confirmed"})
+        else:  # create participant ranges
+            for selected_range in request.data["selected_ranges"]:
+                EventParticipant.objects.create(
+                    event=event,
+                    user=request.user,
+                    start_date=selected_range["start_date"],
+                    end_date=selected_range["end_date"],
+                )
+
+        return Response({"message": "Participation saved"})
 
 
 class EventFinishAPIView(APIView):

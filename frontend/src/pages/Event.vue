@@ -153,9 +153,15 @@
                         v-else
                         :small="true"
                         :click="submitSelection"
-                        :disabled="!isSelectedDateRangesSet || gettingParticipantData"
+                        :disabled="gettingParticipantData"
                     >
-                        Submit <custom-icon class="text-base" icon="event" />
+                        <template v-if="!isSelectedDateRangesSet">
+                            Submit as unavailable
+                        </template>
+                        <template v-else>
+                            Submit
+                        </template>
+                        <custom-icon class="text-base" icon="event" />
                     </custom-button>
                 </div>
                 <!-- Calendar -->
@@ -369,21 +375,21 @@ export default {
         // submit event
         submitSelection() {
             // submit as an invitee
-            if (!this.isSelectedDateRangesSet)
-                return;
-
-            // handler if the event succeedes
-            ApiService.post(`/events/event/participants/${this.$route.params.uuid}/`, {
+            const data = !this.isSelectedDateRangesSet ? {not_comming: true} : {
                 selected_ranges: this.selectedDateRanges.map(range => ({
                     start_date: range.start_date.toISOString(),
                     end_date: range.end_date.toISOString(),
                 }))
-            }).then((response: AxiosResponse) => {
-                if (response.status !== 200)
-                    return;
-                this.previousSelectedDateRanges = this.selectedDateRanges;
-                this.storeMessages.showMessage("Your response has been submitted");
-            })
+            }
+
+            // handler if the event succeedes
+            ApiService.post(`/events/event/participants/${this.$route.params.uuid}/`, data)
+                .then((response: AxiosResponse) => {
+                    if (response.status !== 200)
+                        return;
+                    this.previousSelectedDateRanges = this.selectedDateRanges;
+                    this.storeMessages.showMessage("Your response has been submitted");
+                })
             
         },
         finishEvent() {
