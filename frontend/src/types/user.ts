@@ -22,3 +22,7 @@ export interface Member {
     role: Role,
     user?: User,
 }
+
+export interface MemberCreate extends Member {
+    exists: boolean;
+}

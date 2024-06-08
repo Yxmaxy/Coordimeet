@@ -78,7 +78,7 @@
                                 <b class="flex items-center h-8">{{ member.user?.email }}</b>
                                 <help-icon
                                     v-if="!member.exists"
-                                    class="text-base font-normal text-main-700" icon="info"
+                                    class="text-base font-normal text-calendar-unavailable" icon="info"
                                 >
                                     This user doesn't exist yet.
                                     <br /><br />
@@ -275,6 +275,13 @@ export default {
             if (this.members.some(m => m.user?.email === this.memberEmail)) {
                 this.memberForceInvalidMessage = true;
                 this.memberInvalidMessage = "This member is already added";
+                return;
+            }
+
+            // can't add yourself
+            if (this.memberEmail === this.user?.email) {
+                this.memberForceInvalidMessage = true;
+                this.memberInvalidMessage = "You can't add yourself to the group";
                 return;
             }
 

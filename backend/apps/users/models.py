@@ -56,6 +56,7 @@ class CoordimeetGroup(models.Model):
     name = models.CharField(max_length=150)
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    is_closed = models.BooleanField(default=False)  # group is automatically created and can't be edited
 
     def __repr__(self):
         return self.name

@@ -30,12 +30,26 @@ class EventSerializer(serializers.ModelSerializer):
     event_notifications = EventNotificationSerializer(many=True)
     organiser = serializers.PrimaryKeyRelatedField(queryset=get_user_model().objects.all())
     invited_group = serializers.PrimaryKeyRelatedField(queryset=CoordimeetGroup.objects.all(), required=False)
+    closed_group_users = UserSerializer(many=True, required=False)
 
     class Meta:
         model = Event
         fields = "__all__"
     
     def create(self, validated_data):
+        if "closed_group_users" in validated_data:
+            # create a new Group with is_closed=True
+            # invite all users to the group
+            closed_group_users = validated_data.pop("closed_group_users")
+            group = CoordimeetGroup.objects.create(name=validated_data["title"], is_closed=True)
+            # create members from the provided users (not all users are created already)
+            for user_data in closed_group_users:
+                user, _ = get_user_model().objects.get_or_create(**user_data)
+                group.members.create(user=user)
+            # add current user to event
+            group.members.create(user=self.context["request"].user)
+            validated_data["invited_group"] = group
+
         availability_options_data = validated_data.pop("event_availability_options")
         event_notifications_data = validated_data.pop("event_notifications")
 

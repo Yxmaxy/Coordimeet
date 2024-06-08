@@ -12,6 +12,7 @@ class EventTypeChoices(models.IntegerChoices):
     """Event types"""
     PUBLIC = 1, "Public"        # Anyone with the link can join
     GROUP = 2, "Group"          # Only group members can join
+    CLOSED = 3, "Closed"        # Only invited users can join -> create "temp" group
 
 
 class EventCalendarTypeChoices(models.IntegerChoices):
@@ -166,13 +167,6 @@ class EventAvailabilityOption(models.Model):
     end_date = models.DateTimeField()
 
 
-class EventParticipantAvailabilityLevelChoices(models.IntegerChoices):
-    """Choices for the participant availability level"""
-    IF_NEED_BE = 1, "If need be"
-    MAYBE_AVAILABLE = 2, "Maybe available"
-    AVAILABLE = 3, "Available"
-
-
 class EventParticipant(models.Model):
     """
     Model for event participants.
@@ -180,8 +174,14 @@ class EventParticipant(models.Model):
 
     event = models.ForeignKey(Event, related_name="event_participants", on_delete=models.CASCADE)
     user = models.ForeignKey(get_user_model(), related_name="user_events", null=True, blank=True, on_delete=models.SET_NULL)
-    # availability_level = models.IntegerField(choices=EventParticipantAvailabilityLevelChoices.choices, default=EventParticipantAvailabilityLevelChoices.AVAILABLE)
-
     not_comming = models.BooleanField(default=False)
-    start_date = models.DateTimeField(null=True, blank=True)
-    end_date = models.DateTimeField(null=True, blank=True)
+
+
+class EventParticipantAvailability(models.Model):
+    """
+    Model for the event participant availability.
+    """
+
+    participant = models.ForeignKey(EventParticipant, related_name="participant_availabilities", on_delete=models.CASCADE)
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()

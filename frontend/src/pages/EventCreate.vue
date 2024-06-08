@@ -44,7 +44,20 @@
                                 v-if="groupOptions.length === 0"
                                 class="text-base font-normal"
                             >
-                                You need to be a member of a group to create a group event.    
+                                You need to be a member of a group to create a group event.
+                            </help-icon>
+                        </div>
+                        <div class="flex flex-row items-center gap-2">
+                            <custom-radio
+                                type="radio"
+                                v-model="eventType"
+                                :value="EventType.Closed"
+                                text="Closed"
+                            />
+                            <help-icon
+                                class="text-base font-normal"
+                            >
+                                You can invite users by their email address. A temporary group will be created.
                             </help-icon>
                         </div>
                     </div>
@@ -83,6 +96,64 @@
                         </template>
                     </custom-toggle>
                 </div>
+                <div
+                    v-if="eventType === EventType.Closed"
+                    class="flex flex-col gap-2 mb-4"
+                >
+                    <b class="ml-4">Invited users</b>
+                    <div>
+                        <div class="flex gap-2">
+                            <custom-input
+                                type="email"
+                                v-model="closedGroupUserEmail"
+                                placeholder="Enter a user's email address"
+                                :forceInvalidMessage="closedGroupUserForceInvalidMessage"
+                                :invalidMessage="closedGroupMemberInvalidMessage"
+                                @keydown.enter="addClosedGroupMember"
+                                @input="closedGroupUserForceInvalidMessage = false"
+                            />
+                            <custom-button
+                                class="h-11 rounded-xl"
+                                :click="addClosedGroupMember"
+                            >
+                                <custom-icon icon="add" />
+                            </custom-button>
+                        </div>
+                        <div class="flex flex-col gap-4 mt-1">
+                            <div
+                                v-for="closedGroupUser in closedGroupUsers"
+                                class="flex justify-between items-center bg-main-000 px-6 py-4 rounded-2xl shadow-md"
+                            >
+                                <div class="flex gap-1 items-center">
+                                    <b class="flex items-center h-8">{{ closedGroupUser.email }}</b>
+                                    <help-icon
+                                        v-if="!closedGroupUser.exists"
+                                        class="text-base font-normal text-calendar-unavailable" icon="info"
+                                    >
+                                        This user doesn't exist yet.
+                                        <br /><br />
+                                        You can send them the following link to create an account:
+                                        <div
+                                            class="cursor-pointer font-mono"
+                                            @click="copyInviteLink"
+                                        >
+                                            {{ inviteLink }}
+                                        </div>
+                                    </help-icon>
+                                </div>    
+                                <div class="flex gap-2">
+                                    <custom-button
+                                        class="h-8 w-8 rounded-full"
+                                        :click="() => deleteMember(closedGroupUser)"
+                                    >
+                                        <custom-icon icon="delete" />
+                                    </custom-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="ml-4 mb-4">
                     <b>Select calendar type</b>
                     <div class="flex flex-col gap-2 mt-3">
@@ -263,7 +334,7 @@ import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Event, EventType, EventNotification, EventNotificationType } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
-import { Group } from "@/types/user";
+import { Group, Role, User } from "@/types/user";
 import { SelectOption } from "@/types/ui";
 import { Tab } from "@/types/tabs";
 
@@ -281,6 +352,13 @@ const tabs = [
     }
 ] as Tab[];
 
+interface UserCreate extends User {
+    exists: boolean;
+}
+interface EventCreate extends Event {
+    closed_group_users: User[],
+}
+
 export default {
     setup() {
         const { user } = useStoreUser();
@@ -294,6 +372,8 @@ export default {
             storeMessages,
 
             tabs,
+
+            inviteLink: `${import.meta.env.VITE_FRONTEND_URL}/login`,
         }
     },
     components: {
@@ -330,6 +410,11 @@ export default {
 
             groupOptions: [] as SelectOption[],
             groupInvited: undefined as number|undefined,
+
+            closedGroupUsers: [] as UserCreate[],
+            closedGroupUserEmail: "",
+            closedGroupUserForceInvalidMessage: false,
+            closedGroupMemberInvalidMessage: "",
         }
     },
     computed: {
@@ -359,9 +444,23 @@ export default {
                 this.storeMessages.showMessageError("You must enter a title for the event");
                 return;
             }
-            if (this.length < 0) {
+            if (!this.length || this.length < 0) {
                 this.storeMessages.showMessageError("Event length must me bigger or equal to 1");
                 return;
+            }
+
+            // check that all selected date ranges have length equal of bigger to this.length
+            for (const dateRange of this.selectedDateRanges) {
+                let units = 1;  // if a date range is selected, it must have at least 1 unit
+                let startDate = dateRange.start_date;
+                while (startDate.getTime() < dateRange.end_date.getTime()) {
+                    startDate = this.addUnitsToDate(new Date(startDate), this.calendarType, 1);
+                    units++;
+                }
+                if (units < this.length) {
+                    this.storeMessages.showMessageError(`All selected calendar ranges should be equal or longer than ${this.length} ${this.calendarTypeDisplay} (set in Event length)`);
+                    return;
+                }
             }
 
             // check if dates were selected
@@ -388,6 +487,12 @@ export default {
                 return;
             }
 
+            // if the event type is closed, closedMembers must have something inside
+            if (this.eventType === EventType.Closed && this.closedGroupUsers.length === 0) {
+                this.storeMessages.showMessageError("Please add at least one member to this event in the Invited users section.");
+                return;
+            }
+
             const eventNotifications = [] as EventNotification[];
             if (this.eventNotifications.afterCreation)
                 eventNotifications.push({ notification_type: EventNotificationType.Creation });
@@ -408,13 +513,15 @@ export default {
                 organiser_group: this.eventByGroup ? this.groupInvited : null,
                 invited_group: this.groupInvited,
 
+                closed_group_users: this.closedGroupUsers.map(user => ({email: user.email})),
+
                 description: this.description,
                 event_length: this.length,
                 deadline: new Date(this.deadline),
 
                 event_availability_options: this.selectedDateRanges,
                 event_notifications: eventNotifications,
-            } as Event;
+            } as EventCreate;
 
             ApiService.post("/events/event/", event)
             .then(res => {
@@ -442,6 +549,60 @@ export default {
             }).catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch user's groups.");
             });
+        },
+
+        // Closed group users
+        addClosedGroupMember() {
+            // // check email format
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.closedGroupUserEmail)) {
+                this.closedGroupUserForceInvalidMessage = true;
+                this.closedGroupMemberInvalidMessage = "Invalid email format";
+                return;
+            }
+
+            // check duplicates
+            if (this.closedGroupUsers.some(user => user.email === this.closedGroupUserEmail)) {
+                this.closedGroupUserForceInvalidMessage = true;
+                this.closedGroupMemberInvalidMessage = "This member is already added";
+                return;
+            }
+
+            // can't add yourself
+            if (this.closedGroupUserEmail === this.user?.email) {
+                this.closedGroupUserForceInvalidMessage = true;
+                this.closedGroupMemberInvalidMessage = "You can't add yourself to the group";
+                return;
+            }
+
+            this.closedGroupUserForceInvalidMessage = false;
+            this.closedGroupMemberInvalidMessage = "";
+
+            ApiService.get(`/users/user/exists/${this.closedGroupUserEmail}/`).then((response: any) => {
+                this.closedGroupUsers.push({
+                    email: this.closedGroupUserEmail,
+                    exists: response.data.exists,
+                });
+            }).catch(() => {
+                this.storeMessages.showMessageError("Failed to add user to group");
+            }).finally(() => {
+                this.closedGroupUserEmail = "";
+            });
+        },
+        deleteMember(user: UserCreate) {
+            this.closedGroupUsers = this.closedGroupUsers.filter(u => u !== user);
+        },
+        async copyInviteLink() {
+            navigator.clipboard.writeText(this.inviteLink);
+            this.storeMessages.showMessage("Invite link copied to clipboard", 3000);
+        },
+
+        // helpers
+        addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
+            if (calendarType === CalendarType.Date)
+                date.setDate(date.getDate() + units);
+            else if (calendarType === CalendarType.DateHour)
+                date.setHours(date.getHours() + units);
+            return date;
         },
     },
     mounted() {

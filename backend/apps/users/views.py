@@ -46,7 +46,7 @@ class GroupListCreateAPIView(ListCreateAPIView):
     serializer_class = serializers.GroupSerializer
 
     def get_queryset(self):
-        return CoordimeetGroup.objects.filter(members__user=self.request.user)
+        return CoordimeetGroup.objects.filter(members__user=self.request.user, is_closed=False)
 
 
 class GroupRetrieveUpdateAPIView(RetrieveUpdateAPIView):

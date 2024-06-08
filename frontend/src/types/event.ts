@@ -4,6 +4,7 @@ import { User, Group } from "@/types/user";
 export enum EventType {
     Public = 1,
     Group = 2,
+    Closed = 3,
 }
 
 export interface EventAvailabilityOption extends DateRange {
