@@ -27,7 +27,11 @@ class EventManageAPIView(APIView):
         return Response(serializer.data)
     
     def put(self, request, event_uuid):
-        pass
+        event = Event.objects.get(event_uuid=event_uuid)
+        serializer = EventSerializer(event, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class EventParticipantListAPIView(ListAPIView):

@@ -227,7 +227,7 @@
                         v-model="deadline"
                     />
                 </label>
-                <div v-if="eventType === EventType.Group" class="flex flex-col gap-2">
+                <div v-if="eventType !== EventType.Public" class="flex flex-col gap-2">
                     <b class="ml-4">Send notifications</b>
                     <div class="ml-3 flex flex-col gap-4">
                         <custom-toggle
@@ -294,10 +294,18 @@
                     </div>
                 </div>
                 <custom-button
+                    v-if="!isEditing"
                     class="mt-3 mb-6"
                     @click="onCreateEvent"
                 >
                     Create new event <custom-icon class="text-base" icon="event_available" />
+                </custom-button>
+                <custom-button
+                    v-else
+                    class="mt-3 mb-6"
+                    @click="onUpdateEvent"
+                >
+                    Update event <custom-icon class="text-base" icon="edit_calendar" />
                 </custom-button>
             </div>
         </template>
@@ -440,7 +448,7 @@ export default {
         },
     },
     methods: {
-        onCreateEvent() {
+        getValidatedEventData() {
             if (this.title.length === 0) {
                 this.storeMessages.showMessageError("You must enter a title for the event");
                 return;
@@ -505,7 +513,7 @@ export default {
                     notification_time: new Date(this.eventNotificationsDeadline)
                 });
 
-            const event = {
+            return {
                 title: this.title,
                 event_calendar_type: this.calendarType,
                 event_type: this.eventType,
@@ -523,12 +531,36 @@ export default {
                 event_availability_options: this.selectedDateRanges,
                 event_notifications: eventNotifications,
             } as EventCreate;
+        },
+        onCreateEvent() {
+            const event = this.getValidatedEventData();
+            if (!event)
+                return;
 
             ApiService.post("/events/event/", event)
             .then(res => {
                 const eventUUID = res.data.event_uuid;
                 this.storeMessages.showMessage(`Event successfuly created. You will now be redirected to your event page.`)
                 this.$router.push(`/event/${eventUUID}`);
+            })
+            .catch(err => {
+                this.storeMessages.showMessageError("An error occurred while creating the event. Please try again later.");
+                console.error(err);
+            });
+        },
+        onUpdateEvent() {
+            const event = this.getValidatedEventData();
+            if (!event)
+                return;
+
+            // if event is type Closed, remove invited_group
+            if (event.event_type === EventType.Closed)
+                event.invited_group = undefined;
+
+            ApiService.put(`/events/event/${this.$route.params.uuid}/`, event)
+            .then(() => {
+                this.storeMessages.showMessage(`Event successfuly updated. You will now be redirected to your event page.`)
+                this.$router.push(`/event/${this.$route.params.uuid}`);
             })
             .catch(err => {
                 this.storeMessages.showMessageError("An error occurred while creating the event. Please try again later.");
@@ -576,10 +608,12 @@ export default {
                 }));
 
                 if (res.data.closed_group_members) {
-                    this.closedGroupUsers = res.data.closed_group_members.map((member: any) => ({
+                    this.closedGroupUsers = res.data.closed_group_members
+                    .map((member: any) => ({
                         email: member.user.email,
                         exists: true,
-                    }));
+                    }))
+                    .filter((member: UserCreate) => member.email !== this.user?.email);
                 }
 
                 this.eventNotifications = {
