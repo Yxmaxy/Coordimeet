@@ -36,9 +36,8 @@ export interface Event {
     event_type: EventType,
 
     organiser?: User,
-    organiser_group?: Group,
-
     invited_group?: Group,
+    is_group_organiser: boolean,
 
     description?: string,
     event_length: number,
@@ -52,6 +51,8 @@ export interface Event {
 
     event_availability_options: EventAvailabilityOption[],
     event_notifications: EventNotification[],
+
+    closed_group_users?: User[],
 }
 
 export enum EventPageType {

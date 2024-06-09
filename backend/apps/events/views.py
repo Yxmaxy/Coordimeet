@@ -1,7 +1,9 @@
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import ListCreateAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from django.db.models import Q
 
 from apps.events.models import Event, EventParticipant
 from apps.events.serializers import EventSerializer, EventParticipantSelectedSerializer
@@ -15,19 +17,26 @@ class EventListCreateAPIView(ListCreateAPIView):
         # TODO: extend with events I'm invited to
         return Event.objects.filter(organiser=self.request.user).order_by("-created_at")
 
+
 class EventManageAPIView(APIView):
     def get(self, request, event_uuid):
         # TODO: permissions based on event settings
 
         event = Event.objects.get(event_uuid=event_uuid)
-
-        # TODO: "Organiser" serializer with more data
-
         serializer = EventSerializer(event)
         return Response(serializer.data)
     
     def put(self, request, event_uuid):
         pass
+
+
+class EventParticipantListAPIView(ListAPIView):
+    permission_classes = [IsAuthenticated]  # TODO: permission if event has public participants
+    serializer_class = EventParticipantSelectedSerializer
+
+    def get_queryset(self, event_uuid):
+        event = Event.objects.get(event_uuid=event_uuid)
+        return EventParticipant.objects.filter(event=event)
 
 
 class EventParticipantAPIView(APIView):

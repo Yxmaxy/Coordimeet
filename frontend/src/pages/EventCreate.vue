@@ -71,7 +71,6 @@
                         v-model="groupInvited"
                         :options="groupOptions"
                         placeholder="Please select a group"
-                        :disabled="eventType !== EventType.Group"
                     />
                     <b class="mt-4 ml-4 flex gap-1 items-center">
                         Ownership
@@ -85,7 +84,7 @@
                     </b>
                     <custom-toggle
                         class="ml-4"
-                        v-model="eventByGroup"
+                        v-model="isGroupOrganiser"
                         :disabled="eventType !== EventType.Group"
                     >
                         <template v-slot:left>
@@ -334,23 +333,9 @@ import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Event, EventType, EventNotification, EventNotificationType } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
-import { Group, Role, User } from "@/types/user";
+import { Group, User } from "@/types/user";
 import { SelectOption } from "@/types/ui";
 import { Tab } from "@/types/tabs";
-
-const tabs = [
-    {
-        name: "Create new event",
-        slot_name: "create_event",
-        narrow: "md",
-        icon: "calendar_add_on",
-    },
-    {
-        name: "Calendar input",
-        slot_name: "calendar_input",
-        icon: "calendar_month",
-    }
-] as Tab[];
 
 interface UserCreate extends User {
     exists: boolean;
@@ -370,8 +355,6 @@ export default {
 
             user,
             storeMessages,
-
-            tabs,
 
             inviteLink: `${import.meta.env.VITE_FRONTEND_URL}/login`,
         }
@@ -399,7 +382,7 @@ export default {
             selectedDateRanges: [] as DateRange[],
             fromDate: initializeDateInput(CalendarType.Date),
             toDate: initializeDateInput(CalendarType.Date, undefined, 14),
-            eventByGroup: false,
+            isGroupOrganiser: false,
 
             eventNotifications: {
                 afterCreation: false,
@@ -418,6 +401,24 @@ export default {
         }
     },
     computed: {
+        tabs() {
+            return [
+                {
+                    name: this.isEditing ? "Editing event" : "Create new event",
+                    slot_name: "create_event",
+                    narrow: "md",
+                    icon: this.isEditing ? "edit_calendar" : "calendar_add_on",
+                },
+                {
+                    name: "Calendar input",
+                    slot_name: "calendar_input",
+                    icon: "calendar_month",
+                }
+            ] as Tab[];
+        },
+        isEditing() {
+            return this.$route.params.uuid !== undefined;
+        },
         calendarTypeDisplay() {
             if (this.calendarType === CalendarType.Date)
                 return "days";
@@ -510,7 +511,7 @@ export default {
                 event_type: this.eventType,
 
                 organiser: this.user?.id,
-                organiser_group: this.eventByGroup ? this.groupInvited : null,
+                is_group_organiser: this.isGroupOrganiser,
                 invited_group: this.groupInvited,
 
                 closed_group_users: this.closedGroupUsers.map(user => ({email: user.email})),
@@ -543,11 +544,53 @@ export default {
                     } as SelectOption;
                 });
                 if (this.groupOptions.length === 1 && !this.groupInvited) {
-                    this.groupInvited = this.groupOptions[0].value;
+                    if (!this.isEditing)
+                        this.groupInvited = this.groupOptions[0].value;
                 }
 
             }).catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch user's groups.");
+            });
+        },
+        getEditingEvent() {
+            // set all variables
+            ApiService.get(`events/event/${this.$route.params.uuid}/`)
+            .then(res => {
+                this.title = res.data.title;
+                this.eventType = res.data.event_type;
+                this.calendarType = res.data.event_calendar_type;
+                this.length = res.data.event_length;
+
+                this.fromDate = initializeDateInput(CalendarType.Date, res.data.event_availability_options[0].start_date, -7);
+                this.toDate = initializeDateInput(CalendarType.Date, res.data.event_availability_options[0].end_date, 7);
+                
+                this.description = res.data.description as string;
+                this.deadline = initializeDateInput(CalendarType.DateHour, res.data.deadline);
+
+                this.groupInvited = res.data.invited_group?.id;
+                this.isGroupOrganiser = res.data.is_group_organiser;
+
+                this.selectedDateRanges = res.data.event_availability_options.map((dateRange: any) => ({
+                    start_date: new Date(dateRange.start_date),
+                    end_date: new Date(dateRange.end_date),
+                }));
+
+                if (res.data.closed_group_members) {
+                    this.closedGroupUsers = res.data.closed_group_members.map((member: any) => ({
+                        email: member.user.email,
+                        exists: true,
+                    }));
+                }
+
+                this.eventNotifications = {
+                    afterCreation: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Creation),
+                    afterUpdate: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Update),
+                    beforeDeadline: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Deadline),
+                };
+                this.eventNotificationsDeadline = initializeDateInput(CalendarType.DateHour, res.data.event_notifications.find((notification: EventNotification) => notification.notification_type === EventNotificationType.Deadline)?.notification_time);
+            })
+            .catch(() => {
+                this.storeMessages.showMessageError("Failed to fetch event data.");
             });
         },
 
@@ -607,6 +650,9 @@ export default {
     },
     mounted() {
         this.getGroups();
+        if (this.isEditing) {
+            this.getEditingEvent();
+        }
     },
     watch: {
         calendarType(newType: CalendarType) {

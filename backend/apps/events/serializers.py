@@ -2,9 +2,9 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import serializers
 
-from apps.events.models import Event, EventAvailabilityOption, EventNotification, EventParticipant
+from apps.events.models import Event, EventAvailabilityOption, EventNotification, EventParticipant, EventTypeChoices
 from apps.users.models import CoordimeetGroup
-from apps.users.serializers import UserSerializer
+from apps.users.serializers import UserSerializer, GroupSerializer, MemberSerializer
 
 
 class EventAvailabilityOptionSerializer(serializers.ModelSerializer):
@@ -29,18 +29,21 @@ class EventSerializer(serializers.ModelSerializer):
     event_availability_options = EventAvailabilityOptionSerializer(many=True)
     event_notifications = EventNotificationSerializer(many=True)
     organiser = serializers.PrimaryKeyRelatedField(queryset=get_user_model().objects.all())
+
     invited_group = serializers.PrimaryKeyRelatedField(queryset=CoordimeetGroup.objects.all(), required=False)
     closed_group_users = UserSerializer(many=True, required=False)
+    closed_group_members = serializers.SerializerMethodField()
 
     class Meta:
         model = Event
         fields = "__all__"
     
     def create(self, validated_data):
-        if "closed_group_users" in validated_data:
+        closed_group_users = validated_data.pop("closed_group_users")
+
+        if validated_data.get("event_type") == EventTypeChoices.CLOSED:
             # create a new Group with is_closed=True
             # invite all users to the group
-            closed_group_users = validated_data.pop("closed_group_users")
             group = CoordimeetGroup.objects.create(name=validated_data["title"], is_closed=True)
             # create members from the provided users (not all users are created already)
             for user_data in closed_group_users:
@@ -64,6 +67,11 @@ class EventSerializer(serializers.ModelSerializer):
 
         return event
 
+    def get_closed_group_members(self, instance):
+        if instance.invited_group:
+            return MemberSerializer(instance.invited_group.members.all(), many=True).data
+        return []
+    
     # TODO: update
     # def update(self, instance, validated_data):
     #     availability_options_data = validated_data.pop("event_availability_options")
@@ -79,6 +87,8 @@ class EventSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         self.fields["organiser"] = UserSerializer()
+        self.fields["invited_group"] = GroupSerializer()
+
         return super(EventSerializer, self).to_representation(instance)
 
 

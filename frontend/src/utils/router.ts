@@ -19,6 +19,7 @@ const router = createRouter({
         { path: "/login", component: Login, name: "login" },
         { path: "/event/:uuid", component: Event, name: "event"},
         { path: "/event/new", component: EventCreate, name: "event_new" },
+        { path: "/event/edit/:uuid", component: EventCreate, name: "event_edit" },
         { path: "/event/list", component: EventList, name: "event_list" },
         { path: "/group/new", component: GroupCreate, name: "group_new" },
         { path: "/group/edit/:id", component: GroupCreate, name: "group_edit" },

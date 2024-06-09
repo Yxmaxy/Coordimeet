@@ -29,11 +29,9 @@ class Event(models.Model):
     event_calendar_type = models.IntegerField(choices=EventCalendarTypeChoices.choices, default=EventCalendarTypeChoices.DATE_HOUR)
     event_type = models.IntegerField(choices=EventTypeChoices.choices, default=EventTypeChoices.PUBLIC)
 
-    # set either the organiser or the organiser_group
     organiser = models.ForeignKey(get_user_model(), related_name="organiser_events", null=True, blank=True, on_delete=models.SET_NULL)
-    organiser_group = models.ForeignKey(CoordimeetGroup, related_name="organiser_group_events", null=True, blank=True, on_delete=models.SET_NULL)
-
     invited_group = models.ForeignKey(CoordimeetGroup, related_name="invited_group_events", null=True, blank=True, on_delete=models.SET_NULL)
+    is_group_organiser = models.BooleanField(default=False)
 
     description = models.TextField(null=True, blank=True)
     event_length = models.IntegerField()  # event length in units based on the event_calendar_type
@@ -63,18 +61,6 @@ class Event(models.Model):
 
     def __str__(self):
         return self.title
-    
-    def _validate_organiser(self):
-        """Ensure that either organiser or organiser_group is set"""
-
-        if self.organiser and self.organiser_group:
-            raise ValueError("Event can't set both organiser and organiser_group")
-        if not self.organiser and not self.organiser_group:
-            raise ValueError("Event must set either organiser or organiser_group")
-
-    def save(self, *args, **kwargs):
-        self._validate_organiser()
-        super().save(*args, **kwargs)
     
     def handle_notifications_create(self):
         if not self.invited_group:
