@@ -52,12 +52,16 @@ class EventOrganiserListCreateAPIView(ListCreateAPIView):
 
 
 class EventManageAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsEventOrganiserOrAdminInOrganiserGroup]
 
     def get(self, request, event_uuid):
-        # TODO: permissions based on event settings
-
         event = Event.objects.get(event_uuid=event_uuid)
+
+        if event.event_type in [EventTypeChoices.GROUP, EventTypeChoices.CLOSED]:
+            if not IsAuthenticated().has_permission(request, self):
+                return Response({"message": "Not allowed"}, status=403)
+            if not IsEventOrganiserOrAdminInOrganiserGroup().has_object_permission(request, self, event):
+                return Response({"message": "Not allowed"}, status=403)
+
         serializer = EventSerializer(event, partial=True, context={"request": request})
         return Response(serializer.data)
     

@@ -19,7 +19,7 @@
                                 <help-icon>
                                     If you choose to submit an anonymous response, a temporary account will be created for you.
                                     <br />
-                                    If you try to access the same event from another browser, you will not be able to see your previous response.
+                                    If you try to access the same event again, you will not be able to see your previous response.
                                 </help-icon>
                             </div>
                         </li>

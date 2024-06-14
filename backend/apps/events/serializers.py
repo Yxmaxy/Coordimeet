@@ -125,8 +125,12 @@ class EventSerializer(serializers.ModelSerializer):
         return []
 
     def get_user_response(self, obj):
+        user = self.context["request"].user
+
+        if not user.is_authenticated:
+            return None
         try:
-            participant = EventParticipant.objects.get(event=obj, user=self.context['request'].user)
+            participant = EventParticipant.objects.get(event=obj, user=user)
             return not participant.not_comming
         except EventParticipant.DoesNotExist:
             return None
