@@ -71,8 +71,15 @@ export default {
         getEvents() {
             ApiService.get("/events/event/")
             .then(res => {
-                this.eventsInvited = res.data.filter((event: Event) => event.organiser?.id !== this.user?.id);
-                this.eventsCreated = res.data.filter((event: Event) => event.organiser?.id === this.user?.id);
+                this.eventsCreated = res.data as Event[];
+            })
+            .catch(e => {
+                this.storeMessages.showMessageError(`Pri pridobivanju podatkov je prišlo do napake.`)
+                throw e;
+            });
+            ApiService.get("/events/event/invited")
+            .then(res => {
+                this.eventsInvited = res.data as Event[];
             })
             .catch(e => {
                 this.storeMessages.showMessageError(`Pri pridobivanju podatkov je prišlo do napake.`)

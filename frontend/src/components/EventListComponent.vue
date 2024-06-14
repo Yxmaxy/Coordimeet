@@ -26,9 +26,12 @@
                             class="h-8 w-8 rounded-full !text-base"
                             @click.stop="() => $router.push(`/event/${event.event_uuid}`)"
                         >
-                            <custom-icon icon="calendar_today" />
+                            <custom-icon v-if="event.user_response === null" icon="calendar_today" />
+                            <custom-icon v-if="event.user_response === false" icon="event_busy" />
+                            <custom-icon v-if="event.user_response === true" icon="event_available" />
                         </custom-button>
                         <custom-button
+                            v-if="userIsOrganiser"
                             class="h-8 w-8 rounded-full !text-base"
                             @click.stop="() => $router.push(`/event/edit/${event.event_uuid}`)"
                         >

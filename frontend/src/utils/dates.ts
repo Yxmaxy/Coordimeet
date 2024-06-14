@@ -45,3 +45,9 @@ export function initializeDateInput(type: CalendarType, date?: string, padding?:
         return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}`;
     return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}T${padNumber(now.getHours())}:00`;
 }
+
+export function formatDateRange(range: DateRange): string {
+    if (range.start_date === range.end_date)
+        return formatDateDayMonthYear(range.start_date);
+    return `${formatDateDayMonthYear(range.start_date)} - ${formatDateDayMonthYear(range.end_date)}`;
+}

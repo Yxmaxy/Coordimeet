@@ -26,7 +26,7 @@
                     </ul>
                 </div>
                 <div class="flex justify-center gap-4 mt-4">
-                    <custom-button @click="$router.push('/')">Decline</custom-button>
+                    <custom-button @click="() => $router.push('/')">Decline</custom-button>
                     <custom-button @click="onLoginOrSignup">Log in or Sign up</custom-button>
                     <custom-button @click="onSubmitAnon">Submit anonymously</custom-button>
                 </div>
@@ -60,7 +60,7 @@
                     >
                         <custom-button
                             :negative="true"
-                            :click="() => $router.push('/event/list')"
+                            :click="declineInvitation"
                         >
                             Decline
                         </custom-button>
@@ -84,7 +84,7 @@
         <tab-controller
             v-else
             :tabs="tabs"
-            :breakpoint="1050"
+            :breakpoint="1290"
         >
             <template v-slot:event>
                 <div class="h-full bg-main-100 p-4">
@@ -111,11 +111,26 @@
                     v-for="participant in eventParticipants"
                     :class="[{
                         'text-main-200': !participant.isSelected,
-                        'cursor-pointer hover:bg-main-100': isOrganiserMode,
-                    }, 'p-[1.1rem] font-bold border-b-2 border-b-main-200 transition-colors']"
+                    }, 'cursor-pointer hover:bg-main-100',
+                    'p-[1.1rem] font-bold border-b-2 border-b-main-200 transition-colors',
+                    'flex justify-between items-center']"
                     @click="toggleParticipant(participant)"
                 >
-                    {{ participant.email }}
+                    {{ participant.user.email }}
+                    <custom-icon v-if="participant.not_comming" icon="event_busy"/>
+                    <custom-icon v-if="!participant.not_comming" icon="event_available"/>
+                </div>
+            </template>
+
+            <template v-slot:date_choices>
+                <div
+                    v-for="dateRange in getBestDateRanges"
+                    :class="[
+                        'cursor-pointer hover:bg-main-100', 'p-[1.1rem] font-bold border-b-2 border-b-main-200 transition-colors',
+                    'flex justify-between items-center']"
+                >
+                    <div>{{ formatDateRange(dateRange.range) }}</div>
+                    <div>{{ dateRange.hits }}</div>
                 </div>
             </template>
 
@@ -190,7 +205,7 @@ import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventPageType, EventParticipant } from "@/types/event";
 import { Tab } from "@/types/tabs";
 
-import { formatDateDayMonthYear, formatDateDayMonthHour } from "@/utils/dates";
+import { formatDateDayMonthYear, formatDateDayMonthHour, formatDateRange } from "@/utils/dates";
 
 import EventData from "@/components/EventData.vue";
 import Calendar from "@/components/Calendar.vue";
@@ -200,25 +215,10 @@ import CustomToggle from "@/components/ui/CustomToggle.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
 import HelpIcon from "@/components/ui/HelpIcon.vue";
 
-const tabs = [
-    {
-        name: "Event",
-        slot_name: "event",
-        narrow: "sm",
-        icon: "description",
-    },
-    {
-        name: "Responses",
-        slot_name: "responses",
-        narrow: "sm",
-        icon: "group",
-    },
-    {
-        name: "Calendar",
-        slot_name: "calendar",
-        icon: "calendar_today",
-    },
-] as Tab[];
+interface DateChoice {
+    range: DateRange;
+    hits: number;
+}
 
 export default {
     components: {
@@ -236,7 +236,6 @@ export default {
 
         return {
             storeUser,
-            tabs,
 
             storeMessages,
 
@@ -246,15 +245,17 @@ export default {
     },
     data() {
         return {
-            eventData: null as null | Event,
+            eventData: null as null|Event,
             eventPageType: EventPageType.NonConfirmed as EventPageType,
             eventParticipants: [] as EventParticipant[],
 
             selectedDateRanges: [] as DateRange[],  // the current calendar selection
             previousSelectedDateRanges: [] as DateRange[],  // set if the invitee submitted before
 
-            isOrganiserMode: false,  // organiser mode toggle
+            isOrganiserMode: true,  // organiser mode toggle
             gettingParticipantData: false,  // for fetching event participants
+
+            tabs: [] as Tab[],
         }
     },
     computed: {
@@ -274,14 +275,80 @@ export default {
             return this.selectedDateRanges.length !== 0
         },
         selectedEventParticipantDateRanges(): DateRange[] {
-            if (!this.isOrganiserMode)
+            if (!this.isOrganiserMode || !this.eventParticipants)
                 return [];
             const participantDates = this.eventParticipants
                 .filter(participant => participant.isSelected)
-                .map(participant => participant.selected_ranges)
-            const dateRanges = [] as DateRange[]
-            return dateRanges.concat(...participantDates)
-        }
+                .flatMap((participant: EventParticipant) => 
+                    participant.participant_availabilities.map(availability => ({
+                        start_date: new Date(availability.start_date),
+                        end_date: new Date(availability.end_date),
+                    }))
+                ) as DateRange[];
+            return participantDates;
+        },
+        getBestDateRanges(): DateChoice[] {
+            // Loop through all date ranges in selectedEventParticipantDateRanges.
+            // Move through each date range by using the addUnitsToDate helper
+            // The calendarType parameter is provided by eventData.event_calendar_type
+            // Add each unit to a map with the number of times it appears.
+
+            if (!this.isOrganiserMode || this.eventData === null )
+                return []
+
+            // create a map for each possible date with the number of "hits"
+            const dateCountMap = new Map<string, number>();
+            const calendarType = this.eventData.event_calendar_type;
+
+            this.selectedEventParticipantDateRanges.forEach(range => {
+                let currentDate = new Date(range.start_date);
+                const endDate = new Date(range.end_date);
+
+                while (currentDate <= endDate) {
+                    const dateString = currentDate.toISOString();
+                    dateCountMap.set(dateString, (dateCountMap.get(dateString) || 0) + 1);
+                    currentDate = this.addUnitsToDate(currentDate, calendarType, 1);
+                }
+            });
+
+            // Join all adjacent dates in dateCountMap into date ranges
+            // with the length of this.eventDate.length
+            // Sum the number of "hits" for each date range
+            // Return an ordered list of date ranges with the highest "hits"
+
+            const dateRangesWithHits: DateChoice[] = [];
+            let currentRange: DateRange | null = null;
+            let currentHits = 0;
+
+            Array.from(dateCountMap.keys()).sort().forEach(dateString => {
+                const date = new Date(dateString);
+                const hits = dateCountMap.get(dateString) || 0;
+
+                if (currentRange && this.addUnitsToDate(new Date(currentRange.end_date), calendarType, 1).toISOString() === dateString) {
+                    // The date is adjacent to the current range, extend the current range and add the hits
+                    currentRange.end_date = date;
+                    currentHits += hits;
+                } else {
+                    // The date is not adjacent to the current range, save the current range and start a new one
+                    if (currentRange) {
+                        dateRangesWithHits.push({ range: currentRange, hits: currentHits });
+                    }
+                    currentRange = { start_date: date, end_date: date };
+                    currentHits = hits;
+                }
+            });
+
+            // Save the last range
+            if (currentRange) {
+                dateRangesWithHits.push({ range: currentRange, hits: currentHits });
+            }
+
+            // Sort the date ranges by hits in descending order
+            dateRangesWithHits.sort((a, b) => b.hits - a.hits);
+
+            // Return the sorted date ranges
+            return dateRangesWithHits;
+        },
     },
     methods: {
         // event
@@ -312,6 +379,46 @@ export default {
                 // the current user is the organiser
                 } else if (this.storeUser.user?.id === eventData.organiser?.id) {
                     this.eventPageType = EventPageType.Organiser;
+                    this.getParticipants();
+                    this.tabs =  [
+                        {
+                            name: "Event",
+                            slot_name: "event",
+                            narrow: "sm",
+                            icon: "description",
+                        },
+                        {
+                            name: "Responses",
+                            slot_name: "responses",
+                            narrow: "sm",
+                            icon: "group",
+                        },
+                        {
+                            name: "Date choices",
+                            slot_name: "date_choices",
+                            narrow: "sm",
+                            icon: "calendar_clock",
+                        },
+                        {
+                            name: "Calendar",
+                            slot_name: "calendar",
+                            icon: "calendar_today",
+                        },
+                    ]
+                } else {
+                    this.tabs =  [
+                        {
+                            name: "Event",
+                            slot_name: "event",
+                            narrow: "md",
+                            icon: "description",
+                        },
+                        {
+                            name: "Calendar",
+                            slot_name: "calendar",
+                            icon: "calendar_today",
+                        },
+                    ]
                 }
                 this.eventData = eventData;
             })
@@ -325,17 +432,14 @@ export default {
                         this.storeMessages.showMessageError(`An error occured while fetching your previous selection: ${response.data.error}`)
                         return;
                     }
-                    // empty response
-                    if (response.data.length === 0)
-                        return;
-                    
-                    if (response.data.selected_ranges.length !== 0) {
+
+                    if (response.data.participant_availabilities.length !== 0 || response.data.not_comming) {
                         // "upgrade" user to invitee if the data was submitted
                         if (this.eventPageType === EventPageType.NonConfirmed)
                             this.eventPageType = EventPageType.Invitee;
 
                         // update selectedDateRanges with previous response
-                        this.previousSelectedDateRanges = response.data.selected_ranges.map((range: DateRange) => ({
+                        this.previousSelectedDateRanges = response.data.participant_availabilities.map((range: DateRange) => ({
                             start_date: new Date(range.start_date),
                             end_date: new Date(range.end_date),
                         }));
@@ -372,7 +476,7 @@ export default {
         submitSelection() {
             // submit as an invitee
             const data = !this.isSelectedDateRangesSet ? {not_comming: true} : {
-                selected_ranges: this.selectedDateRanges.map(range => ({
+                participant_availabilities: this.selectedDateRanges.map(range => ({
                     start_date: range.start_date.toISOString(),
                     end_date: range.end_date.toISOString(),
                 }))
@@ -385,6 +489,8 @@ export default {
                         return;
                     this.previousSelectedDateRanges = this.selectedDateRanges;
                     this.storeMessages.showMessage("Your response has been submitted");
+                    if (this.storeUser.user!.id === this.eventData?.organiser?.id)
+                        this.getParticipants();
                 })
             
         },
@@ -398,6 +504,15 @@ export default {
                 SelectedDate: this.displayDateRange(selectedDateRange)
             }).then(() => {
                 this.storeMessages.showMessage("Event date successfully selected!\nYou will now be returned to the event list");
+                this.$router.push("/event/list");
+            })
+        },
+        declineInvitation() {
+            ApiService.post(`/events/event/participants/${this.$route.params.uuid}/`, {not_comming: true})
+            .then((response: AxiosResponse) => {
+                if (response.status !== 200)
+                    return;
+                this.storeMessages.showMessage("You have declined the invitation");
                 this.$router.push("/event/list");
             })
         },
@@ -425,6 +540,13 @@ export default {
                 return convertFunc(range.start_date);
             return `${convertFunc(range.start_date)} - ${convertFunc(range.end_date)}`;
         },
+        addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
+            if (calendarType === CalendarType.Date)
+                date.setDate(date.getDate() + units);
+            else if (calendarType === CalendarType.DateHour)
+                date.setHours(date.getHours() + units);
+            return date;
+        },
 
         // not logged in actions
         onLoginOrSignup() {
@@ -436,21 +558,22 @@ export default {
             // TODO:
             // - make an API point for creating an anonymous user which sets the token
         },
+        formatDateRange,
     },
     mounted() {
+        this.getEventData();
         if (!this.storeUser.user) {
             this.eventPageType = EventPageType.NotLoggedIn;
+        } else {
+            this.getPreviousSelectedDateRanges();
         }
 
-        this.getEventData();
-        this.getPreviousSelectedDateRanges();
-        this.getParticipants();
     },
     watch: {
         isOrganiserMode(isOrganiser: boolean) {
             if (isOrganiser) {
                 // get participant data
-                // this.getParticipants();
+                this.getParticipants();
                 this.selectedDateRanges = [];
             } else {
                 // initialize invitee selection to previous selection

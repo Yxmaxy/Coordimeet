@@ -25,6 +25,10 @@
             <!-- Content -->
             <div class="absolute w-screen top-7 -right-2 pl-4 pt-1 max-w-[20rem]">
                 <div class="flex flex-col bg-main-300 border-2 border-main-400 rounded-lg [&>*]:py-3 [&>*]:px-4 shadow-md">
+                    <div class="flex items-center justify-between">
+                        {{ userDisplayName }}
+                        <span class="material-symbols-outlined align-middle text-lg">person</span>
+                    </div>
                     <router-link to="/event/list" @click="closePopup" class="hover:bg-main-400 transition-colors flex items-center justify-between">
                         Events
                         <span class="material-symbols-outlined align-middle text-lg">calendar_today</span>
@@ -33,10 +37,10 @@
                         Groups
                         <span class="material-symbols-outlined align-middle text-lg">groups</span>
                     </router-link>
-                    <router-link to="/" @click="closePopup" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                    <!-- <router-link to="/" @click="closePopup" class="hover:bg-main-400 transition-colors flex items-center justify-between">
                         My profile
                         <span class="material-symbols-outlined align-middle text-lg">person</span>
-                    </router-link>
+                    </router-link> -->
                     <button @click="onLogout" class="hover:bg-main-400 transition-colors flex items-center justify-between">
                         Log out
                         <span class="material-symbols-outlined align-middle text-lg">logout</span>

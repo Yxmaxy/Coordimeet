@@ -53,6 +53,8 @@ export interface Event {
     event_notifications: EventNotification[],
 
     closed_group_users?: User[],
+
+    user_response?: boolean|null,
 }
 
 export enum EventPageType {
@@ -64,12 +66,9 @@ export enum EventPageType {
 }
 
 export interface EventParticipant {
-    first_name: string,
-    last_name: string,
-    email: string,
-
+    user: User,
     not_comming: boolean,
-    selected_ranges: DateRange[],
+    participant_availabilities: DateRange[],
 
     isSelected: boolean,
 }

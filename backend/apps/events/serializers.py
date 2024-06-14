@@ -34,9 +34,29 @@ class EventSerializer(serializers.ModelSerializer):
     closed_group_users = UserSerializer(many=True, required=False)
     closed_group_members = serializers.SerializerMethodField()
 
+    user_response = serializers.SerializerMethodField()
+
     class Meta:
         model = Event
-        fields = "__all__"
+        fields = [
+            "title",
+            "event_uuid",
+            "event_calendar_type",
+            "event_type",
+            "organiser",
+            "invited_group",
+            "is_group_organiser",
+            "description",
+            "event_length",
+            "deadline",
+            "selected_start_date",
+            "selected_end_date",
+            "closed_group_users",
+            "closed_group_members",
+            "event_availability_options",
+            "event_notifications",
+            "user_response",
+        ]
     
     def create(self, validated_data):
         closed_group_users = validated_data.pop("closed_group_users")
@@ -104,6 +124,13 @@ class EventSerializer(serializers.ModelSerializer):
             return MemberSerializer(instance.invited_group.members.all(), many=True).data
         return []
 
+    def get_user_response(self, obj):
+        try:
+            participant = EventParticipant.objects.get(event=obj, user=self.context['request'].user)
+            return not participant.not_comming
+        except EventParticipant.DoesNotExist:
+            return None
+
     def to_representation(self, instance):
         self.fields["organiser"] = UserSerializer()
         self.fields["invited_group"] = GroupSerializer()
@@ -112,20 +139,9 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class EventParticipantSelectedSerializer(serializers.ModelSerializer):
+    participant_availabilities = EventAvailabilityOptionSerializer(many=True)
+    user = UserSerializer()
+
     class Meta:
         model = EventParticipant
-        fields = ["email", "selected_ranges"]
-    
-    def to_representation(self, instance: EventParticipant):
-        return {
-            "first_name": instance.user.first_name,
-            "last_name": instance.user.last_name,
-            "email": instance.user.email,
-            "not_comming": instance.not_comming,
-            "selected_ranges": [
-                {
-                    "start_date": instance.start_date,
-                    "end_date": instance.end_date,
-                }
-            ],
-        }
+        fields = ["user", "not_comming", "participant_availabilities"]
