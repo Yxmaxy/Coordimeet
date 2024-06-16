@@ -19,7 +19,7 @@
                                 <help-icon>
                                     If you choose to submit an anonymous response, a temporary account will be created for you.
                                     <br />
-                                    If you try to access the same event again, you will not be able to see your previous response.
+                                    If you try to access the same event from another browser or if you log out, you will not be able to see your previous response.
                                 </help-icon>
                             </div>
                         </li>
@@ -111,8 +111,9 @@
                     v-for="participant in eventParticipants"
                     :class="[{
                         'text-main-200': !participant.isSelected,
-                    }, 'cursor-pointer hover:bg-main-100',
-                    'p-[1.1rem] font-bold border-b-2 border-b-main-200 transition-colors',
+                        'hover:bg-main-100 cursor-pointer': isOrganiserMode,
+                    },
+                    'select-none p-[1.1rem] font-bold border-b-2 border-b-main-200 transition-colors',
                     'flex justify-between items-center']"
                     @click="toggleParticipant(participant)"
                 >
@@ -125,11 +126,15 @@
             <template v-slot:date_choices>
                 <div
                     v-for="dateRange in getBestDateRanges"
-                    :class="[
-                        'cursor-pointer hover:bg-main-100', 'p-[1.1rem] font-bold border-b-2 border-b-main-200 transition-colors',
+                    :class="[{
+                        'hover:bg-main-100 cursor-pointer': isOrganiserMode,
+                    }, 'select-none p-[1.1rem] font-bold border-b-2 border-b-main-200 transition-colors',
                     'flex justify-between items-center']"
+                    @click="() => onOrganiserDateChoiceSelect(dateRange.range)"
                 >
-                    <div>{{ formatDateRange(dateRange.range) }}</div>
+                    <div v-if="eventData?.event_calendar_type">
+                        {{ formatDateRange(dateRange.range, eventData?.event_calendar_type) }}
+                    </div>
                     <div>{{ dateRange.hits }}</div>
                 </div>
             </template>
@@ -185,7 +190,7 @@
                     v-model:selectedDateRanges="selectedDateRanges"
                     :roughEventDateRange="roughEventDateRange"
                     :selectableDateRanges="eventData.event_availability_options"
-                    :heatmapDateRanges="selectedEventParticipantDateRanges"
+                    :heatmapDateRanges="isOrganiserMode ? selectedEventParticipantDateRanges : []"
                     :calendarType="eventData.event_calendar_type"
                     :enableOptions="!isOrganiserMode"
                 />
@@ -252,7 +257,7 @@ export default {
             selectedDateRanges: [] as DateRange[],  // the current calendar selection
             previousSelectedDateRanges: [] as DateRange[],  // set if the invitee submitted before
 
-            isOrganiserMode: true,  // organiser mode toggle
+            isOrganiserMode: false,  // organiser mode toggle
             gettingParticipantData: false,  // for fetching event participants
 
             tabs: [] as Tab[],
@@ -275,7 +280,7 @@ export default {
             return this.selectedDateRanges.length !== 0
         },
         selectedEventParticipantDateRanges(): DateRange[] {
-            if (!this.isOrganiserMode || !this.eventParticipants)
+            if (!this.eventParticipants)  // TODO: add check that the user is and admin or organiser
                 return [];
             const participantDates = this.eventParticipants
                 .filter(participant => participant.isSelected)
@@ -293,7 +298,7 @@ export default {
             // The calendarType parameter is provided by eventData.event_calendar_type
             // Add each unit to a map with the number of times it appears.
 
-            if (!this.isOrganiserMode || this.eventData === null )
+            if (this.eventData === null)  // TODO: add check that the user is and admin or organiser
                 return []
 
             // create a map for each possible date with the number of "hits"
@@ -311,43 +316,34 @@ export default {
                 }
             });
 
-            // Join all adjacent dates in dateCountMap into date ranges
-            // with the length of this.eventDate.length
-            // Sum the number of "hits" for each date range
-            // Return an ordered list of date ranges with the highest "hits"
+            // Loop through ordered keys of dateCountMap.
+            // Use the sliding window method to calculate the number of "hits" for each date range.
+            // A single date range is this.eventData.length long and is not related to user's date ranges
+            const result = [] as DateChoice[];
+            const dateCountKeys = Array.from(dateCountMap.keys()).sort();
 
-            const dateRangesWithHits: DateChoice[] = [];
-            let currentRange: DateRange | null = null;
-            let currentHits = 0;
-
-            Array.from(dateCountMap.keys()).sort().forEach(dateString => {
-                const date = new Date(dateString);
-                const hits = dateCountMap.get(dateString) || 0;
-
-                if (currentRange && this.addUnitsToDate(new Date(currentRange.end_date), calendarType, 1).toISOString() === dateString) {
-                    // The date is adjacent to the current range, extend the current range and add the hits
-                    currentRange.end_date = date;
-                    currentHits += hits;
-                } else {
-                    // The date is not adjacent to the current range, save the current range and start a new one
-                    if (currentRange) {
-                        dateRangesWithHits.push({ range: currentRange, hits: currentHits });
-                    }
-                    currentRange = { start_date: date, end_date: date };
-                    currentHits = hits;
+            for (const startDate of dateCountKeys) {
+                const endDate = this.addUnitsToDate(new Date(startDate), this.eventData.event_calendar_type, this.eventData.event_length);
+                // Check if endDate is in dateCountKeys
+                if (!dateCountKeys.includes(this.addUnitsToDate(new Date(endDate), this.eventData.event_calendar_type, -1).toISOString())) {
+                    continue;
                 }
-            });
-
-            // Save the last range
-            if (currentRange) {
-                dateRangesWithHits.push({ range: currentRange, hits: currentHits });
+                // sum all hits that fall between the start and end date
+                let hits = 0;
+                for (let currentDate = new Date(startDate); currentDate < endDate; currentDate = this.addUnitsToDate(currentDate, calendarType, 1)) {
+                    hits += dateCountMap.get(currentDate.toISOString()) || 0;
+                }
+                result.push({
+                    range: {
+                        start_date: new Date(startDate),
+                        end_date: endDate,
+                    },
+                    hits,
+                });
             }
 
-            // Sort the date ranges by hits in descending order
-            dateRangesWithHits.sort((a, b) => b.hits - a.hits);
-
-            // Return the sorted date ranges
-            return dateRangesWithHits;
+            // order the result by hits
+            return result.sort((a, b) => b.hits - a.hits);
         },
     },
     methods: {
@@ -495,6 +491,8 @@ export default {
             
         },
         finishEvent() {
+            // TODO: validate
+
             // finish the event as the organiser
             if (!this.isSelectedDateRangesSet || this.selectedDateRanges.length !== 1)
                 return;
@@ -522,6 +520,14 @@ export default {
             if (!this.isOrganiserMode)
                 return;
             participant.isSelected = !participant.isSelected;
+        },
+        onOrganiserDateChoiceSelect(dateRange: DateRange) {
+            if (!this.isOrganiserMode)
+                return;
+            this.selectedDateRanges = [{
+                start_date: new Date(dateRange.start_date),
+                end_date: new Date(this.addUnitsToDate(new Date(dateRange.end_date), this.eventData!.event_calendar_type, -1)),
+            }];
         },
 
         // helpers
@@ -554,9 +560,11 @@ export default {
             this.$router.push("/login");
         },
         onSubmitAnon() {
-            console.log("submit anonymously")
-            // TODO:
-            // - make an API point for creating an anonymous user which sets the token
+            this.storeUser.onCreateAnonymousUser()
+                .then(() => {
+                    this.storeMessages.showMessage("You have been logged in as an anonymous user");
+                    this.eventPageType = EventPageType.Invitee;
+                });
         },
         formatDateRange,
     },

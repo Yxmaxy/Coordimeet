@@ -46,8 +46,10 @@ export function initializeDateInput(type: CalendarType, date?: string, padding?:
     return `${now.getFullYear()}-${padNumber(now.getMonth() + 1)}-${padNumber(now.getDate())}T${padNumber(now.getHours())}:00`;
 }
 
-export function formatDateRange(range: DateRange): string {
+export function formatDateRange(range: DateRange, calendarType: CalendarType): string {
+    const formatDate = calendarType === CalendarType.Date ? formatDateDayMonth : formatDateDayMonthHour;
+    
     if (range.start_date === range.end_date)
-        return formatDateDayMonthYear(range.start_date);
-    return `${formatDateDayMonthYear(range.start_date)} - ${formatDateDayMonthYear(range.end_date)}`;
+        return formatDate(range.start_date);
+    return `${formatDate(range.start_date)} - ${formatDate(range.end_date)}`;
 }

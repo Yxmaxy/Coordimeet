@@ -84,6 +84,21 @@ export const useStoreUser = defineStore("storeUser", {
         async onLogout() {
             await removeTokens();
             this.user = undefined;
-        }
+        },
+        async onCreateAnonymousUser(): Promise<boolean> {
+            // create a new anonymous user
+            try {
+                const response = await ApiService.post("/users/anonymous/");
+                if (response.status === 201) {
+                    await saveTokens(response.data.access, response.data.refresh);
+                    await this.getUserFromToken();
+                    return true;
+                }
+            } catch (error: any) {
+                const storeMessages = useStoreMessages();
+                storeMessages.showMessageError(error.response.data.error);
+            }
+            return false;
+        },
     }
 })
