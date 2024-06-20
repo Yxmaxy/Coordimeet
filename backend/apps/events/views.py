@@ -8,7 +8,7 @@ from django.db.models import Q
 from apps.utils.permissions import IsEventOrganiserOrAdminInOrganiserGroup, IsEventOrganiserOrOwnerInOrganiserGroup
 from apps.users.models import MemberRole
 from apps.events.models import Event, EventParticipant, EventParticipantAvailability, EventTypeChoices
-from apps.events.serializers import EventSerializer, EventParticipantSelectedSerializer
+from apps.events.serializers import EventSerializer, EventParticipantSelectedSerializer, EventFinishSerializer
 
 
 class EventInvitedListAPIView(ListAPIView):
@@ -134,8 +134,8 @@ class EventOrganiserAPIView(APIView):
         """Select the selected_start_date and selected_end_date for the event"""
         event = Event.objects.get(event_uuid=event_uuid)
 
-        event.selected_start_date = request.data["selected_start_date"]
-        event.selected_end_date = request.data["selected_end_date"]
-        event.save()
+        serializer = EventFinishSerializer(event, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
         return Response({"message": "Selected dates saved"})

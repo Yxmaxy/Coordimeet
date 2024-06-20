@@ -149,3 +149,22 @@ class EventParticipantSelectedSerializer(serializers.ModelSerializer):
     class Meta:
         model = EventParticipant
         fields = ["user", "not_comming", "participant_availabilities"]
+
+
+class EventFinishSerializer(serializers.ModelSerializer):
+    event_notifications = EventNotificationSerializer(many=True)
+
+    class Meta:
+        model = Event
+        fields = ["selected_start_date", "selected_end_date", "event_notifications"]
+
+    def update(self, instance: Event, validated_data):
+        event_notifications_data = validated_data.pop("event_notifications")
+        super(EventFinishSerializer, self).update(instance, validated_data)
+
+        for event_notification_data in event_notifications_data:
+            EventNotification.objects.create(event=instance, **event_notification_data)
+        
+        instance.handle_notifications_finished()
+        instance.refresh_from_db()
+        return instance

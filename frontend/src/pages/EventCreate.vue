@@ -323,7 +323,7 @@
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
-import { initializeDateInput } from "@/utils/dates";
+import { initializeDateInput, addUnitsToDate } from "@/utils/dates";
 
 import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
@@ -674,13 +674,7 @@ export default {
         },
 
         // helpers
-        addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
-            if (calendarType === CalendarType.Date)
-                date.setDate(date.getDate() + units);
-            else if (calendarType === CalendarType.DateHour)
-                date.setHours(date.getHours() + units);
-            return date;
-        },
+        addUnitsToDate,
     },
     mounted() {
         this.getGroups();

@@ -1,5 +1,6 @@
 import os
 import uuid
+from datetime import timedelta
 
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -53,6 +54,12 @@ class Event(models.Model):
     def send_notification_on_update(self) -> bool:
         return self.event_notifications.filter(
             notification_type=EventNotificationTypeChoices.UPDATE
+        ).exists()
+
+    @property
+    def send_notification_date_selected(self) -> bool:
+        return self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.EVENT_DATE_SELECT
         ).exists()
 
     @property
@@ -120,6 +127,43 @@ class Event(models.Model):
                 url=self.frontend_url,
             ).id
             last_notification.save()
+
+    def handle_notifications_finished(self):
+        if not self.invited_group:
+            return
+
+        # TODO: handle public groups
+
+        # handle event date selected
+        end_date = self.selected_end_date
+        format_str = "%d. %m. %Y"
+        if self.event_calendar_type == EventCalendarTypeChoices.DATE_HOUR:
+            format_str = "%d. %m. %Y %H:%M"
+            end_date = end_date + timedelta(hours=1)
+        
+        # TODO: the dates here are not correct...
+        
+        if self.send_notification_date_selected:
+            NotificationServices.send_group_notification(
+                group=self.invited_group,
+                head=f"An event has finished!",
+                body=f"{self} will take place from {self.selected_start_date.strftime(format_str)} to {end_date.strftime(format_str)}!",
+                url=self.frontend_url,
+            )
+        
+        # handle before event starts
+        if start_notifications := self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.EVENT_START
+        ):
+            notification = start_notifications.first()
+            notification.task_id = NotificationServices.send_group_notification_at_time(
+                group=self.invited_group,
+                head=f"Event is about to start!",
+                body=f"{self} is starting soon!",
+                time=notification.notification_time,
+                url=self.frontend_url,
+            ).id
+            notification.save()
 
 
 class EventNotificationTypeChoices(models.IntegerChoices):

@@ -49,7 +49,7 @@
                             You've been invited to:
                         </template>
                         <template v-else>
-                            The event date has been selected!
+                            This event's date has been selected:
                         </template>
                     </div>
                 </template>
@@ -74,17 +74,76 @@
                         v-if="pageTypeIn(EventPageType.Finished)"
                         class="text-lg font-bold mt-4"
                     >
-                        The selected date is: {{ eventData.selected_start_date }}
+                        The selected date is: {{ displayDateRange({ start_date: eventData.selected_start_date!, end_date: eventData.selected_end_date! }) }}
                     </div>
                 </template>
             </event-data>
+        </div>
+
+        <!-- FinishConfirm -->
+        <div
+            v-if="showFinishConfirm && eventData"
+            class="flex justify-center items-center min-h-[calc(100vh-3.5rem)]"
+        >
+            <div class="bg-main-100 px-16 py-10 rounded-lg shadow-lg">
+                <div class="text-xl font-bold">Are you sure you want to finish this event?</div>
+                <div class="text-2xl font-bold">Your choice: {{ formatDateRange(selectedDateRanges[0], eventData?.event_calendar_type) }}</div>
+                <div class="mt-3">
+                    <div>
+                        This action is irreversible.
+                        <br/>
+                        You will not be able to change the date after you finish the event.
+                    </div>
+                    <div class="mt-3">
+                        You can send the next notifications:
+                        <div class="ml-3 flex flex-col gap-2">
+                            <custom-toggle
+                                class="mt-2"
+                                v-model="eventNotifications.afterEventDateSelected"
+                            >
+                                <template v-slot:right>
+                                    <div class="ml-2 flex gap-1 items-center">
+                                        <div>after the event date is selected</div>
+                                    </div>
+                                </template>
+                            </custom-toggle>
+
+                            <div class="flex flex-col gap-1">
+                                <custom-toggle
+                                    v-model="eventNotifications.beforeEventStarts"
+                                >
+                                    <template v-slot:right>
+                                        <div class="ml-2 flex gap-1 items-center">
+                                            <div>before the event starts</div>
+                                        </div>
+                                    </template>
+                                </custom-toggle>
+                                <label
+                                    v-if="eventNotifications.beforeEventStarts"
+                                    class="ml-8"
+                                >
+                                    <custom-input
+                                        type="datetime-local"
+                                        v-model="eventNotificationsBeforeStarts"
+                                        :required="eventNotifications.beforeEventStarts"
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-center gap-4 mt-4">
+                    <custom-button :click="() => showFinishConfirm = false">Cancel</custom-button>
+                    <custom-button :click="finishEvent">Finish this event!</custom-button>
+                </div>
+            </div>
         </div>
 
         <!-- Content -->
         <tab-controller
             v-else
             :tabs="tabs"
-            :breakpoint="1290"
+            :breakpoint="1382"
         >
             <template v-slot:event>
                 <div class="h-full bg-main-100 p-4">
@@ -133,7 +192,7 @@
                     @click="() => onOrganiserDateChoiceSelect(dateRange.range)"
                 >
                     <div v-if="eventData?.event_calendar_type">
-                        {{ formatDateRange(dateRange.range, eventData?.event_calendar_type) }}
+                        {{ formatDateRange(dateRange.range, eventData?.event_calendar_type, false) }}
                     </div>
                     <div>{{ dateRange.hits }}</div>
                 </div>
@@ -165,7 +224,7 @@
                         v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
                         :small="true"
                         :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
-                        :click="finishEvent"
+                        :click="() => showFinishConfirm = true"
                     >
                         Submit and finish <custom-icon class="text-base" icon="event_available" />
                     </custom-button>
@@ -207,10 +266,9 @@ import { useStoreUser } from "@/stores/storeUser";
 import { useStoreMessages } from "@/stores/storeMessages";
 
 import { CalendarType, DateRange } from "@/types/calendar";
-import { Event, EventPageType, EventParticipant } from "@/types/event";
+import { Event, EventNotification, EventNotificationType, EventPageType, EventParticipant } from "@/types/event";
 import { Tab } from "@/types/tabs";
-
-import { formatDateDayMonthYear, formatDateDayMonthHour, formatDateRange } from "@/utils/dates";
+import { initializeDateInput, formatDateDayMonthYear, formatDateDayMonthHour, formatDateRange, addUnitsToDate } from "@/utils/dates";
 
 import EventData from "@/components/EventData.vue";
 import Calendar from "@/components/Calendar.vue";
@@ -218,6 +276,7 @@ import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomToggle from "@/components/ui/CustomToggle.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
+import CustomInput from "@/components/ui/CustomInput.vue";
 import HelpIcon from "@/components/ui/HelpIcon.vue";
 
 interface DateChoice {
@@ -233,6 +292,7 @@ export default {
         CustomButton,
         CustomToggle,
         CustomIcon,
+        CustomInput,
         HelpIcon,
     },
     setup() {
@@ -260,7 +320,15 @@ export default {
             isOrganiserMode: false,  // organiser mode toggle
             gettingParticipantData: false,  // for fetching event participants
 
+            showFinishConfirm: false,  // show finish confirm dialog
+
             tabs: [] as Tab[],
+
+            eventNotifications: {
+                afterEventDateSelected: false,
+                beforeEventStarts: false,
+            },
+            eventNotificationsBeforeStarts: initializeDateInput(CalendarType.DateHour),
         }
     },
     computed: {
@@ -491,19 +559,50 @@ export default {
             
         },
         finishEvent() {
-            // TODO: validate
-
-            // finish the event as the organiser
-            if (!this.isSelectedDateRangesSet || this.selectedDateRanges.length !== 1)
+            // validate selected date
+            if (!this.isSelectedDateRangesSet || this.selectedDateRanges.length !== 1) {
+                this.storeMessages.showMessageError("You did not select a date range!");
                 return;
+            }
+
+            // check that the selected date range is the same length as the eventData.event_length
+            const selectedDateRange = this.selectedDateRanges[0];
+            let startDate = new Date(selectedDateRange.start_date);
+            let units = 1;
+            while (startDate.getTime() < selectedDateRange.end_date.getTime()) {
+                startDate = this.addUnitsToDate(new Date(startDate), this.eventData?.event_calendar_type!, 1);
+                units++;
+            }
+            if (units !== this.eventData!.event_length) {
+                this.storeMessages.showMessageError(`You did not select a valid date range. The event must be exactly ${this.eventData!.event_length} ${this.eventData!.event_calendar_type === CalendarType.Date ? "days" : "hours"} long!`);
+                return;
+            }
+
+            const eventNotifications = [] as EventNotification[]
+            if (this.eventNotifications.afterEventDateSelected)
+                eventNotifications.push({ notification_type: EventNotificationType.EventDateSelected });
+            if (this.eventNotifications.beforeEventStarts)
+                eventNotifications.push({
+                    notification_type: EventNotificationType.EventStart,
+                    notification_time: new Date(this.eventNotificationsBeforeStarts),
+                });
             
-            const selectedDateRange = this.selectedDateRanges[0];  // get the selected date range
-            ApiService.put(`eventDate.php?IDEvent=${this.$route.params.uuid}`, {
-                SelectedDate: this.displayDateRange(selectedDateRange)
-            }).then(() => {
-                this.storeMessages.showMessage("Event date successfully selected!\nYou will now be returned to the event list");
-                this.$router.push("/event/list");
-            })
+            let endDate = selectedDateRange.end_date;
+            if (this.eventData!.event_calendar_type == CalendarType.DateHour) {
+                endDate = this.addUnitsToDate(selectedDateRange.end_date, CalendarType.DateHour, 1);
+            }
+            
+            const data = {
+                selected_start_date: selectedDateRange.start_date,
+                selected_end_date: endDate,
+                event_notifications: eventNotifications,
+            }
+
+            ApiService.post(`/events/event/organiser/${this.$route.params.uuid}/`, data)
+                .then(() => {
+                    this.storeMessages.showMessage("The event date was successfully selected!");
+                    this.$router.push("/event/list");
+                })
         },
         declineInvitation() {
             ApiService.post(`/events/event/participants/${this.$route.params.uuid}/`, {not_comming: true})
@@ -546,12 +645,9 @@ export default {
                 return convertFunc(range.start_date);
             return `${convertFunc(range.start_date)} - ${convertFunc(range.end_date)}`;
         },
-        addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
-            if (calendarType === CalendarType.Date)
-                date.setDate(date.getDate() + units);
-            else if (calendarType === CalendarType.DateHour)
-                date.setHours(date.getHours() + units);
-            return date;
+        onShowFinishConfirm() {
+            this.eventNotificationsBeforeStarts = initializeDateInput(this.eventData?.event_calendar_type!, this.selectedDateRanges[0]?.start_date.toISOString());
+            this.showFinishConfirm = true;
         },
 
         // not logged in actions
@@ -567,6 +663,7 @@ export default {
                 });
         },
         formatDateRange,
+        addUnitsToDate,
     },
     mounted() {
         this.getEventData();
