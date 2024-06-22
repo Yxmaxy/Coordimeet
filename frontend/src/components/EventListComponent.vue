@@ -10,25 +10,33 @@
                 <div>
                     <b>{{ event.title }}</b>
                     <div class="flex align-middle gap-1 text-sm">
-                        <template v-if="event.is_group_organiser">
+                        <abbr
+                            v-if="event.is_group_organiser"
+                            class="no-underline"
+                            title="Organiser group"
+                        >
                             <custom-icon class="text-sm" icon="group" />
                             {{ event.invited_group?.name }}
-                        </template>
-                        <template v-else>
+                        </abbr>
+                        <abbr
+                            v-else
+                            class="no-underline"
+                            title="Organiser"
+                        >
                             <custom-icon class="text-sm" icon="person" />
                             {{ event.organiser?.email }}
-                        </template>
+                        </abbr>
                     </div>
                 </div>
                 <div class="flex gap-2 items-center">
-                    <template v-if="true">
+                    <template v-if="!event.selected_start_date && !event.selected_end_date">
                         <custom-button
                             class="h-8 w-8 rounded-full !text-base"
                             @click.stop="() => $router.push(`/event/${event.event_uuid}`)"
                         >
-                            <custom-icon v-if="event.user_response === null" icon="calendar_today" />
-                            <custom-icon v-if="event.user_response === false" icon="event_busy" />
-                            <custom-icon v-if="event.user_response === true" icon="event_available" />
+                            <custom-icon v-if="event.user_response === null" icon="calendar_today" title="Respond to event" />
+                            <custom-icon v-if="event.user_response === false" icon="event_busy" title="Not comming" />
+                            <custom-icon v-if="event.user_response === true" icon="event_available" title="Comming to event" />
                         </custom-button>
                         <custom-button
                             v-if="userIsOrganiser"
@@ -38,38 +46,20 @@
                             <custom-icon icon="edit" />
                         </custom-button>
                     </template>
-                    <template v-else>
+                    <div v-else class="flex gap-3 items-center">
+                        <abbr class="no-underline" title="Selected date">
+                            {{
+                                formatDateRange({
+                                    start_date: event.selected_start_date!,
+                                    end_date: event.selected_end_date!
+                                }, event.event_calendar_type)
+                            }}
+                        </abbr>
                         <custom-button class="h-8 w-8 rounded-full !text-base">
-                            <custom-icon icon="event_available" />
+                            <custom-icon icon="event_repeat" @click.stop="() => $router.push({name: 'event_new', params: { uuid: event.event_uuid }})"/>
                         </custom-button>
-                        <custom-button class="h-8 w-8 rounded-full !text-base">
-                            <custom-icon icon="event_repeat" />
-                        </custom-button>
-                    </template>
+                    </div>
                     
-                </div>
-            </div>
-            <div>
-                <div
-                    v-if="userIsOrganiser && event.selected_start_date && event.selected_end_date"
-                    class="flex gap-2"
-                >
-                    <abbr title="Event deadline">
-                        {{ formatDateDayMonthYear(new Date(event.deadline)) }}
-                    </abbr>
-                    <custom-icon class="text-base" icon="event_upcoming" />
-                </div>
-                <div
-                    v-else-if="event.selected_start_date && event.selected_end_date"
-                    class="flex gap-2 font-bold"
-                >
-                    <abbr title="Selected date">
-                        {{ formatDateDayMonthYear(event.selected_start_date) }}
-                        <template v-if="event.selected_start_date !== event.selected_end_date">
-                            - {{ formatDateDayMonthYear(event.selected_end_date) }}
-                        </template>
-                    </abbr>
-                    <custom-icon class="text-base" icon="event_available" />
                 </div>
             </div>
         </div>
@@ -78,7 +68,7 @@
 
 <script lang="ts">
 import { PropType } from "vue";
-import { formatDateDayMonthYear } from "@/utils/dates";
+import { formatDateRange } from "@/utils/dates";
 import { Event } from "@/types/event";
 
 import CustomIcon from "@/components/ui/CustomIcon.vue";
@@ -102,7 +92,7 @@ export default {
         }
     },
     methods: {
-        formatDateDayMonthYear,
+        formatDateRange,
     },
 }
 </script>

@@ -114,7 +114,7 @@
 <script lang="ts">
 import { PropType } from "vue";
 
-import { formatDateDayMonthYear, formatDateDayMonth, formatDateHour } from "@/utils/dates";
+import { formatDateDayMonthYear, formatDateDayMonth, formatDateHour, addUnitsToDate } from "@/utils/dates";
 import { CalendarType, DateRange, CalendarDate } from "@/types/calendar";
 
 import CustomButton from "./ui/CustomButton.vue";
@@ -516,13 +516,6 @@ export default {
             return this.selectableDateRanges
                 .some(dateRange => this.isDateInDateRange(date, dateRange));
         },
-        addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
-            if (calendarType === CalendarType.Date)
-                date.setDate(date.getDate() + units);
-            else if (calendarType === CalendarType.DateHour)
-                date.setHours(date.getHours() + units);
-            return date;
-        },
         deepCopyDateRange(dateRange: DateRange): DateRange {
             return {
                 start_date: new Date(dateRange.start_date),
@@ -584,13 +577,16 @@ export default {
             return date <= today;
         },
         isDateDisabled(date: Date): boolean {
-            return !this.isDateInSelectableDateRanges(date) || this.isDateInPast(date);
+            return !this.isDateInSelectableDateRanges(date);
         },
 
         // heatmap
         getHeatmapValue(calendarDate: CalendarDate) {
             return calendarDate.heatmap / (this.maxHeatmapValue + 1);
-        }
+        },
+
+        // helpers
+        addUnitsToDate,
     },
     watch: {
         selectUnavailable() {

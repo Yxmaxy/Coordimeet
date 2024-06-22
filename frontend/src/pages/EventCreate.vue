@@ -155,7 +155,7 @@
 
                 <div class="ml-4 mb-4">
                     <b>Select calendar type</b>
-                    <div class="flex flex-col gap-2 mt-3">
+                    <div v-if="calendarType" class="flex flex-col gap-2 mt-3">
                         <custom-radio
                             type="radio"
                             v-model="calendarType"
@@ -312,6 +312,7 @@
         <template v-slot:calendar_input>
             <div class="bg-main-000 h-full">
                 <calendar
+                    v-if="calendarType"
                     v-model:selectedDateRanges="selectedDateRanges"
                     :roughEventDateRange="roughEventDateRange"
                     :calendarType="calendarType"
@@ -386,7 +387,7 @@ export default {
             deadline: initializeDateInput(CalendarType.DateHour, undefined, 1),
             eventType: EventType.Public,
             
-            calendarType: CalendarType.Date,
+            calendarType: null as CalendarType|null,
             selectedDateRanges: [] as DateRange[],
             fromDate: initializeDateInput(CalendarType.Date),
             toDate: initializeDateInput(CalendarType.Date, undefined, 14),
@@ -425,7 +426,7 @@ export default {
             ] as Tab[];
         },
         isEditing() {
-            return this.$route.params.uuid !== undefined;
+            return this.$route.name === "event_edit";
         },
         calendarTypeDisplay() {
             if (this.calendarType === CalendarType.Date)
@@ -463,7 +464,7 @@ export default {
                 let units = 1;  // if a date range is selected, it must have at least 1 unit
                 let startDate = dateRange.start_date;
                 while (startDate.getTime() < dateRange.end_date.getTime()) {
-                    startDate = this.addUnitsToDate(new Date(startDate), this.calendarType, 1);
+                    startDate = this.addUnitsToDate(new Date(startDate), this.calendarType!, 1);
                     units++;
                 }
                 if (units < this.length) {
@@ -588,23 +589,42 @@ export default {
             // set all variables
             ApiService.get(`events/event/${this.$route.params.uuid}/`)
             .then(res => {
+                let difference: number = 0;
+                if (this.$route.name === "event_new") {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const firstDate = new Date(res.data.event_availability_options[0].start_date);
+                    firstDate.setHours(0, 0, 0, 0);
+
+                    if (this.calendarType === CalendarType.Date) {
+                        difference = Math.floor((today.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+                    } else {
+                        difference = Math.floor((today.getTime() - firstDate.getTime()) / (1000 * 60 * 60));
+                    }
+                }
                 this.title = res.data.title;
                 this.eventType = res.data.event_type;
                 this.calendarType = res.data.event_calendar_type;
                 this.length = res.data.event_length;
 
-                this.fromDate = initializeDateInput(CalendarType.Date, res.data.event_availability_options[0].start_date, -7);
-                this.toDate = initializeDateInput(CalendarType.Date, res.data.event_availability_options[0].end_date, 7);
-                
+                this.fromDate = initializeDateInput(CalendarType.Date,
+                    addUnitsToDate(new Date(res.data.event_availability_options[0].start_date), this.calendarType!, difference).toString()
+                )
+                this.toDate = initializeDateInput(CalendarType.Date,
+                    addUnitsToDate(new Date(res.data.event_availability_options[res.data.event_availability_options.length - 1].end_date), this.calendarType!, difference).toString()
+                )
+
                 this.description = res.data.description as string;
-                this.deadline = initializeDateInput(CalendarType.DateHour, res.data.deadline);
+                this.deadline = initializeDateInput(CalendarType.DateHour,
+                    addUnitsToDate(new Date(res.data.deadline), this.calendarType!, difference).toString()
+                );
 
                 this.groupInvited = res.data.invited_group?.id;
                 this.isGroupOrganiser = res.data.is_group_organiser;
 
-                this.selectedDateRanges = res.data.event_availability_options.map((dateRange: any) => ({
-                    start_date: new Date(dateRange.start_date),
-                    end_date: new Date(dateRange.end_date),
+                this.selectedDateRanges = res.data.event_availability_options.map((dateRange: DateRange) => ({
+                    start_date: addUnitsToDate(new Date(dateRange.start_date), this.calendarType!, difference),
+                    end_date: addUnitsToDate(new Date(dateRange.end_date), this.calendarType!, difference),
                 }));
 
                 if (res.data.closed_group_members) {
@@ -678,15 +698,18 @@ export default {
     },
     mounted() {
         this.getGroups();
-        if (this.isEditing) {
+        if (this.$route.params.uuid) {
             this.getEditingEvent();
+        } else {
+            this.calendarType = CalendarType.Date;
         }
     },
     watch: {
-        calendarType(newType: CalendarType) {
+        calendarType(newType: CalendarType, oldType: CalendarType) {
             this.toDate = initializeDateInput(newType, this.toDate);
             this.fromDate = initializeDateInput(newType, this.fromDate);
-            this.selectedDateRanges = [];
+            if (oldType)  // don't clean on mount
+                this.selectedDateRanges = []
         },
     },
 }

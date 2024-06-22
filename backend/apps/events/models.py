@@ -1,6 +1,5 @@
 import os
 import uuid
-from datetime import timedelta
 
 from django.db import models
 from django.contrib.auth import get_user_model
@@ -139,10 +138,7 @@ class Event(models.Model):
         format_str = "%d. %m. %Y"
         if self.event_calendar_type == EventCalendarTypeChoices.DATE_HOUR:
             format_str = "%d. %m. %Y %H:%M"
-            end_date = end_date + timedelta(hours=1)
-        
-        # TODO: the dates here are not correct...
-        
+
         if self.send_notification_date_selected:
             NotificationServices.send_group_notification(
                 group=self.invited_group,
