@@ -1,11 +1,11 @@
 import { clientsClaim } from "workbox-core"
 import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching"
 
-import { retrieveAccessToken } from "@/utils/tokens";
+import { retrieveTokens } from "@/utils/tokens";
 
 declare let self: ServiceWorkerGlobalScope;
 
-const DEBUG = true;
+const DEBUG = import.meta.env.MODE === "development";
 
 clientsClaim();
 
@@ -85,13 +85,13 @@ async function sendSubscriptionData(subscription: PushSubscription, userID: Numb
     };
 
     try {
-        const token = await retrieveAccessToken();
+        const { accessToken } = await retrieveTokens();
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/notifications/save_information/`, {
             method: "POST",
             body: JSON.stringify(data),
             headers: {
                 "content-type": "application/json",
-                "Authorization": `Bearer ${token}`,
+                "Authorization": `Bearer ${accessToken}`,
             },
             credentials: "include"
         });

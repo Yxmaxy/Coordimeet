@@ -9,6 +9,7 @@
             </template>
         </tab-controller>
         <custom-button
+            v-if="storeOnline.isOnline"
             class="right-4 bottom-4 fixed !p-3 !rounded-2xl shadow-md"
             :click="() => $router.push('/event/new')"
         >
@@ -21,6 +22,7 @@
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
 import { useStoreMessages } from "@/stores/storeMessages";
+import { useStoreOnline } from "@/stores/storeOnline";
 
 import { Event } from "@/types/event";
 import { Tab } from "@/types/tabs";
@@ -54,11 +56,13 @@ export default {
     setup() {
         const { user } = useStoreUser();
         const storeMessages = useStoreMessages();
+        const storeOnline = useStoreOnline();
         return {
             user,
             tabs,
 
             storeMessages,
+            storeOnline,
         }
     },
     data() {

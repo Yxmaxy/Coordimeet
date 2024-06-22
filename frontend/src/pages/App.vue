@@ -10,7 +10,6 @@
             />
             <user-component />
         </header>
-        <offline-component />
         <router-view class="min-h-[calc(100vh-3.5rem)] h-full" />
         <message />
     </div>
@@ -18,14 +17,12 @@
 
 <script lang="ts">
 import UserComponent from "@/components/UserComponent.vue";
-import OfflineComponent from "@/components/OfflineComponent.vue";
 import Message from "@/components/ui/Message.vue";
 
 export default {
     name: "App",
     components: {
         UserComponent,
-        OfflineComponent,
         Message,
     },
 }

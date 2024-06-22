@@ -1,19 +1,19 @@
 <template>
-    <div>
-        <transition name="fadeHeight">
-            <div
-                v-if="!isOnline"
-                class="sticky left-0 right-0 bg-main-400 text-main-000 transition-all text-sm flex justify-center gap-1"
-            >
-                You're offline <custom-icon class="text-sm" icon="wifi_off" />
-            </div>
-        </transition>
-    </div>
+    <transition name="fadeHeight">
+        <div
+            v-if="!storeOnline.isOnline"
+            class="sticky top-14 left-0 right-0 h-6 items-center bg-main-400 text-main-000 transition-all text-sm flex justify-center gap-1"
+        >
+            You're offline <custom-icon class="text-sm" icon="wifi_off" />
+        </div>
+    </transition>
 </template>
 
 <script lang="ts">
 import { Transition } from "vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
+
+import { useStoreOnline } from "@/stores/storeOnline";
 
 export default {
     name: "OfflineComponent",
@@ -21,17 +21,18 @@ export default {
         Transition,
         CustomIcon,
     },
-    data() {
+    setup() {
+        const storeOnline = useStoreOnline();
         return {
-            isOnline: navigator.onLine,
-        };
+            storeOnline,
+        }
     },
     methods: {
         handleOffline() {
-            this.isOnline = false;
+            this.storeOnline.isOnline = false;
         },
         handleOnline() {
-            this.isOnline = true;
+            this.storeOnline.isOnline = true;
         },
     },
     mounted() {
@@ -54,7 +55,7 @@ export default {
 /* fade height */
 .fadeHeight-enter-active,
 .fadeHeight-leave-active {
-    transition: height 250ms linear;
+    transition: height 150ms linear;
     height: 20px;
 }
 .fadeHeight-enter-from,
