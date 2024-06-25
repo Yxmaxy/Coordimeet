@@ -10,4 +10,5 @@ urlpatterns = [
     path("event/<str:event_uuid>/", views.EventManageAPIView.as_view(), name="event_manage_api"),
     path("event/participants/<str:event_uuid>/", views.EventParticipantAPIView.as_view(), name="event_participant_api"),
     path("event/organiser/<str:event_uuid>/", views.EventOrganiserAPIView.as_view(), name="event_organiser_api"),
+    path("event/icalendar/<str:event_uuid>/", views.EventICalendarAPIView.as_view(), name="event_icalendar_api"),
 ]

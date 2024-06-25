@@ -205,7 +205,7 @@ class NotificationServices:
                 },
                 "hits": hits,
             })
-        
+
         # if there are no results, return the first available date
         if not result:
             first_range = event.event_availability_options.order_by("start_date").first()

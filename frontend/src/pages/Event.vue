@@ -75,6 +75,14 @@
                         class="text-lg font-bold mt-4"
                     >
                         The selected date is: {{ formatDateRange({ start_date: eventData.selected_start_date!, end_date: eventData.selected_end_date! }, eventData?.event_calendar_type) }}
+
+                        <custom-button
+                            class="mt-4"
+                            :click="getICalFile"
+                        >
+                            <custom-icon class="text-base" icon="download" />
+                            Download iCal file
+                        </custom-button>
                     </div>
                 </template>
             </event-data>
@@ -220,30 +228,35 @@
                     </div>
 
                     <!-- Submit buttons -->
-                    <template v-if="storeOnline.isOnline">
-                        <custom-button
-                            v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
-                            :small="true"
-                            :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
-                            :click="() => showFinishConfirm = true"
-                        >
-                            Submit and finish <custom-icon class="text-base" icon="event_available" />
-                        </custom-button>
-                        <custom-button
-                            v-else
-                            :small="true"
-                            :click="submitSelection"
-                            :disabled="gettingParticipantData"
-                        >
-                            <template v-if="!isSelectedDateRangesSet">
-                                Submit as unavailable
-                            </template>
-                            <template v-else>
-                                Submit
-                            </template>
-                            <custom-icon class="text-base" icon="event" />
-                        </custom-button>
-                    </template>
+                    <div v-if="storeOnline.isOnline">
+                        <div>
+                            <custom-button
+                                v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
+                                :small="true"
+                                :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
+                                :click="() => showFinishConfirm = true"
+                            >
+                                Submit and finish <custom-icon class="text-base" icon="event_available" />
+                            </custom-button>
+                            <custom-button
+                                v-else
+                                :small="true"
+                                :click="submitSelection"
+                                :disabled="gettingParticipantData"
+                            >
+                                <template v-if="!isSelectedDateRangesSet">
+                                    Submit as unavailable
+                                </template>
+                                <template v-else>
+                                    Submit
+                                </template>
+                                <custom-icon class="text-base" icon="event" />
+                            </custom-button>
+                        </div>
+                        <div>
+                            <input type="file" accept=".ics" v-on:change="getUnavailableDatesFromICal" />
+                        </div>
+                    </div>
                 </div>
                 <!-- Calendar -->
                 <calendar
@@ -539,6 +552,44 @@ export default {
                     this.gettingParticipantData = false;
                 })
         },
+        async getUnavailableDatesFromICal(event: any) {
+            const file = event.target.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const res = await ApiService.post(`events/event/icalendar/${this.$route.params.uuid}/`, formData)
+            // handle the response
+            const unavailableDates = res.data.map((range: any) => ({
+                start_date: new Date(range.event_start),
+                end_date: new Date(range.event_end),
+            } as DateRange));
+
+            let newSelectedDateRanges = this.eventData?.event_availability_options!.map((availabilityOption: any) => (
+                {
+                    start_date: new Date(availabilityOption.start_date),
+                    end_date: new Date(availabilityOption.end_date),
+                } as DateRange
+            ));
+            for (const range of unavailableDates) {
+                newSelectedDateRanges = this.deleteDateRangeFromDateRanges(range, newSelectedDateRanges!);
+            }
+            if (!newSelectedDateRanges) {
+                return;
+            }
+            this.selectedDateRanges = newSelectedDateRanges;
+        },
+        getICalFile() {
+            ApiService.get(`events/event/icalendar/${this.$route.params.uuid}/`, { responseType: "blob" })
+                .then(res => {
+                    // handle the response
+                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                    const link = document.createElement("a");
+                    link.href = url;
+                    link.setAttribute("download", "event.ics");
+                    document.body.appendChild(link);
+                    link.click();
+                });
+        },
 
         // submit event
         submitSelection() {
@@ -641,6 +692,52 @@ export default {
                 start_date: new Date(dateRange.start_date),
                 end_date: new Date(this.addUnitsToDate(new Date(dateRange.end_date), this.eventData!.event_calendar_type, -1)),
             }];
+        },
+        deleteDateRangeFromDateRanges(deleteDateRange: DateRange, dateRanges: DateRange[]): DateRange[] {
+            // remove "eaten up" ranges
+            dateRanges = dateRanges.filter(x => {
+                return !(x.start_date >= deleteDateRange.start_date && x.end_date <= deleteDateRange.end_date);
+            });
+            
+            for (const dateRange of dateRanges) {
+                if (dateRange.start_date <= deleteDateRange.start_date && deleteDateRange.end_date <= dateRange.end_date) {
+                    // selection splits existing range
+                    if (deleteDateRange.start_date > dateRange.start_date && deleteDateRange.end_date < dateRange.end_date) {
+                        // add current selection to date range
+                        const newDateFrom = new Date(deleteDateRange.start_date);
+                        const newDateTo = new Date(deleteDateRange.end_date);
+                        // add padding
+                        this.addUnitsToDate(newDateFrom, this.eventData?.event_calendar_type!, -1);
+                        this.addUnitsToDate(newDateTo, this.eventData?.event_calendar_type!, 1);
+
+                        // create new date range for last part
+                        dateRanges.push({
+                            start_date: newDateTo,
+                            end_date: dateRange.end_date,
+                        });
+                        // update current range for first part
+                        dateRange.end_date = new Date(newDateFrom);
+                        continue;
+                    }
+                    // remove from start
+                    if (deleteDateRange.start_date.getTime() === dateRange.start_date.getTime()) {
+                        const newDateTo = new Date(deleteDateRange.end_date);
+                        // add padding
+                        this.addUnitsToDate(newDateTo, this.eventData?.event_calendar_type!, 1)
+
+                        dateRange.start_date = newDateTo;
+                    }
+                    // remove from end
+                    if (deleteDateRange.end_date.getTime() === dateRange.end_date.getTime()) {
+                        const newDateFrom = new Date(deleteDateRange.start_date);
+                        // add padding
+                        this.addUnitsToDate(newDateFrom, this.eventData?.event_calendar_type!, -1)
+
+                        dateRange.end_date = newDateFrom;
+                    }
+                }
+            }
+            return dateRanges;
         },
 
         // helpers

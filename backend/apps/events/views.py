@@ -1,9 +1,12 @@
+from icalendar import Calendar, Event as ICalEvent
+
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from django.db.models import Q
+from django.http import HttpResponse
 
 from apps.utils.permissions import IsEventOrganiserOrAdminInOrganiserGroup, IsEventOrganiserOrOwnerInOrganiserGroup
 from apps.users.models import MemberRole
@@ -139,3 +142,39 @@ class EventOrganiserAPIView(APIView):
         serializer.save()
 
         return Response({"message": "Selected dates saved"})
+
+
+class EventICalendarAPIView(APIView):
+    def post(self, request, event_uuid=None):
+        """
+        Read the iCalendar file provided from the request and return the date ranges of times when the user is unavailable
+        """
+        ical_file = request.FILES["file"]
+        cal = Calendar.from_ical(ical_file.read())
+        unavailable_times = []
+        for component in cal.walk():
+            if component.name == "VEVENT":
+                start = component.get("dtstart").dt
+                end = component.get("dtend").dt
+                unavailable_times.append({"event_start": start, "event_end": end})
+        return Response(unavailable_times)
+
+    def get(self, request, event_uuid):
+        """
+        Return the iCalendar file with the event's selected date ranges, name and description
+        """
+        event = Event.objects.get(event_uuid=event_uuid)
+        if event.selected_start_date is None or event.selected_end_date is None:
+            return Response({"message": "Event is not finished yet."}, status=400)
+
+        cal = Calendar()
+        ical_event = ICalEvent()
+        ical_event.add("summary", event.title)
+        ical_event.add("dtstart", event.selected_start_date)
+        ical_event.add("dtend", event.selected_end_date)
+        ical_event.add("description", event.description)
+        cal.add_component(ical_event)
+
+        response = HttpResponse(cal.to_ical(), content_type="text/calendar")
+        response["Content-Disposition"] = "attachment; filename=event.ics"
+        return response
