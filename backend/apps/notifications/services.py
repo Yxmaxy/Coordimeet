@@ -10,7 +10,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import timedelta
 
 from apps.users.models import CoordimeetGroup
-from apps.events.models import Event, EventCalendarTypeChoices
+from apps.events.models import Event, EventCalendarTypeChoices, EventTypeChoices
 
 
 class NotificationServices:
@@ -49,7 +49,6 @@ class NotificationServices:
         url: str = None
     ):
         """Send a notification to all members of a group."""
-
         for member in group.members.all():
             NotificationServices.send_user_notification(
                 user=member.user,
@@ -57,6 +56,72 @@ class NotificationServices:
                 body=body,
                 url=url,
             )
+
+    @staticmethod
+    def send_event_notification(
+        event: Event,
+        head: str,
+        body: str,
+        url: str = None
+    ):
+        """
+        If the event type is GROUP or CLOSED send a notification to all members.
+        If the event type is PUBLIC send to all users who are in the event_participants
+        """
+
+        if event.event_type == EventTypeChoices.PUBLIC:
+            for participant in event.event_participants.all():
+                NotificationServices.send_user_notification(
+                    user=participant.user,
+                    head=head,
+                    body=body,
+                    url=url,
+                )
+                # TODO: check if this includes admins/owners
+        else:
+            NotificationServices.send_group_notification(
+                group=event.invited_group,
+                head=head,
+                body=body,
+                url=url,
+            )
+
+    @staticmethod
+    @shared_task
+    def _send_async_event_notification(
+        event_id: int,
+        head: str,
+        body: str,
+        url: str = None
+    ):
+        event = Event.objects.get(id=event_id)
+        NotificationServices.send_event_notification(event, head, body, url)
+
+    @staticmethod
+    def send_event_notification_at_time(
+        event: Event,
+        head: str,
+        body: str,
+        time: datetime,
+        url: str = None,
+    ):
+        """Send a notification to all members of a group at a specific time."""
+
+        return NotificationServices._send_async_event_notification.apply_async(
+            args=[event.id, head, body, url],
+            eta=time,
+        )
+
+    @staticmethod
+    @shared_task
+    def _send_async_group_notification(
+        group_id: int,
+        head: str,
+        body: str,
+        url: str = None
+    ):
+        group = CoordimeetGroup.objects.get(id=group_id)
+        NotificationServices.send_group_notification(group, head, body, url)
 
     @staticmethod
     def send_group_notification_at_time(
@@ -72,17 +137,6 @@ class NotificationServices:
             args=[group.id, head, body, url],
             eta=time,
         )
-
-    @staticmethod
-    @shared_task
-    def _send_async_group_notification(
-        group_id: int,
-        head: str,
-        body: str,
-        url: str = None
-    ):
-        group = CoordimeetGroup.objects.get(id=group_id)
-        NotificationServices.send_group_notification(group, head, body, url)
 
     @staticmethod
     def cancel_async_notification(task_id: str):

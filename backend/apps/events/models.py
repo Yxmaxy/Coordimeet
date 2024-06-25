@@ -44,24 +44,6 @@ class Event(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     @property
-    def send_notification_on_create(self) -> bool:
-        return self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.CREATION
-        ).exists()
-
-    @property
-    def send_notification_on_update(self) -> bool:
-        return self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.UPDATE
-        ).exists()
-
-    @property
-    def send_notification_date_selected(self) -> bool:
-        return self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.EVENT_DATE_SELECT
-        ).exists()
-
-    @property
     def get_formatted_selected_date(self) -> str:
         end_date = self.selected_end_date
         format_str = "%d. %m. %Y"
@@ -86,9 +68,11 @@ class Event(models.Model):
         if not self.invited_group:
             return
 
-        if self.send_notification_on_create:
-            NotificationServices.send_group_notification(
-                group=self.invited_group,
+        if self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.CREATION
+        ).exists():
+            NotificationServices.send_event_notification(
+                event=self,
                 head=f"New invitation!",
                 body=f"You have been invited to participate in {self}",
                 url=self.frontend_url,
@@ -126,20 +110,20 @@ class Event(models.Model):
         if not self.invited_group:
             return
 
-        if self.send_notification_on_update:
-            NotificationServices.send_group_notification(
-                group=self.invited_group,
+        if self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.UPDATE
+        ).exists():
+            NotificationServices.send_event_notification(
+                event=self,
                 head=f"Event updated!",
                 body=f"{self} has been updated, check it out!",
                 url=self.frontend_url,
             )
 
         # handle notification before deadline
-        deadline_notifications = self.event_notifications.filter(
+        if deadline_notifications := self.event_notifications.filter(
             notification_type=EventNotificationTypeChoices.BEFORE_DEADLINE
-        )
-        
-        if deadline_notifications:
+        ):
             # remove the extra notifications
             last_notification = deadline_notifications.last()
             for notification in deadline_notifications.exclude(id=last_notification.id):
@@ -183,11 +167,11 @@ class Event(models.Model):
         if not self.invited_group:
             return
 
-        # TODO: handle public groups
-
-        if self.send_notification_date_selected:
-            NotificationServices.send_group_notification(
-                group=self.invited_group,
+        if self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.EVENT_DATE_SELECT
+        ).exists():
+            NotificationServices.send_event_notification(
+                event=self,
                 head=f"An event has finished!",
                 body=f"{self} will take place {self.get_formatted_selected_date}!",
                 url=self.frontend_url,
@@ -198,8 +182,8 @@ class Event(models.Model):
             notification_type=EventNotificationTypeChoices.EVENT_START
         ):
             notification = start_notifications.first()
-            notification.task_id = NotificationServices.send_group_notification_at_time(
-                group=self.invited_group,
+            notification.task_id = NotificationServices.send_event_notification_at_time(
+                event=self,
                 head=f"Event is about to start!",
                 body=f"{self} is starting soon!",
                 time=notification.notification_time,
