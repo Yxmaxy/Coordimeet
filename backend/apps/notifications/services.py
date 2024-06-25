@@ -10,7 +10,6 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import timedelta
 
 from apps.users.models import CoordimeetGroup
-from apps.events.models import Event, EventCalendarTypeChoices, EventTypeChoices
 
 
 class NotificationServices:
@@ -59,7 +58,7 @@ class NotificationServices:
 
     @staticmethod
     def send_event_notification(
-        event: Event,
+        event,
         head: str,
         body: str,
         url: str = None
@@ -68,6 +67,7 @@ class NotificationServices:
         If the event type is GROUP or CLOSED send a notification to all members.
         If the event type is PUBLIC send to all users who are in the event_participants
         """
+        from apps.events.models import EventTypeChoices
 
         if event.event_type == EventTypeChoices.PUBLIC:
             for participant in event.event_participants.all():
@@ -94,12 +94,13 @@ class NotificationServices:
         body: str,
         url: str = None
     ):
+        from apps.events.models import Event
         event = Event.objects.get(id=event_id)
         NotificationServices.send_event_notification(event, head, body, url)
 
     @staticmethod
     def send_event_notification_at_time(
-        event: Event,
+        event,
         head: str,
         body: str,
         time: datetime,
@@ -145,6 +146,7 @@ class NotificationServices:
     @staticmethod
     @shared_task
     def _send_deadline_notification(event_id: int):
+        from apps.events.models import Event
         event = Event.objects.get(id=event_id)
         
         # the date was selected; no action needed
@@ -160,15 +162,16 @@ class NotificationServices:
         )
 
     @staticmethod
-    def send_deadline_notification(event: Event):
+    def send_deadline_notification(event):
         return NotificationServices._send_deadline_notification.apply_async(
             args=[event.id],
             eta=event.deadline,
         )
 
     @staticmethod
-    def __get_best_date_range(event: Event) -> t.List[t.Dict[str, t.Union[datetime, int]]]:
+    def __get_best_date_range(event) -> t.List[t.Dict[str, t.Union[datetime, int]]]:
         """Return the best date range for an event. The same function as in Event.vue"""
+        from apps.events.models import EventCalendarTypeChoices
         date_count_map = {}
         calendar_type = event.event_calendar_type
 
@@ -220,6 +223,7 @@ class NotificationServices:
     @staticmethod
     @shared_task
     def _send_event_finished_notification(event_id):
+        from apps.events.models import Event
         event = Event.objects.get(id=event_id)
         
         # the date was selected; no action needed
@@ -244,7 +248,7 @@ class NotificationServices:
         )
 
     @staticmethod
-    def send_event_finished_notification(event: Event):
+    def send_event_finished_notification(event):
         """Send a notification at the first event's available_date."""
 
         first_available_date = event.event_availability_options.order_by("start_date").first().start_date
