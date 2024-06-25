@@ -510,7 +510,7 @@ export default {
                 eventNotifications.push({ notification_type: EventNotificationType.Update });
             if (this.eventNotifications.beforeDeadline)
                 eventNotifications.push({
-                    notification_type: EventNotificationType.Deadline,
+                    notification_type: EventNotificationType.BeforeDeadline,
                     notification_time: new Date(this.eventNotificationsDeadline)
                 });
 
@@ -653,9 +653,9 @@ export default {
                 this.eventNotifications = {
                     afterCreation: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Creation),
                     afterUpdate: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Update),
-                    beforeDeadline: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Deadline),
+                    beforeDeadline: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.BeforeDeadline),
                 };
-                this.eventNotificationsDeadline = initializeDateInput(CalendarType.DateHour, res.data.event_notifications.find((notification: EventNotification) => notification.notification_type === EventNotificationType.Deadline)?.notification_time);
+                this.eventNotificationsDeadline = initializeDateInput(CalendarType.DateHour, res.data.event_notifications.find((notification: EventNotification) => notification.notification_type === EventNotificationType.BeforeDeadline)?.notification_time);
             })
             .catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch event data.");

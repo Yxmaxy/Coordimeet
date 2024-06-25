@@ -62,6 +62,20 @@ class Event(models.Model):
         ).exists()
 
     @property
+    def get_formatted_selected_date(self) -> str:
+        end_date = self.selected_end_date
+        format_str = "%d. %m. %Y"
+        if self.event_calendar_type == EventCalendarTypeChoices.DATE_HOUR:
+            format_str = "%d. %m. %Y %H:%M"
+        
+        formatted_start = self.selected_start_date.strftime(format_str)
+        formatted_end = end_date.strftime(format_str)
+
+        if formatted_start == formatted_end:
+            return f"at {formatted_start}"
+        return f"from {formatted_start} to {formatted_end}"
+
+    @property
     def frontend_url(self) -> str:
         return f"{os.environ.get('VITE_FRONTEND_URL')}/event/{self.event_uuid}"
 
@@ -80,9 +94,9 @@ class Event(models.Model):
                 url=self.frontend_url,
             )
         
-        # handle deadline
+        # handle notification before deadline
         if deadline_notifications := self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.DEADLINE
+            notification_type=EventNotificationTypeChoices.BEFORE_DEADLINE
         ):
             notification = deadline_notifications.first()
             notification.task_id = NotificationServices.send_group_notification_at_time(
@@ -93,6 +107,20 @@ class Event(models.Model):
                 url=self.frontend_url,
             ).id
             notification.save()
+
+        # handle notification at the deadline
+        # notify the event's owner at the deadline, to pick a date
+        self.event_notifications.create(
+            notification_type=EventNotificationTypeChoices.DEADLINE,
+            task_id=NotificationServices.send_deadline_notification(event=self).id
+        )
+
+        # handle notification for automatically finishing event
+        # trigger this event at the first event's available_date
+        self.event_notifications.create(
+            notification_type=EventNotificationTypeChoices.FINISH_EVENT,
+            task_id=NotificationServices.send_event_finished_notification(event=self).id
+        )
 
     def handle_notifications_update(self):
         if not self.invited_group:
@@ -106,9 +134,9 @@ class Event(models.Model):
                 url=self.frontend_url,
             )
 
-        # handle deadline
+        # handle notification before deadline
         deadline_notifications = self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.DEADLINE
+            notification_type=EventNotificationTypeChoices.BEFORE_DEADLINE
         )
         
         if deadline_notifications:
@@ -127,23 +155,41 @@ class Event(models.Model):
             ).id
             last_notification.save()
 
+        # handle notification at the deadline
+        # remove the previous deadline notification and create a new one
+        if deadline_notification := self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.DEADLINE
+        ).first():
+            NotificationServices.cancel_async_notification(deadline_notification.task_id)
+            deadline_notification.delete()
+        self.event_notifications.create(
+            notification_type=EventNotificationTypeChoices.DEADLINE,
+            task_id=NotificationServices.send_deadline_notification(event=self).id
+        )
+
+        # handle notification for automatically finishing event
+        # remove the previous notification and create a new one
+        if finish_notification := self.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.FINISH_EVENT
+        ).first():
+            NotificationServices.cancel_async_notification(finish_notification.task_id)
+            finish_notification.delete()
+        self.event_notifications.create(
+            notification_type=EventNotificationTypeChoices.FINISH_EVENT,
+            task_id=NotificationServices.send_event_finished_notification(event=self).id
+        )
+
     def handle_notifications_finished(self):
         if not self.invited_group:
             return
 
         # TODO: handle public groups
 
-        # handle event date selected
-        end_date = self.selected_end_date
-        format_str = "%d. %m. %Y"
-        if self.event_calendar_type == EventCalendarTypeChoices.DATE_HOUR:
-            format_str = "%d. %m. %Y %H:%M"
-
         if self.send_notification_date_selected:
             NotificationServices.send_group_notification(
                 group=self.invited_group,
                 head=f"An event has finished!",
-                body=f"{self} will take place from {self.selected_start_date.strftime(format_str)} to {end_date.strftime(format_str)}!",
+                body=f"{self} will take place {self.get_formatted_selected_date}!",
                 url=self.frontend_url,
             )
         
@@ -159,16 +205,18 @@ class Event(models.Model):
                 time=notification.notification_time,
                 url=self.frontend_url,
             ).id
-            notification.save()
+            notification.save()            
 
 
 class EventNotificationTypeChoices(models.IntegerChoices):
     """Choices for the notification types"""
     CREATION = 1, "After creation"
     UPDATE = 2, "After update"
-    DEADLINE = 3, "Before deadline"
+    BEFORE_DEADLINE = 3, "Before deadline"
     EVENT_DATE_SELECT = 4, "After event date selected"
     EVENT_START = 5, "Before event starts"
+    DEADLINE = 6, "At the deadline"
+    FINISH_EVENT = 7, "Automatically finish event"
 
 
 class EventNotification(models.Model):

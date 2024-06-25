@@ -15,9 +15,10 @@ export interface EventAvailabilityOption extends DateRange {
 export enum EventNotificationType {
     Creation = 1,
     Update = 2,
-    Deadline = 3,
+    BeforeDeadline = 3,
     EventDateSelected = 4,
     EventStart = 5,
+    Deadline = 6,
 }
 
 export interface EventNotification {
