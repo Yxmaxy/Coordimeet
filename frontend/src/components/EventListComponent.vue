@@ -52,7 +52,7 @@
                                 formatDateRange({
                                     start_date: event.selected_start_date!,
                                     end_date: event.selected_end_date!
-                                }, event.event_calendar_type)
+                                }, event.event_calendar_type, false)
                             }}
                         </abbr>
                         <custom-button class="h-8 w-8 rounded-full !text-base">

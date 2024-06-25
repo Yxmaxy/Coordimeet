@@ -1,9 +1,9 @@
 <template>
     <div class="flex flex-col">
         <!-- Header -->
-        <div class="top-14 sticky">
+        <div class="top-14 sticky z-20">
             <offline-component />
-            <div class="flex  z-20 w-full shadow-md">
+            <div class="flex w-full shadow-md">
                 <!-- Mobile design -->
                 <div
                     v-if="isMobile"

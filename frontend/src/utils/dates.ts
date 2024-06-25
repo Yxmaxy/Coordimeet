@@ -54,11 +54,19 @@ export function formatDateRange(range: DateRange, calendarType: CalendarType, ad
             start_date: new Date(range.start_date),
             end_date: addUnitsToDate(new Date(range.end_date), CalendarType.DateHour, 1)
         };
+    } else {
+        range = {
+            start_date: new Date(range.start_date),
+            end_date: new Date(range.end_date)
+        };
     }
 
-    if (range.start_date === range.end_date)
-        return formatDate(range.start_date);
-    return `${formatDate(range.start_date)} - ${formatDate(range.end_date)}`;
+    const formattedStart = formatDate(range.start_date);
+    const formattedEnd = formatDate(range.end_date);
+
+    if (formattedStart === formattedEnd)
+        return formattedStart;
+    return `${formattedStart} - ${formattedEnd}`;
 }
 
 export function addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {

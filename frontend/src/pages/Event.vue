@@ -74,7 +74,7 @@
                         v-if="pageTypeIn(EventPageType.Finished)"
                         class="text-lg font-bold mt-4"
                     >
-                        The selected date is: {{ displayDateRange({ start_date: eventData.selected_start_date!, end_date: eventData.selected_end_date! }) }}
+                        The selected date is: {{ formatDateRange({ start_date: eventData.selected_start_date!, end_date: eventData.selected_end_date! }, eventData?.event_calendar_type) }}
                     </div>
                 </template>
             </event-data>
@@ -563,6 +563,16 @@ export default {
             
         },
         finishEvent() {
+            // if eventNotifications.beforeEventStarts is set, check that the notification time is before
+            // the selected start date
+            if (this.eventNotifications.beforeEventStarts) {
+                const notificationTime = new Date(this.eventNotificationsBeforeStarts);
+                if (notificationTime >= this.selectedDateRanges[0].start_date) {
+                    this.storeMessages.showMessageError("The notification time must be before the event starts!");
+                    return;
+                }
+            }
+
             // validate selected date
             if (!this.isSelectedDateRangesSet || this.selectedDateRanges.length !== 1) {
                 this.storeMessages.showMessageError("You did not select a date range!");
@@ -640,14 +650,6 @@ export default {
         copyLink() {
             navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/event/${this.$route.params.uuid}`);
             this.storeMessages.showMessage("Link copied to clipboard", 1000);
-        },
-        displayDateRange(range: DateRange): string {
-            // converts date range to a readable format
-            const convertFunc = this.eventData?.event_calendar_type === CalendarType.Date ?
-                formatDateDayMonthYear : formatDateDayMonthHour;
-            if (convertFunc(range.start_date) === convertFunc(range.end_date))
-                return convertFunc(range.start_date);
-            return `${convertFunc(range.start_date)} - ${convertFunc(range.end_date)}`;
         },
         onShowFinishConfirm() {
             this.eventNotificationsBeforeStarts = initializeDateInput(this.eventData?.event_calendar_type!, this.selectedDateRanges[0]?.start_date.toISOString());

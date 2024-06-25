@@ -589,23 +589,37 @@ export default {
             // set all variables
             ApiService.get(`events/event/${this.$route.params.uuid}/`)
             .then(res => {
-                let difference: number = 0;
-                if (this.$route.name === "event_new") {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    const firstDate = new Date(res.data.event_availability_options[0].start_date);
-                    firstDate.setHours(0, 0, 0, 0);
-
-                    if (this.calendarType === CalendarType.Date) {
-                        difference = Math.floor((today.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
-                    } else {
-                        difference = Math.floor((today.getTime() - firstDate.getTime()) / (1000 * 60 * 60));
-                    }
-                }
                 this.title = res.data.title;
                 this.eventType = res.data.event_type;
                 this.calendarType = res.data.event_calendar_type;
                 this.length = res.data.event_length;
+
+                let difference: number = 0;
+                if (this.$route.name === "event_new") {
+                    const currentDate = new Date();
+                    currentDate.setHours(0, 0, 0, 0);
+                    const firstDate = new Date(res.data.event_availability_options[0].start_date);
+                    firstDate.setHours(0, 0, 0, 0);
+
+                    // if the first date is in the past, add 7 days to the difference
+                    if ((firstDate.getDay() === 0 ? 7 : firstDate.getDay()) <= (currentDate.getDay() === 0 ? 7 : currentDate.getDay())) {
+                        if (this.calendarType === CalendarType.Date) {
+                            difference = 7;
+                        } else {
+                            difference = 7 * 24;
+
+                        }
+                    }
+                    currentDate.setDate(currentDate.getDate() - currentDate.getDay() + 1);
+                    firstDate.setDate(firstDate.getDate() - firstDate.getDay() + 1);
+
+                    const differenceInDays = Math.floor((currentDate.getTime() - firstDate.getTime()) / (1000 * 60 * 60 * 24));
+                    if (this.calendarType === CalendarType.Date) {
+                        difference += differenceInDays;
+                    } else {
+                        difference += differenceInDays * 24;
+                    }
+                }
 
                 this.fromDate = initializeDateInput(CalendarType.Date,
                     addUnitsToDate(new Date(res.data.event_availability_options[0].start_date), this.calendarType!, difference).toString()
