@@ -365,7 +365,7 @@ export default {
             user,
             storeMessages,
 
-            inviteLink: `${import.meta.env.VITE_FRONTEND_URL}/login`,
+            inviteLink: `${import.meta.env.VITE_FRONTEND_URL}/`,
         }
     },
     components: {

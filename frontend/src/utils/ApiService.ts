@@ -34,7 +34,7 @@ axios.interceptors.response.use(undefined, async error => {
             return axios(error.config);
         } catch (error) {
             await removeTokens();  // TODO: make request to backend
-            window.location.href = "/login";
+            window.location.href = "/";
         }
     }
     return Promise.reject(error);

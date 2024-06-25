@@ -8,10 +8,13 @@
                         :class="[{
                             'cursor-pointer transition-all hover:-translate-y-1 hover:bg-main-200': isAdmin(group) || isOwner(group),
                         }, 'flex-1 flex justify-between bg-main-100 m-2 px-8 py-6 rounded-2xl shadow-md']"
-                        @click="() => editGroup(group)"
+                        @click="() => storeOnline.isOnline && editGroup(group)"
                     >
                         <b class="flex items-center">{{ group.name }}</b>
-                        <div class="flex gap-2 items-center">
+                        <div
+                            v-if="storeOnline.isOnline"
+                            class="flex gap-2 items-center"
+                        >
                             <custom-button
                                 v-if="isOwner(group)"
                                 class="h-8 w-8 rounded-full"
@@ -32,6 +35,7 @@
             </template>
         </tab-controller>
         <custom-button
+            v-if="storeOnline.isOnline"
             class="right-4 bottom-4 fixed !p-3 !rounded-2xl shadow-md"
             :click="() => $router.push('/group/new')"
         >
@@ -44,6 +48,7 @@
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
 import { useStoreMessages } from "@/stores/storeMessages";
+import { useStoreOnline } from "@/stores/storeOnline";
 
 import { Group, Role } from "@/types/user";
 import { Tab } from "@/types/tabs";
@@ -70,11 +75,13 @@ export default {
     setup() {
         const { user } = useStoreUser();
         const storeMessages = useStoreMessages();
+        const storeOnline = useStoreOnline();
         return {
             user,
             tabs,
 
             storeMessages,
+            storeOnline,
         }
     },
     data() {

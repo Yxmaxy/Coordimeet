@@ -39,7 +39,7 @@
                             <custom-icon v-if="event.user_response === true" icon="event_available" title="Comming to event" />
                         </custom-button>
                         <custom-button
-                            v-if="userIsOrganiser"
+                            v-if="userIsOrganiser && storeOnline.isOnline"
                             class="h-8 w-8 rounded-full !text-base"
                             @click.stop="() => $router.push(`/event/edit/${event.event_uuid}`)"
                         >
@@ -71,6 +71,8 @@ import { PropType } from "vue";
 import { formatDateRange } from "@/utils/dates";
 import { Event } from "@/types/event";
 
+import { useStoreOnline } from "@/stores/storeOnline";
+
 import CustomIcon from "@/components/ui/CustomIcon.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 
@@ -79,6 +81,12 @@ export default {
     components: {
         CustomIcon,
         CustomButton,
+    },
+    setup() {
+        const storeOnline = useStoreOnline();
+        return {
+            storeOnline,
+        }
     },
     props: {
         events: {

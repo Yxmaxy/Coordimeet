@@ -220,28 +220,30 @@
                     </div>
 
                     <!-- Submit buttons -->
-                    <custom-button
-                        v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
-                        :small="true"
-                        :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
-                        :click="() => showFinishConfirm = true"
-                    >
-                        Submit and finish <custom-icon class="text-base" icon="event_available" />
-                    </custom-button>
-                    <custom-button
-                        v-else
-                        :small="true"
-                        :click="submitSelection"
-                        :disabled="gettingParticipantData"
-                    >
-                        <template v-if="!isSelectedDateRangesSet">
-                            Submit as unavailable
-                        </template>
-                        <template v-else>
-                            Submit
-                        </template>
-                        <custom-icon class="text-base" icon="event" />
-                    </custom-button>
+                    <template v-if="storeOnline.isOnline">
+                        <custom-button
+                            v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
+                            :small="true"
+                            :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
+                            :click="() => showFinishConfirm = true"
+                        >
+                            Submit and finish <custom-icon class="text-base" icon="event_available" />
+                        </custom-button>
+                        <custom-button
+                            v-else
+                            :small="true"
+                            :click="submitSelection"
+                            :disabled="gettingParticipantData"
+                        >
+                            <template v-if="!isSelectedDateRangesSet">
+                                Submit as unavailable
+                            </template>
+                            <template v-else>
+                                Submit
+                            </template>
+                            <custom-icon class="text-base" icon="event" />
+                        </custom-button>
+                    </template>
                 </div>
                 <!-- Calendar -->
                 <calendar
@@ -264,6 +266,7 @@ import { AxiosResponse } from "axios";
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
 import { useStoreMessages } from "@/stores/storeMessages";
+import { useStoreOnline } from "@/stores/storeOnline";
 
 import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventNotification, EventNotificationType, EventPageType, EventParticipant } from "@/types/event";
@@ -298,11 +301,12 @@ export default {
     setup() {
         const storeUser = useStoreUser();
         const storeMessages = useStoreMessages();
+        const storeOnline = useStoreOnline();
 
         return {
             storeUser,
-
             storeMessages,
+            storeOnline,
 
             EventPageType,
             CalendarType,
@@ -653,7 +657,7 @@ export default {
         // not logged in actions
         onLoginOrSignup() {
             this.storeUser.redirectAfterLogin = this.$route.fullPath;
-            this.$router.push("/login");
+            this.$router.push({"name": "login"});
         },
         onSubmitAnon() {
             this.storeUser.onCreateAnonymousUser()

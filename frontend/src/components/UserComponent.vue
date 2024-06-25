@@ -70,13 +70,13 @@
             </div>
         </template>
     </div>
-    <router-link
+    <!-- <router-link
         v-else
         to="/login"
         class="h-full flex items-center cursor-pointer select-none"
     >
         <span class="material-symbols-outlined align-middle ml-1">login</span>
-    </router-link>
+    </router-link> -->
 </template>
 
 <script lang="ts">
