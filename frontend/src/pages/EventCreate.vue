@@ -271,26 +271,6 @@
                                 />
                             </label>
                         </div>
-
-                        <!-- Implement in the selection
-                        <custom-toggle
-                            v-model="eventNotifications.beforeDateSelected"
-                            :right-value="EventNotificationType.EventDateSelected"
-                        >
-                            <template v-slot:right>
-                                <span class="ml-2">when the event date is selected</span>
-                                TODO: send .ics file
-                            </template>
-                        </custom-toggle>
-
-                        <custom-toggle
-                            v-model="eventNotifications.beforeEventStart"
-                            :right-value="EventNotificationType.EventStart"
-                        >
-                            <template v-slot:right>
-                                <span class="ml-2">before the event starts</span>
-                            </template>
-                        </custom-toggle> -->
                     </div>
                 </div>
                 <custom-button

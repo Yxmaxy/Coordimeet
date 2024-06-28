@@ -33,6 +33,13 @@ export const useStoreUser = defineStore("storeUser", {
             }
         },
         async onLogin(email: string, password: string): Promise<boolean> {
+            const storeMessages = useStoreMessages();
+
+            if (!email || !password) {
+                storeMessages.showMessageError("Please fill in all fields!");
+                return false;
+            }
+            
             // retrieve access token
             try {
                 const response = await ApiService.post("/users/token/", {
@@ -54,15 +61,14 @@ export const useStoreUser = defineStore("storeUser", {
                         // send message to service worker to register user to notifications
                         const registration = await navigator.serviceWorker.ready;
                         registration.active?.postMessage({
-                            user_id: this.user?.id,  // TODO: this could be read from the JWT
+                            user_id: this.user?.id,
                             type: "REGISTER_NOTIFICATIONS",
                         });
                     }
                 }
                 return true;
             } catch (error: any) {
-                const storeMessages = useStoreMessages();
-                storeMessages.showMessageError(error.response.data.error);
+                storeMessages.showMessageError(error.response.data.detail);
             }
             return false;
         },

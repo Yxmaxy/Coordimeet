@@ -514,7 +514,7 @@ export default {
             if (this.selectableDateRanges.length === 0)
                 return true;
             return this.selectableDateRanges
-                .some(dateRange => this.isDateInDateRange(date, dateRange));
+                .some(dateRange => this.isDateInDateRange(date, dateRange)) && !this.isDateInPast(date);
         },
         deepCopyDateRange(dateRange: DateRange): DateRange {
             return {
@@ -577,7 +577,7 @@ export default {
             return date <= today;
         },
         isDateDisabled(date: Date): boolean {
-            return !this.isDateInSelectableDateRanges(date);
+            return !this.isDateInSelectableDateRanges(date) || this.isDateInPast(date);
         },
 
         // heatmap

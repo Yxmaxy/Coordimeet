@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.http import HttpResponse
 
-from apps.utils.permissions import IsEventOrganiserOrAdminInOrganiserGroup, IsEventOrganiserOrOwnerInOrganiserGroup
+from apps.utils.permissions import IsEventOrganiserOrAdminInOrganiserGroup, IsPublicEventOrUserIsMember
 from apps.users.models import MemberRole
 from apps.events.models import Event, EventParticipant, EventParticipantAvailability, EventTypeChoices
 from apps.events.serializers import EventSerializer, EventParticipantSelectedSerializer, EventFinishSerializer
@@ -26,16 +26,20 @@ class EventInvitedListAPIView(ListAPIView):
         # - if the user is the organiser
         # - if the user is a member of the invited_group and is_group_organiser is True and the user's role is OWNER or ADMIN
 
-        return Event.objects.filter(
-            Q(event_type=EventTypeChoices.PUBLIC) & Q(event_participants__user=self.request.user)
+        all_events = Event.objects.filter(
+            Q(event_type=EventTypeChoices.PUBLIC)
+            & Q(event_participants__user=self.request.user)
             | Q(event_type__in=[EventTypeChoices.GROUP, EventTypeChoices.CLOSED])
             & Q(invited_group__members__user=self.request.user)
-        ).exclude(
+        ).distinct().order_by("-created_at")
+        exclude_events = Event.objects.filter(
             Q(organiser=self.request.user)
             | Q(is_group_organiser=True)
             & Q(invited_group__members__user=self.request.user)
             & Q(invited_group__members__role__in=[MemberRole.OWNER, MemberRole.ADMIN])
         ).distinct().order_by("-created_at")
+
+        return all_events.exclude(event_uuid__in=exclude_events.values_list("event_uuid", flat=True))
 
 
 class EventOrganiserListCreateAPIView(ListCreateAPIView):
@@ -55,14 +59,14 @@ class EventOrganiserListCreateAPIView(ListCreateAPIView):
 
 
 class EventManageAPIView(APIView):
+    permission_classes = [IsPublicEventOrUserIsMember]
 
     def get(self, request, event_uuid):
         event = Event.objects.get(event_uuid=event_uuid)
+        self.check_object_permissions(request, event)
 
         if event.event_type in [EventTypeChoices.GROUP, EventTypeChoices.CLOSED]:
             if not IsAuthenticated().has_permission(request, self):
-                return Response({"message": "Not allowed"}, status=403)
-            if not IsEventOrganiserOrAdminInOrganiserGroup().has_object_permission(request, self, event):
                 return Response({"message": "Not allowed"}, status=403)
 
         serializer = EventSerializer(event, partial=True, context={"request": request})
@@ -70,26 +74,26 @@ class EventManageAPIView(APIView):
     
     def put(self, request, event_uuid):
         event = Event.objects.get(event_uuid=event_uuid)
+        self.check_object_permissions(request, event)
+
+        if (
+            not IsAuthenticated().has_permission(request, self)
+            or not IsEventOrganiserOrAdminInOrganiserGroup().has_object_permission(request, self, event)
+        ):
+            return Response({"message": "Not allowed"}, status=403)
+
         serializer = EventSerializer(event, data=request.data, partial=True, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
 
-class EventParticipantListAPIView(ListAPIView):
-    permission_classes = [IsAuthenticated]
-    serializer_class = EventParticipantSelectedSerializer
-
-    def get_queryset(self, event_uuid):
-        event = Event.objects.get(event_uuid=event_uuid)
-        return EventParticipant.objects.filter(event=event)
-
-
 class EventParticipantAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsPublicEventOrUserIsMember]
 
     def get(self, request, event_uuid):
         event = Event.objects.get(event_uuid=event_uuid)
+        self.check_object_permissions(request, event)
         try:
             participant = EventParticipant.objects.get(event=event, user=request.user)
         except EventParticipant.DoesNotExist:
@@ -99,7 +103,7 @@ class EventParticipantAPIView(APIView):
     
     def post(self, request, event_uuid):
         event = Event.objects.get(event_uuid=event_uuid)
-        # TODO: check if user is invited
+        self.check_object_permissions(request, event)
 
         event_participant, _ = EventParticipant.objects.get_or_create(
             event=event,
@@ -124,11 +128,13 @@ class EventParticipantAPIView(APIView):
 
 
 class EventOrganiserAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsEventOrganiserOrOwnerInOrganiserGroup]
+    permission_classes = [IsAuthenticated, IsEventOrganiserOrAdminInOrganiserGroup]
 
     def get(self, request, event_uuid):
         """Get participants for the event"""
         event = Event.objects.get(event_uuid=event_uuid)
+        self.check_object_permissions(request, event)
+
         participants = EventParticipant.objects.filter(event=event)
         serializer = EventParticipantSelectedSerializer(participants, many=True)
         return Response(serializer.data)
@@ -136,6 +142,7 @@ class EventOrganiserAPIView(APIView):
     def post(self, request, event_uuid):
         """Select the selected_start_date and selected_end_date for the event"""
         event = Event.objects.get(event_uuid=event_uuid)
+        self.check_object_permissions(request, event)
 
         serializer = EventFinishSerializer(event, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
@@ -145,6 +152,8 @@ class EventOrganiserAPIView(APIView):
 
 
 class EventICalendarAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, event_uuid=None):
         """
         Read the iCalendar file provided from the request and return the date ranges of times when the user is unavailable

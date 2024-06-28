@@ -1,7 +1,7 @@
 from rest_framework import permissions
 from rest_framework.request import Request
 
-from apps.events.models import Event
+from apps.events.models import Event, EventTypeChoices
 from apps.users.models import CoordimeetGroup, MemberRole
 
 
@@ -31,6 +31,7 @@ class IsEventOrganiserOrAdminInOrganiserGroup(permissions.BasePermission):
             return _has_group_permission(request, obj.invited_group, [MemberRole.ADMIN, MemberRole.OWNER])
         return False
 
+
 class IsEventOrganiserOrOwnerInOrganiserGroup(permissions.BasePermission):
     def has_object_permission(self, request: Request, view, obj: Event):
         if obj.organiser == request.user:
@@ -38,3 +39,15 @@ class IsEventOrganiserOrOwnerInOrganiserGroup(permissions.BasePermission):
         if obj.is_group_organiser and obj.invited_group:
             return _has_group_permission(request, obj.invited_group, [MemberRole.OWNER])
         return False
+
+
+class IsPublicEventOrUserIsMember(permissions.BasePermission):
+    def has_object_permission(self, request: Request, view, obj: Event):
+        return (
+            obj.event_type == EventTypeChoices.PUBLIC or
+            (
+                request.user.is_authenticated
+                and obj.event_type in [EventTypeChoices.GROUP, EventTypeChoices.CLOSED]
+                and obj.invited_group.members.filter(user=request.user).exists()
+            )
+        )

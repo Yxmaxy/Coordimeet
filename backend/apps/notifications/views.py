@@ -1,5 +1,3 @@
-import os
-
 from webpush.forms import WebPushForm, SubscriptionForm
 from webpush.views import process_subscription_data
 

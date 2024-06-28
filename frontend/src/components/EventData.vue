@@ -42,6 +42,9 @@ export default {
             return "hours";
         },
         organiserDisplay(): string {
+            if (this.event.is_group_organiser && this.event.invited_group?.name) {
+                return this.event.invited_group.name;
+            }
             if (this.event.organiser) {
                 if (this.event.organiser.first_name && this.event.organiser.last_name)
                     return `${this.event.organiser?.first_name} ${this.event.organiser?.last_name}`;

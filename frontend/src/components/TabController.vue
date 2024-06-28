@@ -133,5 +133,15 @@ export default {
     unmounted() {
         window.removeEventListener('resize', this.checkScreenSize);
     },
+    watch: {
+        breakpoint() {
+            this.$nextTick(() => {
+                this.checkScreenSize();
+            });
+        },
+        tabs() {
+            this.checkScreenSize();
+        },
+    }
 }
 </script>

@@ -8,10 +8,11 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.db.models import Q
 from django.contrib.auth import get_user_model
 
 from apps.users import serializers
-from apps.users.models import CoordimeetGroup, UserTypes
+from apps.users.models import CoordimeetGroup, UserTypes, MemberRole
 
 from apps.utils.permissions import HasGroupOwnerOrAdminPermission, HasGroupOwnerPermission
 
@@ -42,7 +43,7 @@ class AnonymousUserCreateAPIView(APIView):
             try:
                 random_adjective = r.word(include_parts_of_speech=["adjectives"])
                 random_noun = r.word(include_parts_of_speech=["nouns"])
-                email = f"{random_adjective}.{random_noun}@coordimeet.eu"
+                email = f"{random_adjective}.{random_noun}@coordimeet.com"
                 user = get_user_model().objects.create(
                     email=email,
                     user_type=UserTypes.ANONYMOUS,
@@ -76,7 +77,12 @@ class GroupListCreateAPIView(ListCreateAPIView):
     serializer_class = serializers.GroupSerializer
 
     def get_queryset(self):
-        return CoordimeetGroup.objects.filter(members__user=self.request.user, is_closed=False)
+        # get the groups where is_closed is False and the user is a member and either a group owner or admin
+        return CoordimeetGroup.objects.filter(
+            Q(is_closed=False)
+            & Q(members__user=self.request.user)
+            & Q(members__role__in=[MemberRole.OWNER, MemberRole.ADMIN])
+        )
 
 
 class GroupRetrieveUpdateAPIView(RetrieveUpdateAPIView):

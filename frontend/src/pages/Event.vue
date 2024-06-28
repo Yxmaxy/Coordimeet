@@ -76,16 +76,20 @@
                     >
                         The selected date is: {{ formatDateRange({ start_date: eventData.selected_start_date!, end_date: eventData.selected_end_date! }, eventData?.event_calendar_type) }}
 
-                        <custom-button
-                            class="mt-4"
-                            :click="getICalFile"
-                        >
-                            <custom-icon class="text-base" icon="download" />
-                            Download iCal file
-                        </custom-button>
+                        <div class="flex justify-center">
+                            <custom-button
+                                class="mt-4"
+                                :click="getICalFile"
+                                :small="true"
+                            >
+                                Download iCal file
+                                <custom-icon class="text-base" icon="download" />
+                            </custom-button>
+                        </div>
                     </div>
                 </template>
             </event-data>
+            <a ref="icalDownload" class="hidden" :href="icalFileUrl" download="event.ics"></a>
         </div>
 
         <!-- FinishConfirm -->
@@ -151,7 +155,7 @@
         <tab-controller
             v-else
             :tabs="tabs"
-            :breakpoint="1382"
+            :breakpoint="tabControllerBreakpoint"
         >
             <template v-slot:event>
                 <div class="h-full bg-main-100 p-4">
@@ -207,54 +211,65 @@
             </template>
 
             <template v-slot:calendar>
-                <div class="bg-main-100 shadow-md p-3 mb-3 flex justify-between items-center">
-                    <!-- Organiser mode toggle -->
-                    <div>
-                        <custom-toggle
-                            v-if="pageTypeIn(EventPageType.Organiser)"
-                            v-model="isOrganiserMode"
-                        >
-                            <template v-slot:left>
-                                <span class="flex items-center gap-1 font-bold mr-1">
-                                    Invitee <custom-icon class="text-base" icon="person" />
-                                </span>
-                            </template>
-                            <template v-slot:right>
-                                <span class="flex items-center gap-1 font-bold ml-1">
-                                    Organiser <custom-icon class="text-base" icon="engineering" />
-                                </span>
-                            </template>
-                        </custom-toggle>
-                    </div>
-
-                    <!-- Submit buttons -->
-                    <div v-if="storeOnline.isOnline">
+                <div class="bg-main-100 shadow-md p-3 mb-3">
+                    <div class="flex justify-between items-baseline">
+                        <!-- Organiser mode toggle -->
                         <div>
-                            <custom-button
-                                v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
-                                :small="true"
-                                :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
-                                :click="() => showFinishConfirm = true"
+                            <custom-toggle
+                                v-if="pageTypeIn(EventPageType.Organiser)"
+                                v-model="isOrganiserMode"
                             >
-                                Submit and finish <custom-icon class="text-base" icon="event_available" />
-                            </custom-button>
-                            <custom-button
-                                v-else
-                                :small="true"
-                                :click="submitSelection"
-                                :disabled="gettingParticipantData"
-                            >
-                                <template v-if="!isSelectedDateRangesSet">
-                                    Submit as unavailable
+                                <template v-slot:left>
+                                    <span class="flex items-center gap-1 font-bold mr-1">
+                                        Invitee <custom-icon class="text-base" icon="person" />
+                                    </span>
                                 </template>
-                                <template v-else>
-                                    Submit
+                                <template v-slot:right>
+                                    <span class="flex items-center gap-1 font-bold ml-1">
+                                        Organiser <custom-icon class="text-base" icon="engineering" />
+                                    </span>
                                 </template>
-                                <custom-icon class="text-base" icon="event" />
-                            </custom-button>
+                            </custom-toggle>
                         </div>
-                        <div>
-                            <input type="file" accept=".ics" v-on:change="getUnavailableDatesFromICal" />
+    
+                        <!-- Submit buttons -->
+                        <div class="flex flex-wrap justify-end gap-2">
+                            <div v-if="storeOnline.isOnline">
+                                <custom-button
+                                    v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
+                                    :small="true"
+                                    :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
+                                    :click="() => showFinishConfirm = true"
+                                >
+                                    Submit and finish <custom-icon class="text-base" icon="event_available" />
+                                </custom-button>
+                                <custom-button
+                                    v-else
+                                    :small="true"
+                                    :click="submitSelection"
+                                    :disabled="gettingParticipantData"
+                                >
+                                    <template v-if="!isSelectedDateRangesSet">
+                                        Submit as unavailable
+                                    </template>
+                                    <template v-else>
+                                        Submit
+                                    </template>
+                                    <custom-icon class="text-base" icon="event" />
+                                </custom-button>
+                            </div>
+                            <div v-if="!isOrganiserMode">
+                                <custom-button :small="true" :click="() => ($refs.icalFileInput as HTMLInputElement).click()">
+                                    Upload iCal file <custom-icon class="text-base" icon="upload" />
+                                </custom-button>
+                                <input
+                                    ref="icalFileInput"
+                                    type="file"
+                                    accept=".ics"
+                                    @change="getUnavailableDatesFromICal"
+                                    class="hidden"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -284,7 +299,8 @@ import { useStoreOnline } from "@/stores/storeOnline";
 import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventNotification, EventNotificationType, EventPageType, EventParticipant } from "@/types/event";
 import { Tab } from "@/types/tabs";
-import { initializeDateInput, formatDateDayMonthYear, formatDateDayMonthHour, formatDateRange, addUnitsToDate } from "@/utils/dates";
+import { Member, Role } from "@/types/user";
+import { initializeDateInput, formatDateRange, addUnitsToDate } from "@/utils/dates";
 
 import EventData from "@/components/EventData.vue";
 import Calendar from "@/components/Calendar.vue";
@@ -338,8 +354,10 @@ export default {
             gettingParticipantData: false,  // for fetching event participants
 
             showFinishConfirm: false,  // show finish confirm dialog
+            icalFileUrl: "",  // ical file url
 
             tabs: [] as Tab[],
+            tabControllerBreakpoint: 750,
 
             eventNotifications: {
                 afterEventDateSelected: false,
@@ -457,10 +475,18 @@ export default {
                 // the event has finished
                 if (eventData.selected_start_date !== null) {
                     this.eventPageType = EventPageType.Finished;
-                // the current user is the organiser
-                } else if (this.storeUser.user?.id === eventData.organiser?.id) {
+                // the current user is the organiser or in the organiser group as admin or owner
+                } else if (
+                    this.storeUser.user?.id === eventData.organiser?.id ||
+                    (
+                        eventData.is_group_organiser
+                        && eventData.invited_group?.members.some(
+                            (member: Member) => member.user?.id === this.storeUser.user?.id && [Role.OWNER, Role.ADMIN].includes(member.role))
+                        )
+                ) {
                     this.eventPageType = EventPageType.Organiser;
                     this.getParticipants();
+                    this.tabControllerBreakpoint = 1382;
                     this.tabs =  [
                         {
                             name: "Event",
@@ -491,7 +517,7 @@ export default {
                         {
                             name: "Event",
                             slot_name: "event",
-                            narrow: "md",
+                            narrow: "sm",
                             icon: "description",
                         },
                         {
@@ -502,7 +528,10 @@ export default {
                     ]
                 }
                 this.eventData = eventData;
-            })
+            }).catch(() => {
+                this.storeMessages.showMessageError("You don't have permissions to access this event!");
+                this.$router.push("/event/list");
+            });
         },
         getPreviousSelectedDateRanges() {
             // gets the user's selected date ranges if they exist
@@ -583,11 +612,10 @@ export default {
                 .then(res => {
                     // handle the response
                     const url = window.URL.createObjectURL(new Blob([res.data]));
-                    const link = document.createElement("a");
-                    link.href = url;
-                    link.setAttribute("download", "event.ics");
-                    document.body.appendChild(link);
-                    link.click();
+                    this.icalFileUrl = url;
+                    this.$nextTick(() => {
+                        (this.$refs.icalDownload as HTMLAnchorElement).click();
+                    });
                 });
         },
 

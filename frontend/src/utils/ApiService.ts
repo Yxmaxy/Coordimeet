@@ -17,7 +17,8 @@ axios.interceptors.request.use(async config => {
 
 // token expired, request new token if possible
 axios.interceptors.response.use(undefined, async error => {
-    if (error.config && error.response?.status === 401) {
+    const { refreshToken } = await retrieveTokens();  // only check if logged in
+    if (refreshToken && error.config && error.response?.status === 401) {
         if (error.config.url === "/users/token/refresh/") {
             // If it is, reject the promise
             return Promise.resolve(error);
@@ -33,7 +34,7 @@ axios.interceptors.response.use(undefined, async error => {
             error.config.headers.Authorization = `Bearer ${newAccessToken}`;
             return axios(error.config);
         } catch (error) {
-            await removeTokens();  // TODO: make request to backend
+            await removeTokens();
             window.location.href = "/";
         }
     }
