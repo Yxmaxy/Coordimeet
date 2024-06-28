@@ -383,7 +383,7 @@ export default {
             return this.selectedDateRanges.length !== 0
         },
         selectedEventParticipantDateRanges(): DateRange[] {
-            if (!this.eventParticipants)  // TODO: add check that the user is and admin or organiser
+            if (!this.eventParticipants)
                 return [];
             const participantDates = this.eventParticipants
                 .filter(participant => participant.isSelected)
@@ -401,7 +401,7 @@ export default {
             // The calendarType parameter is provided by eventData.event_calendar_type
             // Add each unit to a map with the number of times it appears.
 
-            if (this.eventData === null)  // TODO: add check that the user is and admin or organiser
+            if (this.eventData === null)
                 return []
 
             // create a map for each possible date with the number of "hits"

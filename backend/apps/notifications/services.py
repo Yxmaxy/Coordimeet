@@ -9,7 +9,7 @@ from webpush import send_user_notification
 from django.contrib.auth import get_user_model
 from django.utils.timezone import timedelta
 
-from apps.users.models import CoordimeetGroup
+from apps.users.models import CoordimeetGroup, MemberRole
 
 
 class NotificationServices:
@@ -77,7 +77,13 @@ class NotificationServices:
                     body=body,
                     url=url,
                 )
-                # TODO: check if this includes admins/owners
+            if not event.event_participants.filter(user=event.organiser).exists():
+                NotificationServices.send_user_notification(
+                    user=event.organiser,
+                    head=head,
+                    body=body,
+                    url=url,
+                )
         else:
             NotificationServices.send_group_notification(
                 group=event.invited_group,
@@ -154,12 +160,21 @@ class NotificationServices:
             return
 
         # send a notification to the organiser
-        NotificationServices.send_user_notification(
-            user=event.organiser,  # TODO: add admins
-            head=f"The event response deadline is here!",
-            body=f"{event} response period has ended. Pick a date!",
-            url=event.frontend_url,
-        )
+        if not event.is_group_organiser:
+            NotificationServices.send_user_notification(
+                user=event.organiser,
+                head=f"The event response deadline is here!",
+                body=f"{event} response period has ended. Pick a date!",
+                url=event.frontend_url,
+            )
+        else:
+            for member in event.invited_group.members.filter(role__in=[MemberRole.OWNER, MemberRole.ADMIN]):
+                NotificationServices.send_user_notification(
+                    user=member.user,
+                    head=f"The event response deadline is here!",
+                    body=f"{event} response period has ended. Pick a date!",
+                    url=event.frontend_url,
+                )
 
     @staticmethod
     def send_deadline_notification(event):
@@ -240,12 +255,21 @@ class NotificationServices:
         event.save()
 
         # send a notification to the organiser
-        NotificationServices.send_user_notification(
-            user=event.organiser,  # TODO: add admins
-            head=f"A date for your event was automatically selected!",
-            body=f"The selected date for {event} is {event.get_formatted_selected_date}!",
-            url=event.frontend_url,
-        )
+        if not event.is_group_organiser:
+            NotificationServices.send_user_notification(
+                user=event.organiser,
+                head=f"A date for your event was automatically selected!",
+                body=f"The selected date for {event} is {event.get_formatted_selected_date}!",
+                url=event.frontend_url,
+            )
+        else:
+            for member in event.invited_group.members.filter(role__in=[MemberRole.OWNER, MemberRole.ADMIN]):
+                NotificationServices.send_user_notification(
+                    group=member.user,
+                    head=f"A date for your event was automatically selected!",
+                    body=f"The selected date for {event} is {event.get_formatted_selected_date}!",
+                    url=event.frontend_url,
+                )
 
     @staticmethod
     def send_event_finished_notification(event):
