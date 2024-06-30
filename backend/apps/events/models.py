@@ -107,9 +107,6 @@ class Event(models.Model):
         )
 
     def handle_notifications_update(self):
-        if not self.invited_group:
-            return
-
         if self.event_notifications.filter(
             notification_type=EventNotificationTypeChoices.UPDATE
         ).exists():
@@ -119,6 +116,9 @@ class Event(models.Model):
                 body=f"{self} has been updated, check it out!",
                 url=self.frontend_url,
             )
+
+        if not self.invited_group:
+            return
 
         # handle notification before deadline
         if deadline_notifications := self.event_notifications.filter(
@@ -164,9 +164,6 @@ class Event(models.Model):
         )
 
     def handle_notifications_finished(self):
-        if not self.invited_group:
-            return
-
         if self.event_notifications.filter(
             notification_type=EventNotificationTypeChoices.EVENT_DATE_SELECT
         ).exists():

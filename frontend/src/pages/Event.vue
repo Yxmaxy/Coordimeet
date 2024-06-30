@@ -74,7 +74,7 @@
                         v-if="pageTypeIn(EventPageType.Finished)"
                         class="text-lg font-bold mt-4"
                     >
-                        The selected date is: {{ formatDateRange({ start_date: eventData.selected_start_date!, end_date: eventData.selected_end_date! }, eventData?.event_calendar_type) }}
+                        The selected date is: {{ formatDateRange({ start_date: eventData.selected_start_date!, end_date: eventData.selected_end_date! }, eventData?.event_calendar_type, false) }}
 
                         <div class="flex justify-center">
                             <custom-button
@@ -263,7 +263,7 @@
                                     v-if="pageTypeIn(EventPageType.Organiser) && isOrganiserMode"
                                     :small="true"
                                     :disabled="!isSelectedDateRangesSet || selectedDateRanges.length !== 1"
-                                    :click="() => showFinishConfirm = true"
+                                    :click="onShowFinishConfirm"
                                 >
                                     Submit and finish <custom-icon class="text-base" icon="event_available" />
                                 </custom-button>
@@ -804,7 +804,9 @@ export default {
             this.storeMessages.showMessage("Link copied to clipboard", 1000);
         },
         onShowFinishConfirm() {
-            this.eventNotificationsBeforeStarts = initializeDateInput(this.eventData?.event_calendar_type!, this.selectedDateRanges[0]?.start_date.toISOString());
+            const selectedDate = new Date(this.selectedDateRanges[0].start_date);
+            selectedDate.setHours(0, 0);
+            this.eventNotificationsBeforeStarts = initializeDateInput(CalendarType.DateHour, selectedDate.toString());
             this.showFinishConfirm = true;
         },
 
