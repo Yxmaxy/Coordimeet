@@ -7,11 +7,13 @@ from rest_framework.response import Response
 
 from django.db.models import Q
 from django.http import HttpResponse
+from django.utils import timezone
 
 from apps.utils.permissions import IsEventOrganiserOrAdminInOrganiserGroup, IsPublicEventOrUserIsMember
 from apps.users.models import MemberRole
 from apps.events.models import Event, EventParticipant, EventParticipantAvailability, EventTypeChoices
 from apps.events.serializers import EventSerializer, EventParticipantSelectedSerializer, EventFinishSerializer
+from apps.events.services import EventServices
 
 
 class EventInvitedListAPIView(ListAPIView):
@@ -64,6 +66,16 @@ class EventManageAPIView(APIView):
     def get(self, request, event_uuid):
         event = Event.objects.get(event_uuid=event_uuid)
         self.check_object_permissions(request, event)
+
+        if not event.selected_start_date and event.deadline < timezone.now():
+            best_date_ranges = EventServices.get_best_date_range(event)
+            if not best_date_ranges:  # should not happen
+                return
+
+            best_range = best_date_ranges[0]
+            event.selected_start_date = best_range["range"]["start_date"]
+            event.selected_end_date = best_range["range"]["end_date"]
+            event.save()
 
         if event.event_type in [EventTypeChoices.GROUP, EventTypeChoices.CLOSED]:
             if not IsAuthenticated().has_permission(request, self):

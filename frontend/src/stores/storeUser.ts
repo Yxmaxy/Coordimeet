@@ -89,6 +89,10 @@ export const useStoreUser = defineStore("storeUser", {
         },
         async onLogout() {
             await removeTokens();
+            const registration = await navigator.serviceWorker.ready;
+            registration.active?.postMessage({
+                type: "UNSUBSCRIBE_NOTIFICATIONS",
+            });
             this.user = undefined;
         },
         async onCreateAnonymousUser(): Promise<boolean> {

@@ -106,6 +106,14 @@ async function sendSubscriptionData(subscription: PushSubscription, userID: Numb
     }
 }
 
+function unsubscribeUserFromNotifications() {
+    self.registration.pushManager.getSubscription().then((subscription) => {
+        if (subscription) {
+            subscription.unsubscribe();
+        }
+    });
+}
+
 // Handle push notifications
 self.addEventListener("push", async (event: PushEvent) => {
     const notificationData = event.data?.json();
@@ -142,6 +150,9 @@ self.addEventListener("message", (event: any) => {
             return;
         }
         registerNotifications(userID);
+    }
+    if (event.data?.type === "UNSUBSCRIBE_NOTIFICATIONS") {
+        unsubscribeUserFromNotifications();
     }
 });
 
