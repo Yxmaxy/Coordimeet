@@ -67,7 +67,8 @@ class EventManageAPIView(APIView):
         event = Event.objects.get(event_uuid=event_uuid)
         self.check_object_permissions(request, event)
 
-        if not event.selected_start_date and event.deadline < timezone.now():
+        # if not selected start date and first available date is sooner than current time
+        if not event.selected_start_date and event.event_availability_options.filter(start_date__lte=timezone.now()).exists():
             best_date_ranges = EventServices.get_best_date_range(event)
             if not best_date_ranges:  # should not happen
                 return

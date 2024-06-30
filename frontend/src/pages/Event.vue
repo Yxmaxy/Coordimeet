@@ -92,6 +92,30 @@
             <a ref="icalDownload" class="hidden" :href="icalFileUrl" download="event.ics"></a>
         </div>
 
+        <!-- PickingDate -->
+        <div
+            v-else-if="pageTypeIn(EventPageType.PickingDate)"
+            class="flex justify-center items-center min-h-[calc(100vh-3.5rem)]"
+        >
+            <event-data
+                v-if="eventData"
+                class="bg-main-100 px-16 py-10 rounded-lg shadow-lg"
+                :event="eventData"
+            >
+                <template v-slot:before>
+                    <div class="text-xl font-bold">
+                        The event's date is being picked
+                    </div>
+                </template>
+                <template v-slot:after>
+                    <div class="mt-3">
+                        The deadline for picking the date has passed.
+                    </div>
+                </template>
+            </event-data>
+            <a ref="icalDownload" class="hidden" :href="icalFileUrl" download="event.ics"></a>
+        </div>
+
         <!-- FinishConfirm -->
         <div
             v-if="showFinishConfirm && eventData"
@@ -512,6 +536,9 @@ export default {
                             icon: "calendar_today",
                         },
                     ]
+                // if the user is not an organiser and the deadline has passed show a screen
+                } else if (new Date(eventData.deadline) < new Date() && !eventData.selected_start_date) {
+                    this.eventPageType = EventPageType.PickingDate;
                 } else {
                     this.tabs =  [
                         {

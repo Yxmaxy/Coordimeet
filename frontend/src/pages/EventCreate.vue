@@ -227,10 +227,11 @@
                         v-model="deadline"
                     />
                 </label>
-                <div v-if="eventType !== EventType.Public" class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2">
                     <b class="ml-4">Send notifications</b>
                     <div class="ml-3 flex flex-col gap-4">
                         <custom-toggle
+                            v-if="eventType !== EventType.Public"
                             class="mt-2"
                             v-model="eventNotifications.afterCreation"
                         >
@@ -249,6 +250,7 @@
 
                         <div class="flex flex-col gap-1">
                             <custom-toggle
+                                v-if="eventType !== EventType.Public"
                                 v-model="eventNotifications.beforeDeadline"
                             >
                                 <template v-slot:right>
@@ -460,7 +462,7 @@ export default {
             }
 
             // check that the deadline is before the first selected date
-            if (new Date(this.deadline) > this.selectedDateRanges[0].start_date) {
+            if (new Date(this.deadline) > new Date(this.selectedDateRanges[0].start_date)) {
                 this.storeMessages.showMessageError("The deadline must be before the event starts.");
                 return;
             }

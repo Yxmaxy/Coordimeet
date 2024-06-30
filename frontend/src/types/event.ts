@@ -64,6 +64,7 @@ export enum EventPageType {
     Invitee = 1,        // calendar and all event data
     Organiser = 2,      // data about user responses, ending data
     Finished = 3,       // Event has finished, show only the simplest information
+    PickingDate = 4,    // Event is in the date picking phase
 }
 
 export interface EventParticipant {

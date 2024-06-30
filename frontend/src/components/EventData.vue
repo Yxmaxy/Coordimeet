@@ -6,13 +6,16 @@
             <div>Organiser: {{ organiserDisplay }}</div>
             <div>
                 Deadline:
-                <template v-if="event.deadline">{{ formatDateDayMonthYear(event.deadline) }}</template>
+                <template v-if="event.deadline">{{ formatDateByCalendarType(event.deadline, event.event_calendar_type) }}</template>
                 <template v-else>Not set</template>
             </div>
             <div>
                 Length:
                 <template v-if="event.event_length">{{ event.event_length }} {{ readableCalendarUnits }}</template>
                 <template v-else>Not set</template>
+            </div>
+            <div v-if="event.description">
+                {{ event.description }}
             </div>
         </div>
         <slot name="after"></slot>
@@ -25,7 +28,7 @@ import { PropType } from 'vue';
 import { Event } from '@/types/event';
 import { CalendarType } from '@/types/calendar';
 
-import { formatDateDayMonthYear } from "@/utils/dates";
+import { formatDateByCalendarType } from "@/utils/dates";
 
 export default {
     name: "EventData",
@@ -55,7 +58,7 @@ export default {
     },
     methods: {
         // imported
-        formatDateDayMonthYear,
+        formatDateByCalendarType,
     },
 }
 </script>

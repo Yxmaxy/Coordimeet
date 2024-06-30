@@ -33,10 +33,6 @@ export function removeHoursMinutesFromDate(date: Date): Date {
     return date;
 }
 
-export function formatDateForBackend(date: Date) {
-    return `${date.getFullYear()}-${padNumber(date.getMonth() + 1)}-${padNumber(date.getDate())} ${padNumber(date.getHours())}:${padNumber(date.getMinutes())}:00`;
-}
-
 export function initializeDateInput(type: CalendarType, date?: string, padding?: number): string {    
     const now = date === undefined ? removeHoursMinutesFromDate(new Date()) : new Date(date);
     if (padding !== undefined)
@@ -67,6 +63,11 @@ export function formatDateRange(range: DateRange, calendarType: CalendarType, ad
     if (formattedStart === formattedEnd)
         return formattedStart;
     return `${formattedStart} - ${formattedEnd}`;
+}
+
+export function formatDateByCalendarType(date: Date, calendarType: CalendarType): string {
+    const formatDate = calendarType === CalendarType.Date ? formatDateDayMonthYear : formatDateDayMonthHour;
+    return formatDate(date);
 }
 
 export function addUnitsToDate(date: Date, calendarType: CalendarType, units: number) {
