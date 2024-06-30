@@ -189,7 +189,7 @@
                     >
                         <template v-slot:after>
                             <custom-button
-                                v-if="pageTypeIn(EventPageType.Organiser)"
+                                v-if="pageTypeIn(EventPageType.Organiser) && [EventType.Public].includes(eventData.event_type)"
                                 class="mt-5"
                                 :small="true"
                                 @click="copyLink"
@@ -321,7 +321,7 @@ import { useStoreMessages } from "@/stores/storeMessages";
 import { useStoreOnline } from "@/stores/storeOnline";
 
 import { CalendarType, DateRange } from "@/types/calendar";
-import { Event, EventNotification, EventNotificationType, EventPageType, EventParticipant } from "@/types/event";
+import { Event, EventNotification, EventNotificationType, EventPageType, EventParticipant, EventType } from "@/types/event";
 import { Tab } from "@/types/tabs";
 import { Member, Role } from "@/types/user";
 import { initializeDateInput, formatDateRange, addUnitsToDate } from "@/utils/dates";
@@ -363,6 +363,7 @@ export default {
 
             EventPageType,
             CalendarType,
+            EventType,
         }
     },
     data() {
