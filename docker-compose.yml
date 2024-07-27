@@ -22,6 +22,8 @@ services:
       - "${CACHE_PORT}:6379"
     depends_on:
       - db
+    volumes:
+      - ./cache:/data
     env_file:
       - .env
 
@@ -39,15 +41,29 @@ services:
     env_file:
       - .env
 
+  celery:
+    container_name: coordimeet-celery
+    build:
+      context: ./backend
+      dockerfile: DockerfileCelery
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - db
+      - cache
+      - backend
+    env_file:
+      - .env
+
   frontend:
     container_name: coordimeet-frontend
     build:
       context: ./frontend
     ports:
       - "${FRONTEND_PORT}:3000"
-    # depends_on:
-    #   - db
-    #   - backend
+    depends_on:
+      - db
+      - backend
     volumes:
       - ./frontend:/app
       - node_modules:/app/node_modules

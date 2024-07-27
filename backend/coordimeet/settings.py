@@ -89,8 +89,8 @@ DATABASES = {
         "NAME": os.getenv("DB_DATABASE"),
         "USER": os.getenv("DB_USERNAME"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
-        "HOST": "127.0.0.1", # os.getenv("DB_HOSTNAME"),
-        "PORT": "5454", # os.getenv("DB_PORT"),
+        "HOST": os.getenv("DB_HOSTNAME"),
+        "PORT": os.getenv("DB_PORT"),
     }
 }
 
@@ -177,8 +177,8 @@ SIMPLE_JWT = {
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     os.getenv("VITE_FRONTEND_URL"),
-    "http://localhost:3001",  # for npm run preview; probably remove this at some point
     os.getenv("VITE_BACKEND_URL"),
+    # "http://localhost:3001",  # for npm run preview
 ]
 
 # Celery
