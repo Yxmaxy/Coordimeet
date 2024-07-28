@@ -1,0 +1,29 @@
+FROM python:3.12-alpine3.19 as build
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# create app user and dirs
+RUN mkdir -p /home/app
+RUN addgroup -S app && adduser -S app -G app
+ENV HOME=/home/app
+ENV APP_HOME=/home/app/web
+RUN mkdir $APP_HOME
+WORKDIR $APP_HOME
+
+# install dependencies
+RUN apk add --no-cache gcc musl-dev libffi-dev netcat-openbsd
+
+# python dependencies
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+
+WORKDIR $APP_HOME
+
+# copy project
+COPY . $APP_HOME
+RUN chown -R app:app $APP_HOME
+
+USER app
+
+ENTRYPOINT ["sh", "prod_entrypoint.sh"]

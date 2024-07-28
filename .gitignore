@@ -3,4 +3,5 @@
 **/node_modules/
 **/__pycache__/
 **/cache/
+**/cache-prod/
 .DS_Store
