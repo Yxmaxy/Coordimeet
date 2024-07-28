@@ -81,7 +81,7 @@ export default {
                 this.storeMessages.showMessageError(`Pri pridobivanju podatkov je prišlo do napake.`)
                 throw e;
             });
-            ApiService.get("/events/event/invited")
+            ApiService.get("/events/event/invited/")
             .then(res => {
                 this.eventsInvited = res.data as Event[];
             })
