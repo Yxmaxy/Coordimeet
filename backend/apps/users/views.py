@@ -43,7 +43,7 @@ class AnonymousUserCreateAPIView(APIView):
             try:
                 random_adjective = r.word(include_parts_of_speech=["adjectives"])
                 random_noun = r.word(include_parts_of_speech=["nouns"])
-                email = f"{random_adjective}.{random_noun}@coordimeet.com"
+                email = f"{random_adjective}.{random_noun}@coordimeet.eu"
                 user = get_user_model().objects.create(
                     email=email,
                     user_type=UserTypes.ANONYMOUS,

@@ -25,7 +25,7 @@
                         </li>
                     </ul>
                 </div>
-                <div class="flex justify-center gap-4 mt-4">
+                <div class="flex justify-center flex-wrap gap-4 mt-4">
                     <custom-button @click="() => $router.push('/')">Decline</custom-button>
                     <custom-button @click="onLoginOrSignup">Log in or Sign up</custom-button>
                     <custom-button @click="onSubmitAnon">Submit anonymously</custom-button>
@@ -65,7 +65,7 @@
                             Decline
                         </custom-button>
                         <custom-button
-                            :click="() => eventPageType = EventPageType.Invitee"
+                            :click="acceptInvitation"
                         >
                             Accept
                         </custom-button>
@@ -733,6 +733,10 @@ export default {
                 this.storeMessages.showMessage("You have declined the invitation");
                 this.$router.push("/event/list");
             })
+        },
+        async acceptInvitation() {
+            await this.storeUser.requestNotifications();
+            this.eventPageType = EventPageType.Invitee;
         },
 
         // interaction

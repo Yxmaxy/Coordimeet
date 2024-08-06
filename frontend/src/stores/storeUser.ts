@@ -52,20 +52,8 @@ export const useStoreUser = defineStore("storeUser", {
 
                 await saveTokens(response.data.access, response.data.refresh);
                 await this.getUserFromToken();
-
-                // register user to notifications
-                if ("serviceWorker" in navigator) {
-                    // retrieve notification permissions
-                    const notificationPermission = await Notification.requestPermission();
-                    if (notificationPermission === "granted") {
-                        // send message to service worker to register user to notifications
-                        const registration = await navigator.serviceWorker.ready;
-                        registration.active?.postMessage({
-                            user_id: this.user?.id,
-                            type: "REGISTER_NOTIFICATIONS",
-                        });
-                    }
-                }
+                await this.requestNotifications();
+                
                 return true;
             } catch (error: any) {
                 storeMessages.showMessageError(error.response.data.detail);
@@ -102,6 +90,8 @@ export const useStoreUser = defineStore("storeUser", {
                 if (response.status === 201) {
                     await saveTokens(response.data.access, response.data.refresh);
                     await this.getUserFromToken();
+                    await this.requestNotifications();
+
                     return true;
                 }
             } catch (error: any) {
@@ -110,5 +100,24 @@ export const useStoreUser = defineStore("storeUser", {
             }
             return false;
         },
+
+        // request notifications
+        async requestNotifications() {
+            // register user to notifications
+            if ("serviceWorker" in navigator) {
+                // retrieve notification permissions
+                const notificationPermission = await Notification.requestPermission();
+                if (notificationPermission === "granted") {
+                    // send message to service worker to register user to notifications
+                    const registration = await navigator.serviceWorker.ready;
+                    registration.active?.postMessage({
+                        user_id: this.user?.id,
+                        type: "REGISTER_NOTIFICATIONS",
+                    });
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 })

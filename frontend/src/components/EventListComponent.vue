@@ -46,7 +46,7 @@
                             <custom-icon icon="edit" />
                         </custom-button>
                     </template>
-                    <div v-else class="flex gap-3 items-center">
+                    <div v-else-if="userIsOrganiser" class="flex gap-3 items-center">
                         <abbr class="no-underline" title="Selected date">
                             {{
                                 formatDateRange({

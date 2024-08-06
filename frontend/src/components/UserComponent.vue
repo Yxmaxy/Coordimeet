@@ -41,6 +41,10 @@
                         My profile
                         <span class="material-symbols-outlined align-middle text-lg">person</span>
                     </router-link> -->
+                    <button @click="onInstall" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                        Install app
+                        <span class="material-symbols-outlined align-middle text-lg">download</span>
+                    </button>
                     <button @click="onLogout" class="hover:bg-main-400 transition-colors flex items-center justify-between">
                         Log out
                         <span class="material-symbols-outlined align-middle text-lg">logout</span>
@@ -104,6 +108,7 @@ export default {
             showPopup: false,
             isMobile: true,
             isLoggedIn: false,
+            deferredInstallPrompt: null as any,
         }
     },
     computed: {
@@ -134,16 +139,31 @@ export default {
             this.isMobile = window.innerWidth <= 400;
             window.innerWidth <= 400 ? this.isMobile = true : this.isMobile = false;
         },
+        onInstall() {
+            if (this.deferredInstallPrompt) {
+                this.deferredInstallPrompt.prompt();
+                this.deferredInstallPrompt.userChoice.then((choiceResult: any) => {
+                    this.deferredInstallPrompt = null;
+                });
+            }
+        },
+        handleInstallPrompt(event: Event) {
+            event.preventDefault();
+            this.deferredInstallPrompt = event;
+        },
     },
     async mounted() {
-        window.addEventListener('resize', this.checkScreenSize);
+        window.addEventListener("resize", this.checkScreenSize);
         this.$nextTick(() => {
             this.checkScreenSize();
         });
         this.isLoggedIn = await this.userStore.isLoggedIn();
+
+        window.addEventListener("beforeinstallprompt", this.handleInstallPrompt);
     },
     unmounted() {
-        window.removeEventListener('resize', this.checkScreenSize);
+        window.removeEventListener("resize", this.checkScreenSize);
+        window.removeEventListener("beforeinstallprompt", this.handleInstallPrompt);
     },
     watch: {
         "userStore.user"(n) {
