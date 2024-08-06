@@ -5,7 +5,10 @@ from celery.worker.control import revoke
 from datetime import datetime
 from webpush import send_user_notification
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
 from apps.users.models import CoordimeetGroup, MemberRole
 from apps.events.services import EventServices
@@ -38,7 +41,18 @@ class NotificationServices:
             payload=payload,
             ttl=10000,
         )
-    
+
+        if settings.EMAIL_ENABLED:
+            email_message = EmailMultiAlternatives(
+                subject=f"[Coordimeet] {head}",
+                body=body,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[user.email],
+            )
+            email_message.attach_alternative(render_to_string("email.html", {"body": body}), "text/html")
+            email_message.send(fail_silently=True)
+
+
     @staticmethod
     def send_group_notification(
         group: CoordimeetGroup,
