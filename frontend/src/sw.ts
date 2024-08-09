@@ -114,6 +114,14 @@ function unsubscribeUserFromNotifications() {
     });
 }
 
+async function resubscribeUserToNotifications(userID: Number) {
+    const previousSubscription = await self.registration.pushManager.getSubscription()
+    if (previousSubscription) {
+        previousSubscription.unsubscribe();
+    }   
+    registerNotifications(userID);
+}
+
 // Handle push notifications
 self.addEventListener("push", async (event: PushEvent) => {
     const notificationData = event.data?.json();
@@ -130,7 +138,14 @@ self.addEventListener("push", async (event: PushEvent) => {
             url: notificationData.url,
         },
     }));
+
+    // try resubscribing
+    const { userID } = notificationData;
+    if (userID) {
+        resubscribeUserToNotifications(userID);
+    }
 });
+
 self.addEventListener("notificationclick", (event: NotificationEvent) => {
     const notification = event.notification;
     const url = notification.data.url;
