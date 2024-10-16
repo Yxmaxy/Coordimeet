@@ -39,18 +39,29 @@ To stop the containers use `docker compose -f docker-compose.prod.yml down`.
 - create user coordimeet with encrypted password 'SomeUnsafePassword';
 - grant all privileges on database coordimeet to coordimeet;
 
+### Create website user
+- adduser -D website
+
 ## Python setup
 - apk add --no-cache python3
-- python -m venv /root/pyenv
+
+### Python environment
+- su website
+- cd
+- python -m venv /home/website/pyenv
 - source pyenv/bin/activate
+- chown -R website:website /home/website/pyenv
 
 ## Repo
 - git clone https://github.com/Yxmaxy/Coordimeet
 - cd Coordimeet/backend
 - pip install -r requirements.txt
-
+- cd ..
+- cp .env.example .env
+- Change the variables...
 
 ## Redis
+- exit (to sudo)
 - apk add redis
 - service redis start
 
@@ -90,40 +101,48 @@ stop() {
 - rc-update add celeryd default
 - service celeryd start
 
+
 ## Backend
-- adduser -D gunicorn
 - vi /etc/init.d/gunicorn
-- chown -R gunicorn:gunicorn /root/Coordimeet/backend/
 
 ```
 #!/sbin/openrc-run
 
-command="/root/pyenv/bin/gunicorn"
-command_args="--workers 3 --bind 0.0.0.0:8000 coordimeet.wsgi:application"
+description="Gunicorn application server for Coordimeet"
+
+# User and Group to run the service
+command_user="website:website"
+
+# Path to your project directory
+directory="/home/website/Coordimeet/backend"
+
+# Python virtual environment
+export PYTHON_ENV="/home/website/pyenv"
+
+# Load the environment variables from the .env file
+if [ -f /home/website/Coordimeet/.env ]; then
+  export $(grep -v '^#' /home/website/Coordimeet/.env | xargs)
+fi
+
+# Path to the Gunicorn executable
+command="${PYTHON_ENV}/bin/gunicorn"
+
+# Arguments for Gunicorn
+command_args="--workers 3 --bind 0.0.0.0:8000 --daemon coordimeet.wsgi:application"
+
+# Set a PID file
 pidfile="/run/gunicorn.pid"
-name="gunicorn"
 
 depend() {
-    need redis
+    need net
+    use dns logger
 }
 
 start_pre() {
-    checkpath --directory --mode 755 /run/gunicorn
-}
-
-start() {
-    ebegin "Starting $name"
-    start-stop-daemon --start --make-pidfile --pidfile "$pidfile" --background --user gunicorn \
-        --exec "$command" -- $command_args
-    eend $?
-}
-
-stop() {
-    ebegin "Stopping $name"
-    start-stop-daemon --stop --pidfile "$pidfile"
-    eend $?
+    checkpath --directory /run --owner website:website
 }
 ```
+
 - chmod +x /etc/init.d/gunicorn
 - rc-update add gunicorn default
 - service gunicorn start
