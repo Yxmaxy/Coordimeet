@@ -37,7 +37,7 @@ To stop the containers use `docker compose -f docker-compose.prod.yml down`.
 ### Database setup
 - create database coordimeet;
 - create user coordimeet with encrypted password 'SomeUnsafePassword';
-- grant all privileges on database coordimeet to coordimeet;
+- grant postgres to coordimeet;  # UNSAFE; CHANGE ASAP! Migrations don/t work without it
 
 ### Create website user
 - adduser -D website
@@ -108,10 +108,8 @@ stop() {
 ```
 #!/sbin/openrc-run
 
+name="Gunicorn Coordimeet"
 description="Gunicorn application server for Coordimeet"
-
-# User and Group to run the service
-command_user="website:website"
 
 # Path to your project directory
 directory="/home/website/Coordimeet/backend"
@@ -124,14 +122,11 @@ if [ -f /home/website/Coordimeet/.env ]; then
   export $(grep -v '^#' /home/website/Coordimeet/.env | xargs)
 fi
 
-# Path to the Gunicorn executable
+# Run command
 command="${PYTHON_ENV}/bin/gunicorn"
+command_args="--workers 3 --bind 0.0.0.0:8000 --daemon --pid /run/gunicorn/gunicorn.pid --access-logficommand_user="website"
 
-# Arguments for Gunicorn
-command_args="--workers 3 --bind 0.0.0.0:8000 --daemon coordimeet.wsgi:application"
-
-# Set a PID file
-pidfile="/run/gunicorn.pid"
+pidfile="/run/gunicorn/gunicorn.pid"
 
 depend() {
     need net
@@ -139,10 +134,25 @@ depend() {
 }
 
 start_pre() {
-    checkpath --directory /run --owner website:website
+    checkpath --directory /run/gunicorn --owner website:website --mode 0755
+}
+
+stop() {
+    ebegin "Stopping ${name}"
+    start-stop-daemon --stop --pidfile ${pidfile} --retry TERM/30/KILL/5
+    eend $?
+}
+
+restart() {
+    ebegin "Restarting ${name}"
+    svc_stop
+    svc_start
+    eend $?
 }
 ```
 
 - chmod +x /etc/init.d/gunicorn
 - rc-update add gunicorn default
+- chown -R website:website /run/gunicorn
+
 - service gunicorn start
