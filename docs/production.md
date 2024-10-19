@@ -125,8 +125,79 @@ restart() {
 - service gunicorn start
 
 
+### Celery
+```
+#!/sbin/openrc-run
+
+name="Celery Coordimeet"
+description="Celery worker for Coordimeet"
+
+# Path to your project directory
+directory="/home/website/Coordimeet/backend"
+
+# Python virtual environment
+export PYTHON_ENV="/home/website/pyenv"
+
+# Load the environment variables from the .env file
+if [ -f /home/website/Coordimeet/.env ]; then
+  export $(grep -v '^#' /home/website/Coordimeet/.env | xargs)
+fi
+
+pidfile="/run/celeryd/celeryd.pid"
+
+# Run command
+command="${PYTHON_ENV}/bin/celery"
+command_args="-A coordimeet worker -l INFO -E --pidfile ${pidfile} -D"
+
+
+depend() {
+    need net
+    use redis
+}
+
+start_pre() {
+    checkpath --directory /run/celeryd --owner website:website --mode 0755
+}
+
+stop() {
+    ebegin "Stopping ${name}"
+    start-stop-daemon --stop --pidfile ${pidfile} --retry TERM/30/KILL/5
+    eend $?
+}
+
+restart() {
+    ebegin "Restarting ${name}"
+    svc_stop
+    svc_start
+    eend $?
+}
+```
+
+
 ## Frontend
 - apk add --update npm
 - su website
-- cd /home/website/Coordimeet/frontend
-- npm install --legacy-peer-deps
+- cd /home/website/Coordimeet/frontende
+- npx npm-check-updates -u  # update if needed (if newer node version was installed)
+- npm run build
+
+### nginx
+- apk add nginx
+- mkdir sites-enabled
+- vi /etc/nginx/nginx.conf
+    - add include /etc/nginx/sites-enabled/* to http
+- vi /etc/sites-enabled/coordimeet
+    ```
+    server {
+        listen 3000;
+        server_name coordimeet.eu;
+
+        location / {
+            root /home/website/Coordimeet/frontend/dist;
+            index index.html;
+            try_files $uri $uri/ /index.html;
+        }
+    }
+    ```
+- nginx -t
+- service nginx start
