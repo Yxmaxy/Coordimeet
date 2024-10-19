@@ -65,42 +65,6 @@ To stop the containers use `docker compose -f docker-compose.prod.yml down`.
 - apk add redis
 - service redis start
 
-## Celery
-- vi /etc/init.d/celeryd
-
-```
-#!/sbin/openrc-run
-
-command="/usr/bin/python3"
-command_args="/root/pyenv/bin/celery -A tasks worker --loglevel=info"
-pidfile="/run/celeryd.pid"
-name="celeryd"
-
-depend() {
-    need redis
-}
-
-start_pre() {
-    checkpath --directory --mode 755 /run/celeryd
-}
-
-start() {
-    ebegin "Starting $name"
-    start-stop-daemon --start --make-pidfile --pidfile "$pidfile" --background --user nobody \
-        --exec "$command" -- $command_args
-    eend $?
-}
-
-stop() {
-    ebegin "Stopping $name"
-    start-stop-daemon --stop --pidfile "$pidfile"
-    eend $?
-}
-```
-- chmod +x /etc/init.d/celeryd
-- rc-update add celeryd default
-- service celeryd start
-
 
 ## Backend
 - vi /etc/init.d/gunicorn
@@ -155,4 +119,14 @@ restart() {
 - rc-update add gunicorn default
 - chown -R website:website /run/gunicorn
 
+- python manage.py collectstatic
+- python manage.py migrate
+
 - service gunicorn start
+
+
+## Frontend
+- apk add --update npm
+- su website
+- cd /home/website/Coordimeet/frontend
+- npm install --legacy-peer-deps
