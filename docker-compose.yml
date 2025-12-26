@@ -1,27 +1,11 @@
 version: '3'
 
 services:
-  db:
-    container_name: coordimeet-db
-    image: postgres:14.9-alpine
-    environment:
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_USER: ${DB_USERNAME}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "${DB_PORT}:5432"
-    volumes:
-      - db-data:/var/lib/postgresql/data/
-    env_file:
-      - .env
-
   cache:
     container_name: coordimeet-cache
-    image: redis:7.2.4-alpine
+    image: redis:latest
     ports:
       - "${CACHE_PORT}:6379"
-    depends_on:
-      - db
     volumes:
       - ./cache:/data
     env_file:
@@ -36,7 +20,6 @@ services:
     ports:
       - "${BACKEND_PORT}:8000"
     depends_on:
-      - db
       - cache
     env_file:
       - .env
@@ -49,9 +32,7 @@ services:
     volumes:
       - ./backend:/app
     depends_on:
-      - db
       - cache
-      - backend
     env_file:
       - .env
 
@@ -62,7 +43,6 @@ services:
     ports:
       - "${FRONTEND_PORT}:3000"
     depends_on:
-      - db
       - backend
     volumes:
       - ./frontend:/app

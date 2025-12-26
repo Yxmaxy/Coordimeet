@@ -1,13 +1,13 @@
 import typing as t
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from django.utils.timezone import timedelta
+from coordimeet.events.models import Event, EventCalendarTypeChoices
+
 
 class EventServices:
     @staticmethod
-    def get_best_date_range(event) -> t.List[t.Dict[str, t.Union[datetime, int]]]:
+    def get_best_date_range(event: Event) -> t.List[t.Dict[str, t.Union[datetime, int]]]:
         """Return the best date range for an event. The same function as in Event.vue"""
-        from coordimeet.events.models import EventCalendarTypeChoices
         date_count_map = {}
         calendar_type = event.event_calendar_type
 

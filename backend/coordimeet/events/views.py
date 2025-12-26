@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 
 from coordimeet.events.permissions import IsEventOrganiserOrAdminInOrganiserGroup, IsPublicEventOrUserIsMember
-from coordimeet.users.models import MemberRole
+from coordimeet.users.models import CoordimeetMemberRole
 from coordimeet.events.models import Event, EventParticipant, EventParticipantAvailability, EventTypeChoices
 from coordimeet.events.serializers import EventSerializer, EventParticipantSelectedSerializer, EventFinishSerializer
 from coordimeet.events.services import EventServices
@@ -38,7 +38,7 @@ class EventInvitedListAPIView(ListAPIView):
             Q(organiser=self.request.user)
             | Q(is_group_organiser=True)
             & Q(invited_group__members__user=self.request.user)
-            & Q(invited_group__members__role__in=[MemberRole.OWNER, MemberRole.ADMIN])
+            & Q(invited_group__members__role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN])
         ).distinct().order_by("-created_at")
 
         return all_events.exclude(event_uuid__in=exclude_events.values_list("event_uuid", flat=True))
@@ -56,7 +56,7 @@ class EventOrganiserListCreateAPIView(ListCreateAPIView):
             Q(organiser=self.request.user)
             | Q(is_group_organiser=True)
             & Q(invited_group__members__user=self.request.user)
-            & Q(invited_group__members__role__in=[MemberRole.OWNER, MemberRole.ADMIN])
+            & Q(invited_group__members__role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN])
         ).distinct().order_by("-created_at")
 
 

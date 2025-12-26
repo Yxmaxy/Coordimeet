@@ -2,9 +2,10 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import serializers
 
-from coordimeet.events.models import Event, EventAvailabilityOption, EventNotification, EventParticipant, EventTypeChoices
+from coordimeet.events.models import Event, EventAvailabilityOption, EventParticipant, EventTypeChoices
+from coordimeet.notifications.models import EventNotification
 from coordimeet.users.models import CoordimeetGroup
-from coordimeet.users.serializers import UserSerializer, GroupSerializer, MemberSerializer
+from coordimeet.users.serializers import CoordimeetUserSerializer, CoordimeetGroupSerializer, CoordimeetMemberSerializer
 
 
 class EventAvailabilityOptionSerializer(serializers.ModelSerializer):
@@ -31,7 +32,7 @@ class EventSerializer(serializers.ModelSerializer):
     organiser = serializers.PrimaryKeyRelatedField(queryset=get_user_model().objects.all())
 
     invited_group = serializers.PrimaryKeyRelatedField(queryset=CoordimeetGroup.objects.all(), required=False)
-    closed_group_users = UserSerializer(many=True, required=False)
+    closed_group_users = CoordimeetUserSerializer(many=True, required=False)
     closed_group_members = serializers.SerializerMethodField()
 
     user_response = serializers.SerializerMethodField()
@@ -121,7 +122,7 @@ class EventSerializer(serializers.ModelSerializer):
 
     def get_closed_group_members(self, instance):
         if instance.invited_group:
-            return MemberSerializer(instance.invited_group.members.all(), many=True).data
+            return CoordimeetMemberSerializer(instance.invited_group.members.all(), many=True).data
         return []
 
     def get_user_response(self, obj):
@@ -136,15 +137,15 @@ class EventSerializer(serializers.ModelSerializer):
             return None
 
     def to_representation(self, instance):
-        self.fields["organiser"] = UserSerializer()
-        self.fields["invited_group"] = GroupSerializer()
+        self.fields["organiser"] = CoordimeetUserSerializer()
+        self.fields["invited_group"] = CoordimeetGroupSerializer()
 
         return super(EventSerializer, self).to_representation(instance)
 
 
 class EventParticipantSelectedSerializer(serializers.ModelSerializer):
     participant_availabilities = EventAvailabilityOptionSerializer(many=True)
-    user = UserSerializer()
+    user = CoordimeetUserSerializer()
 
     class Meta:
         model = EventParticipant

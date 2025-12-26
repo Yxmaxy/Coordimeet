@@ -5,32 +5,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
-
 from django.db.models import Q
 from django.contrib.auth import get_user_model
 
 from coordimeet.users import serializers
-from coordimeet.users.models import CoordimeetGroup, UserTypes, MemberRole
+from coordimeet.users.models import CoordimeetGroup, CoordimeetMemberRole
 
 from coordimeet.events.permissions import HasGroupOwnerOrAdminPermission, HasGroupOwnerPermission
-
-
-class CustomTokenObtainView(TokenObtainPairView):
-    serializer_class = serializers.CustomTokenObtainSerializer
-
-
-class UserCreateAPIView(APIView):
-    def post(self, request):
-        serializer = serializers.UserCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        try:
-            serializer.save()
-        except Exception:
-            return Response({"error": "User already exists"}, status=400)
-
-        return Response(serializer.data, status=201)
 
 
 class AnonymousUserCreateAPIView(APIView):
@@ -46,7 +27,7 @@ class AnonymousUserCreateAPIView(APIView):
                 email = f"{random_adjective}.{random_noun}@coordimeet.eu"
                 user = get_user_model().objects.create(
                     email=email,
-                    user_type=UserTypes.ANONYMOUS,
+                    user_type=CoordimeetUserType.ANONYMOUS,
                 )
                 break
             except get_user_model().DoesNotExist:
@@ -74,20 +55,20 @@ class UserExistsAPIView(APIView):
 class GroupListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
-    serializer_class = serializers.GroupSerializer
+    serializer_class = serializers.CoordimeetGroupSerializer
 
     def get_queryset(self):
         # get the groups where is_closed is False and the user is a member and either a group owner or admin
         return CoordimeetGroup.objects.filter(
             Q(is_closed=False)
             & Q(members__user=self.request.user)
-            & Q(members__role__in=[MemberRole.OWNER, MemberRole.ADMIN])
+            & Q(members__role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN])
         )
 
 
 class GroupRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated, HasGroupOwnerOrAdminPermission]
-    serializer_class = serializers.GroupSerializer
+    serializer_class = serializers.CoordimeetGroupSerializer
     lookup_field = "pk"
 
     def get_queryset(self):
@@ -96,7 +77,7 @@ class GroupRetrieveUpdateAPIView(RetrieveUpdateAPIView):
 
 class GroupDestroyAPIView(DestroyAPIView):
     permission_classes = [IsAuthenticated, HasGroupOwnerPermission]
-    serializer_class = serializers.GroupSerializer
+    serializer_class = serializers.CoordimeetGroupSerializer
     lookup_field = "pk"
 
     def get_queryset(self):

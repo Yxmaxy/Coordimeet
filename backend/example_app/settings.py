@@ -11,10 +11,13 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+load_dotenv(BASE_DIR.parent / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -43,6 +46,7 @@ INSTALLED_APPS = [
     # internal apps
     "coordimeet.users",
     "coordimeet.events",
+    "coordimeet.notifications",
 ]
 
 MIDDLEWARE = [
@@ -82,7 +86,7 @@ WSGI_APPLICATION = "example_app.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.contrib.gis.db.backends.spatialite",
+        "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
@@ -136,29 +140,30 @@ SESSION_COOKIE_DOMAIN = "localhost"
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = False
 
+# Coordimeet
+COORDIMEEET_NOTIFICATIONS_APP_NAME = os.getenv(
+    "COORDIMEEET_NOTIFICATIONS_APP_NAME"
+)
+COORDIMEET_FRONTEND_URL = os.getenv("COORDIMEET_FRONTEND_URL")
+COORDIMEET_BACKEND_URL = os.getenv("COORDIMEET_BACKEND_URL")
+
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:8000",
+    COORDIMEET_FRONTEND_URL,
+    COORDIMEET_BACKEND_URL,
 ]
 CORS_ALLOW_CREDENTIALS = True
 
 # CSRF settings
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:8000",
+    COORDIMEET_FRONTEND_URL,
+    COORDIMEET_BACKEND_URL,
 ]
 
 # Django Simple Notifications
 NOTIFICATIONS_VAPID_PUBLIC_KEY = os.getenv("NOTIFICATIONS_VAPID_PUBLIC_KEY")
 NOTIFICATIONS_VAPID_PRIVATE_KEY = os.getenv("NOTIFICATIONS_VAPID_PRIVATE_KEY")
 NOTIFICATIONS_VAPID_EMAIL = os.getenv("NOTIFICATIONS_VAPID_EMAIL")
-
-# Coordimeet notifications
-COORDIMEEET_NOTIFICATIONS_ENABLED = True
-COORDIMEEET_NOTIFICATIONS_APP_NAME = os.getenv(
-    "COORDIMEEET_NOTIFICATIONS_APP_NAME"
-)
 
 # Celery
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")

@@ -5,3 +5,5 @@
 **/cache/
 **/cache-prod/
 .DS_Store
+*.sqlite3
+dist/
