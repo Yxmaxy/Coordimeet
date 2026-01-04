@@ -3,9 +3,13 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from coordimeet.events.models import Event, EventAvailabilityOption, EventParticipant, EventTypeChoices
+
 from coordimeet.notifications.models import EventNotification
-from coordimeet.users.models import CoordimeetGroup
+from coordimeet.notifications.services import EventNotificationServices
+
+from coordimeet.users.models import CoordimeetGroup, CoordimeetUser
 from coordimeet.users.serializers import CoordimeetUserSerializer, CoordimeetGroupSerializer, CoordimeetMemberSerializer
+from coordimeet.users.services import CoordimeetUserServices
 
 
 class EventAvailabilityOptionSerializer(serializers.ModelSerializer):
@@ -29,7 +33,6 @@ class EventSerializer(serializers.ModelSerializer):
 
     event_availability_options = EventAvailabilityOptionSerializer(many=True)
     event_notifications = EventNotificationSerializer(many=True)
-    organiser = serializers.PrimaryKeyRelatedField(queryset=get_user_model().objects.all())
 
     invited_group = serializers.PrimaryKeyRelatedField(queryset=CoordimeetGroup.objects.all(), required=False)
     closed_group_users = CoordimeetUserSerializer(many=True, required=False)
@@ -44,7 +47,6 @@ class EventSerializer(serializers.ModelSerializer):
             "event_uuid",
             "event_calendar_type",
             "event_type",
-            "organiser",
             "invited_group",
             "is_group_organiser",
             "description",
@@ -58,8 +60,8 @@ class EventSerializer(serializers.ModelSerializer):
             "event_notifications",
             "user_response",
         ]
-    
-    def create(self, validated_data):
+
+    def create(self, validated_data: dict):
         closed_group_users = validated_data.pop("closed_group_users")
 
         if validated_data.get("event_type") == EventTypeChoices.CLOSED:
@@ -68,14 +70,18 @@ class EventSerializer(serializers.ModelSerializer):
             group = CoordimeetGroup.objects.create(name=validated_data["title"], is_closed=True)
             # create members from the provided users (not all users are created already)
             for user_data in closed_group_users:
-                user, _ = get_user_model().objects.get_or_create(**user_data)
-                group.members.create(user=user)
+                coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user_data["user"])
+                group.coordimeet_members.create(coordimeet_user=coordimeet_user)
             # add current user to event
-            group.members.create(user=self.context["request"].user)
+            coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
+            group.coordimeet_members.create(coordimeet_user=coordimeet_user)
             validated_data["invited_group"] = group
 
         availability_options_data = validated_data.pop("event_availability_options")
         event_notifications_data = validated_data.pop("event_notifications")
+
+        if not validated_data.get("is_group_organiser"):
+            validated_data["organiser"] = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
 
         event = Event.objects.create(**validated_data)
         for availability_option_data in availability_options_data:
@@ -84,10 +90,10 @@ class EventSerializer(serializers.ModelSerializer):
         for event_notification_data in event_notifications_data:
             EventNotification.objects.create(event=event, **event_notification_data)
 
-        event.handle_notifications_create()
+        EventNotificationServices.handle_notifications_create(event)
         return event
 
-    def update(self, instance: Event, validated_data):
+    def update(self, instance: Event, validated_data: dict):
         closed_group_users = validated_data.pop("closed_group_users")
 
         if validated_data.get("event_type") == EventTypeChoices.CLOSED:
@@ -100,9 +106,9 @@ class EventSerializer(serializers.ModelSerializer):
             # create members from the provided users (not all users are created already)
             for user_data in closed_group_users:
                 user, _ = get_user_model().objects.get_or_create(**user_data)
-                group.members.create(user=user)
+                group.coordimeet_members.create(coordimeet_user=user)
             # add current user to event
-            group.members.create(user=self.context["request"].user)
+            group.coordimeet_members.create(coordimeet_user=self.context["request"].user)
             validated_data["invited_group"] = group
 
         availability_options_data = validated_data.pop("event_availability_options")
@@ -117,26 +123,27 @@ class EventSerializer(serializers.ModelSerializer):
             EventNotification.objects.create(event=instance, **event_notification_data)
 
         event = super(EventSerializer, self).update(instance, validated_data)
-        event.handle_notifications_update()
+        EventNotificationServices.handle_notifications_update(event)
         return event
 
-    def get_closed_group_members(self, instance):
+    def get_closed_group_members(self, instance: Event):
         if instance.invited_group:
-            return CoordimeetMemberSerializer(instance.invited_group.members.all(), many=True).data
+            return CoordimeetMemberSerializer(instance.invited_group.coordimeet_members.all(), many=True).data
         return []
 
-    def get_user_response(self, obj):
+    def get_user_response(self, obj: Event):
         user = self.context["request"].user
+        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user)
 
-        if not user.is_authenticated:
+        if not coordimeet_user:
             return None
         try:
-            participant = EventParticipant.objects.get(event=obj, user=user)
+            participant = EventParticipant.objects.get(event=obj, coordimeet_user=coordimeet_user)
             return not participant.not_comming
         except EventParticipant.DoesNotExist:
             return None
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: Event):
         self.fields["organiser"] = CoordimeetUserSerializer()
         self.fields["invited_group"] = CoordimeetGroupSerializer()
 
@@ -145,11 +152,11 @@ class EventSerializer(serializers.ModelSerializer):
 
 class EventParticipantSelectedSerializer(serializers.ModelSerializer):
     participant_availabilities = EventAvailabilityOptionSerializer(many=True)
-    user = CoordimeetUserSerializer()
+    coordimeet_user = CoordimeetUserSerializer()
 
     class Meta:
         model = EventParticipant
-        fields = ["user", "not_comming", "participant_availabilities"]
+        fields = ["coordimeet_user", "not_comming", "participant_availabilities"]
 
 
 class EventFinishSerializer(serializers.ModelSerializer):
@@ -165,7 +172,7 @@ class EventFinishSerializer(serializers.ModelSerializer):
 
         for event_notification_data in event_notifications_data:
             EventNotification.objects.create(event=instance, **event_notification_data)
-        
-        instance.handle_notifications_finished()
+
+        EventNotificationServices.handle_notifications_finished(instance)
         instance.refresh_from_db()
         return instance

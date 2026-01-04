@@ -1,5 +1,5 @@
 import { CalendarType, DateRange } from "@/types/calendar";
-import { User, Group } from "@/types/user";
+import { CoordimeetUser, CoordimeetGroup } from "@/types/user";
 
 export enum EventType {
     Public = 1,
@@ -36,8 +36,8 @@ export interface Event {
     event_calendar_type: CalendarType,
     event_type: EventType,
 
-    organiser?: User,
-    invited_group?: Group,
+    organiser?: CoordimeetUser,
+    invited_group?: CoordimeetGroup,
     is_group_organiser: boolean,
 
     description?: string,
@@ -53,7 +53,7 @@ export interface Event {
     event_availability_options: EventAvailabilityOption[],
     event_notifications: EventNotification[],
 
-    closed_group_users?: User[],
+    closed_group_users?: CoordimeetUser[],
 
     user_response?: boolean|null,
 }
@@ -68,7 +68,7 @@ export enum EventPageType {
 }
 
 export interface EventParticipant {
-    user: User,
+    coordimeet_user: CoordimeetUser,
     not_comming: boolean,
     participant_availabilities: DateRange[],
 

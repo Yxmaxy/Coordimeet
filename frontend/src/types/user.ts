@@ -1,28 +1,29 @@
 export interface User {
     id?: number,
     email: string,
-    first_name?: string,
-    last_name?: string,
 }
 
-export interface Group {
+export interface CoordimeetUser {
+    id?: number,
+    user: User,
+    email: string,
+    is_anonymous?: boolean,
+}
+
+export interface CoordimeetGroup {
     id?: number,
     name: string,
-    members: Member[],
+    coordimeet_members: CoordimeetMember[],
 }
 
-export enum Role {
+export enum CoordimeetMemberRole {
     ADMIN = 1,
     MEMBER = 2,
     OWNER = 3,
 }
 
-export interface Member {
+export interface CoordimeetMember {
     id?: number,
-    role: Role,
-    user?: User,
-}
-
-export interface MemberCreate extends Member {
-    exists: boolean;
+    role: CoordimeetMemberRole,
+    coordimeet_user?: CoordimeetUser,
 }

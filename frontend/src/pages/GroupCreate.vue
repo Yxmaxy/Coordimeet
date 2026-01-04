@@ -34,40 +34,25 @@
                 <div
                     class="flex flex-col gap-4 px-4 pt-4 h-full min-h-[calc(100vh-7rem)]"
                 >
-                    <label class="flex flex-col gap-2">
-                        <b class="ml-4 flex gap-2 items-center">
-                            Member's email
-                            <help-icon class="text-base font-normal">
-                                Enter the email address of a member you want to add to the group.
-                                If the account does not yet exist, the user will be added to the group when they create an account.
-                                <br /><br />
-                                You can send them the following link to create an account:
-                                <div
-                                    class="cursor-pointer font-mono"
-                                    @click="copyInviteLink"
-                                >
-                                    {{ inviteLink }}
-                                </div>
-                            </help-icon>
-                        </b>
-                        <div class="flex gap-2">
-                            <custom-input
-                                type="email"
-                                v-model="memberEmail"
-                                placeholder="Enter a member's email address"
-                                :forceInvalidMessage="memberForceInvalidMessage"
-                                :invalidMessage="memberInvalidMessage"
-                                @keydown.enter="addMember"
-                                @input="memberForceInvalidMessage = false"
-                            />
+                    <div class="flex flex-col gap-2">
+                        <b class="ml-4 flex gap-2 items-baseline justify-between">
+                            Available users
+
                             <custom-button
-                                class="h-11 rounded-xl"
-                                :click="addMember"
+                                :small="true"
+                                @click="openManageFriends"
                             >
-                                <custom-icon icon="add" />
+                                Manage available users <custom-icon class="text-base" icon="group_add" />
                             </custom-button>
+                        </b>
+                        <div>
+                            <custom-select
+                                v-model="userSearch"
+                                :options="displayedAvailableUsers"
+                                @confirmedOption="addMember"
+                            />
                         </div>
-                    </label>
+                    </div>
 
                     <div class="flex flex-col gap-4">
                         <div
@@ -75,31 +60,17 @@
                             class="flex justify-between items-center bg-main-100 px-6 py-4 rounded-2xl shadow-md"
                         >
                             <div class="flex gap-1 items-center">
-                                <b class="flex items-center h-8">{{ member.user?.email }}</b>
-                                <help-icon
-                                    v-if="!member.exists"
-                                    class="text-base font-normal text-calendar-unavailable" icon="info"
-                                >
-                                    This user doesn't exist yet.
-                                    <br /><br />
-                                    You can send them the following link to create an account:
-                                    <div
-                                        class="cursor-pointer font-mono"
-                                        @click="copyInviteLink"
-                                    >
-                                        {{ inviteLink }}
-                                    </div>
-                                </help-icon>
+                                <b class="flex items-center h-8">{{ member.coordimeet_user?.email }}</b>
                             </div>    
                             <div class="flex gap-2">
-                                <div class="flex items-center gap-1 ml-1" v-if="member.role === Role.OWNER">
+                                <div class="flex items-center gap-1 ml-1" v-if="member.role === CoordimeetMemberRole.OWNER">
                                     Owner <custom-icon icon="shield_person" class="text-base" />
                                 </div>
                                 <custom-toggle
-                                    v-if="isCurrentUserOwner && member.user?.id !== user?.id"
+                                    v-if="isCurrentUserOwner && member.coordimeet_user?.id !== user?.id"
                                     v-model="member.role"
-                                    :leftValue="Role.MEMBER"
-                                    :rightValue="Role.ADMIN"
+                                    :leftValue="CoordimeetMemberRole.MEMBER"
+                                    :rightValue="CoordimeetMemberRole.ADMIN"
                                 >
                                     <template v-slot:left>
                                         <div class="flex items-center gap-1 mr-1">
@@ -113,18 +84,11 @@
                                     </template>
                                 </custom-toggle>
                                 <custom-button
-                                    v-if="member.role !== Role.OWNER && member.user?.id !== user?.id"
+                                    v-if="member.role !== CoordimeetMemberRole.OWNER && member.coordimeet_user?.id !== user?.id"
                                     class="h-8 w-8 rounded-full"
                                     :click="() => deleteMember(member)"
                                 >
                                     <custom-icon icon="delete" />
-                                </custom-button>
-                                <custom-button
-                                    v-if="!member.id"
-                                    class="h-8 w-8 rounded-full !text-base"
-                                    :click="() => editMember(member)"
-                                >
-                                    <custom-icon icon="edit" />
                                 </custom-button>
                             </div>
                         </div>
@@ -141,18 +105,21 @@ import { useStoreUser } from "@/stores/storeUser";
 import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Tab } from "@/types/tabs";
-import { Member, Group, Role } from "@/types/user";
+import {
+    User,
+    CoordimeetMember,
+    CoordimeetGroup,
+    CoordimeetMemberRole,
+} from "@/types/user";
+import { SelectOption } from "@/types/ui";
 
 import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomToggle from "@/components/ui/CustomToggle.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
+import CustomSelect from "@/components/ui/CustomSelect.vue";
 import HelpIcon from "@/components/ui/HelpIcon.vue";
-
-interface MemberCreate extends Member {
-    exists: boolean;
-}
 
 const tabs = [
     {
@@ -177,6 +144,7 @@ export default {
         CustomToggle,
         CustomIcon,
         HelpIcon,
+        CustomSelect,
     },
     setup() {
         const { user } = useStoreUser();
@@ -184,20 +152,20 @@ export default {
         return {
             user,
             tabs,
-            Role,
+            CoordimeetMemberRole,
             storeMessages,
-            inviteLink: `${import.meta.env.VITE_FRONTEND_URL}/`,
         }
     },
     data() {
         return {
             groupName: "",
             
-            memberEmail: "",
             memberForceInvalidMessage: false,
             memberInvalidMessage: "",
+            members: [] as CoordimeetMember[],
 
-            members: [] as MemberCreate[],
+            userSearch: "",
+            availableUsers: [] as SelectOption<User>[],
         }
     },
     computed: {
@@ -205,16 +173,39 @@ export default {
             return this.$route.params.id !== undefined;
         },
         isCurrentUserOwner() {
-            return this.members.find((member) => member.user?.id === this.user?.id)?.role === Role.OWNER;
+            return this.members.find((member) => member.coordimeet_user?.id === this.user?.id)?.role === CoordimeetMemberRole.OWNER;
+        },
+        // available users
+        displayedAvailableUsers() {
+            return this.availableUsers
+                .filter(user => !this.members.some(member =>
+                    member.coordimeet_user?.user === user.value.id ||    
+                    member.coordimeet_user?.user.id === user.value.id
+                ));
         },
     },
     methods: {
+        // available users
+        getAvailableUsers() {
+            ApiService.get<User[]>(`/friends/list/`).then((response) => {
+                this.availableUsers = response.map(user => ({
+                    value: user,
+                    text: user.email,
+                }));
+            }).catch(() => {
+                this.storeMessages.showMessageError("Failed to fetch available users");
+            });
+        },
+        openManageFriends() {
+            window.location.href = import.meta.env.VITE_FRIENDS_MANAGE_URL;
+        },
+
+        // group
         getGroup() {
-            ApiService.get(`/users/group/${this.$route.params.id}/`).then((response) => {
-                this.groupName = response.data.name;
-                this.members = response.data.members.map((member: MemberCreate) => ({
+            ApiService.get<CoordimeetGroup>(`/users/group/${this.$route.params.id}/`).then((response) => {
+                this.groupName = response.name;
+                this.members = response.coordimeet_members.map((member: CoordimeetMember) => ({
                     ...member,
-                    exists: true,
                 }));
             }).catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch group information");
@@ -233,17 +224,19 @@ export default {
 
             const data = {
                 name: this.groupName,
-                members: this.members,
-            } as Group;
+                coordimeet_members: this.members.map((member: CoordimeetMember) => ({
+                    coordimeet_user: member.coordimeet_user,
+                    role: member.role,
+                })),
+            } as CoordimeetGroup;
 
-            ApiService.post("/users/group/", data).then((response) => {
-                if (response.status !== 201)
-                    throw new Error("Failed to create group");
-                this.storeMessages.showMessage("Group created successfully");
-                this.$router.push("/group/list");
-            }).catch(() => {
-                this.storeMessages.showMessageError("Failed to create group");
-            });
+            ApiService.post("/users/group/", data)
+                .then(() => {
+                    this.storeMessages.showMessage("Group created successfully");
+                    this.$router.push("/group/list");
+                }).catch(() => {
+                    this.storeMessages.showMessageError("Failed to create group");
+                });
         },
         editGroup() {
             if (!this.validateData())
@@ -251,70 +244,33 @@ export default {
 
             const data = {
                 name: this.groupName,
-                members: this.members,
-            } as Group;
+                coordimeet_members: this.members,
+            } as CoordimeetGroup;
 
-            ApiService.put(`/users/group/${this.$route.params.id}/`, data).then((response) => {
-                if (response.status !== 200)
-                    throw new Error("Failed to update group");
-                this.storeMessages.showMessage("Group updated successfully");
-                this.$router.push("/group/list");
-            }).catch(() => {
-                this.storeMessages.showMessageError("Failed to update group");
-            });
-        },
-        addMember() {
-            // // check email format
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.memberEmail)) {
-                this.memberForceInvalidMessage = true;
-                this.memberInvalidMessage = "Invalid email format";
-                return;
-            }
-
-            // check duplicates
-            if (this.members.some(m => m.user?.email === this.memberEmail)) {
-                this.memberForceInvalidMessage = true;
-                this.memberInvalidMessage = "This member is already added";
-                return;
-            }
-
-            // can't add yourself
-            if (this.memberEmail === this.user?.email) {
-                this.memberForceInvalidMessage = true;
-                this.memberInvalidMessage = "You can't add yourself to the group";
-                return;
-            }
-
-            this.memberForceInvalidMessage = false;
-            this.memberInvalidMessage = "";
-
-            ApiService.get(`/users/user/exists/${this.memberEmail}/`).then((response: any) => {
-                this.members.push({
-                    user: {
-                        email: this.memberEmail,
-                    },
-                    role: Role.MEMBER,
-                    exists: response.data.exists,
+            ApiService.put(`/users/group/${this.$route.params.id}/`, data)
+                .then(() => {
+                    this.storeMessages.showMessage("Group updated successfully");
+                    this.$router.push("/group/list");
+                }).catch(() => {
+                    this.storeMessages.showMessageError("Failed to update group");
                 });
-            }).catch(() => {
-                this.storeMessages.showMessageError("Failed to add user to group");
-            }).finally(() => {
-                this.memberEmail = "";
-            });
         },
-        deleteMember(member: MemberCreate) {
+        addMember(option: SelectOption<User>) {
+            this.members.push({
+                role: CoordimeetMemberRole.MEMBER,
+                coordimeet_user: {
+                    user: option.value?.id,  // ID instead of User!
+                    email: option.value?.email,
+                },
+            } as any);
+            this.userSearch = "";
+        },
+        deleteMember(member: CoordimeetMember) {
             this.members = this.members.filter(m => m !== member);
-        },
-        editMember(member: MemberCreate) {
-            this.memberEmail = member.user?.email?.toString() || "";
-            this.deleteMember(member);
-        },
-        async copyInviteLink() {
-            navigator.clipboard.writeText(this.inviteLink);
-            this.storeMessages.showMessage("Invite link copied to clipboard", 3000);
         },
     },
     mounted() {
+        this.getAvailableUsers();
         if (this.isEditing) {
             this.getGroup();
         }

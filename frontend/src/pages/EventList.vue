@@ -73,22 +73,23 @@ export default {
     },
     methods: {
         getEvents() {
-            ApiService.get("/events/event/")
-            .then(res => {
-                this.eventsCreated = res.data as Event[];
-            })
-            .catch(e => {
-                this.storeMessages.showMessageError(`Pri pridobivanju podatkov je prišlo do napake.`)
-                throw e;
-            });
-            ApiService.get("/events/event/invited/")
-            .then(res => {
-                this.eventsInvited = res.data as Event[];
-            })
-            .catch(e => {
-                this.storeMessages.showMessageError(`Pri pridobivanju podatkov je prišlo do napake.`)
-                throw e;
-            });
+            ApiService.get<Event[]>("/events/event/")
+                .then(res => {
+                    this.eventsCreated = res;
+                })
+                .catch(e => {
+                    this.storeMessages.showMessageError(`An error occurred while fetching the events.`)
+                    throw e;
+                });
+
+            ApiService.get<Event[]>("/events/event/invited/")
+                .then(res => {
+                    this.eventsInvited = res;
+                })
+                .catch(e => {
+                    this.storeMessages.showMessageError(`An error occurred while fetching the invited events.`)
+                    throw e;
+                });
         },
     },
     mounted() {

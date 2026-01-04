@@ -14,6 +14,18 @@ from coordimeet.users.models import CoordimeetGroup, CoordimeetMemberRole
 from coordimeet.events.permissions import HasGroupOwnerOrAdminPermission, HasGroupOwnerPermission
 
 
+class CurrentUserAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({
+            "email": request.user.email,
+            "first_name": request.user.first_name,
+            "last_name": request.user.last_name,
+            "id": request.user.id,
+        })
+
+
 class AnonymousUserCreateAPIView(APIView):
     def post(self, request):
         r = RandomWord()
@@ -61,9 +73,9 @@ class GroupListCreateAPIView(ListCreateAPIView):
         # get the groups where is_closed is False and the user is a member and either a group owner or admin
         return CoordimeetGroup.objects.filter(
             Q(is_closed=False)
-            & Q(members__user=self.request.user)
-            & Q(members__role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN])
-        )
+            & Q(coordimeet_members__coordimeet_user__user=self.request.user)
+            & Q(coordimeet_members__role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN])
+        ).distinct()
 
 
 class GroupRetrieveUpdateAPIView(RetrieveUpdateAPIView):
@@ -72,7 +84,7 @@ class GroupRetrieveUpdateAPIView(RetrieveUpdateAPIView):
     lookup_field = "pk"
 
     def get_queryset(self):
-        return CoordimeetGroup.objects.filter(members__user=self.request.user)
+        return CoordimeetGroup.objects.filter(coordimeet_members__coordimeet_user__user=self.request.user)
 
 
 class GroupDestroyAPIView(DestroyAPIView):
@@ -81,7 +93,7 @@ class GroupDestroyAPIView(DestroyAPIView):
     lookup_field = "pk"
 
     def get_queryset(self):
-        return CoordimeetGroup.objects.filter(members__user=self.request.user)
+        return CoordimeetGroup.objects.filter(coordimeet_members__coordimeet_user__user=self.request.user)
 
 
 class GroupLeaveAPIView(APIView):
@@ -89,5 +101,5 @@ class GroupLeaveAPIView(APIView):
 
     def post(self, request, pk):
         group = CoordimeetGroup.objects.get(pk=pk)
-        group.members.filter(user=request.user).delete()
+        group.coordimeet_members.filter(coordimeet_user__user=self.request.user).delete()
         return Response(status=204)

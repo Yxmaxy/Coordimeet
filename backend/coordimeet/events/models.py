@@ -101,7 +101,7 @@ class EventParticipant(models.Model):
         related_name="event_participants",
         on_delete=models.CASCADE
     )
-    user = models.ForeignKey(
+    coordimeet_user = models.ForeignKey(
         CoordimeetUser,
         related_name="user_events",
         null=True,

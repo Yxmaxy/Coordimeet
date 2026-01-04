@@ -18,7 +18,10 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+    # example app
     path("admin/", admin.site.urls),
+    path("friends/", include("friends.urls")),
+    # coordimeet
     path("users/", include("coordimeet.users.urls")),
     path("events/", include("coordimeet.events.urls")),
     # simple notifications

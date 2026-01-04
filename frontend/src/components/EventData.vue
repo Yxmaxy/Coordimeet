@@ -49,9 +49,7 @@ export default {
                 return this.event.invited_group.name;
             }
             if (this.event.organiser) {
-                if (this.event.organiser.first_name && this.event.organiser.last_name)
-                    return `${this.event.organiser?.first_name} ${this.event.organiser?.last_name}`;
-                return this.event.organiser.email;
+                return this.event.organiser.user?.email;
             }
             return "";
         }

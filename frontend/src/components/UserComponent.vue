@@ -113,10 +113,6 @@ export default {
     },
     computed: {
         userDisplayName() {
-            if (this.userStore.user!.first_name && this.userStore.user!.last_name)
-                return `${this.userStore.user!.first_name} ${this.userStore.user!.last_name}`;
-            if (this.userStore.user!.first_name)
-                return this.userStore.user!.first_name;
             return this.userStore.user!.email;
         }
     },

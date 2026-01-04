@@ -212,7 +212,7 @@
                     'flex justify-between items-center']"
                     @click="toggleParticipant(participant)"
                 >
-                    {{ participant.user.email }}
+                    {{ participant.coordimeet_user.email }}
                     <custom-icon v-if="participant.not_comming" icon="event_busy"/>
                     <custom-icon v-if="!participant.not_comming" icon="event_available"/>
                 </div>
@@ -313,8 +313,6 @@
 </template>
 
 <script lang="ts">
-import { AxiosResponse } from "axios";
-
 import ApiService from "@/utils/ApiService";
 import { useStoreUser } from "@/stores/storeUser";
 import { useStoreMessages } from "@/stores/storeMessages";
@@ -323,7 +321,7 @@ import { useStoreOnline } from "@/stores/storeOnline";
 import { CalendarType, DateRange } from "@/types/calendar";
 import { Event, EventNotification, EventNotificationType, EventPageType, EventParticipant, EventType } from "@/types/event";
 import { Tab } from "@/types/tabs";
-import { Member, Role } from "@/types/user";
+import { CoordimeetMember, CoordimeetMemberRole } from "@/types/user";
 import { initializeDateInput, formatDateRange, addUnitsToDate } from "@/utils/dates";
 
 import EventData from "@/components/EventData.vue";
@@ -478,18 +476,18 @@ export default {
         // event
         getEventData() {
             // gets the event data and sets page type
-            ApiService.get(`events/event/${this.$route.params.uuid}/`)
+            ApiService.get<Event>(`/events/event/${this.$route.params.uuid}/`)
             .then(res => {
                 // parse all dates
-                const parseDate = (date: string) => new Date(date);
-                const parseDateNull = (date: string) => date ? parseDate(date) : null;
+                const parseDate = (date: any) => new Date(date);
+                const parseDateNull = (date: any) => date ? parseDate(date) : null;
                 
                 const eventData = {
-                    ...res.data,
-                    deadline: parseDate(res.data.deadline),
-                    selected_start_date: parseDateNull(res.data.selected_start_date),
-                    selected_end_date: parseDateNull(res.data.selected_end_date),
-                    event_availability_options: res.data.event_availability_options.map(
+                    ...res,
+                    deadline: parseDate(res.deadline),
+                    selected_start_date: parseDateNull(res.selected_start_date),
+                    selected_end_date: parseDateNull(res.selected_end_date),
+                    event_availability_options: res.event_availability_options.map(
                         (dateRange: any) => ({
                             start_date: parseDate(dateRange.start_date),
                             end_date: parseDate(dateRange.end_date),
@@ -505,8 +503,8 @@ export default {
                     this.storeUser.user?.id === eventData.organiser?.id ||
                     (
                         eventData.is_group_organiser
-                        && eventData.invited_group?.members.some(
-                            (member: Member) => member.user?.id === this.storeUser.user?.id && [Role.OWNER, Role.ADMIN].includes(member.role))
+                        && eventData.invited_group?.coordimeet_members.some(
+                            (member: CoordimeetMember) => member.coordimeet_user?.id === this.storeUser.user?.id && [CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN].includes(member.role))
                         )
                 ) {
                     this.eventPageType = EventPageType.Organiser;
@@ -564,20 +562,15 @@ export default {
         getPreviousSelectedDateRanges() {
             // gets the user's selected date ranges if they exist
             // also "upgrades" the user to invitee if needed
-            ApiService.get(`/events/event/participants/${this.$route.params.uuid}/`)
-                .then((response: AxiosResponse) => {
-                    if (response.data.error) {
-                        this.storeMessages.showMessageError(`An error occured while fetching your previous selection: ${response.data.error}`)
-                        return;
-                    }
-
-                    if (response.data.participant_availabilities.length !== 0 || response.data.not_comming) {
+            ApiService.get<EventParticipant>(`/events/event/participants/${this.$route.params.uuid}/`)
+                .then((response) => {
+                    if (response.participant_availabilities.length !== 0 || response.not_comming) {
                         // "upgrade" user to invitee if the data was submitted
                         if (this.eventPageType === EventPageType.NonConfirmed)
                             this.eventPageType = EventPageType.Invitee;
 
                         // update selectedDateRanges with previous response
-                        this.previousSelectedDateRanges = response.data.participant_availabilities.map((range: DateRange) => ({
+                        this.previousSelectedDateRanges = response.participant_availabilities.map((range: DateRange) => ({
                             start_date: new Date(range.start_date),
                             end_date: new Date(range.end_date),
                         }));
@@ -585,27 +578,30 @@ export default {
                         // intialize the selected date ranges
                         this.selectedDateRanges = this.previousSelectedDateRanges;
                     }
+                })
+                .catch(() => {
+                    this.storeMessages.showMessageError(`An error occured while fetching your previous selection`)
                 });
         },
         getParticipants() {
             this.gettingParticipantData = true;
-            ApiService.get(`/events/event/organiser/${this.$route.params.uuid}/`)
+            ApiService.get<any[]>(`/events/event/organiser/${this.$route.params.uuid}/`)
                 .then(res => {
-                    if (res.data.error) {
-                        this.storeMessages.showMessageError(`An error occured while fetching the participants: ${res.data.error}`)
-                        return;
-                    }
-                    if (res.data.length === 0)
+                    if (res.length === 0)
                         return;
 
                     // set the participants array
-                    this.eventParticipants = res.data.map((participant: any) => {
+                    this.eventParticipants = res.map((participant: any) => {
                         return {
                             ...participant,
                             isSelected: true,
                         } as EventParticipant
                     })
-                }).finally(() => {
+                })
+                .catch(() => {
+                    this.storeMessages.showMessageError(`An error occured while fetching the participants`)
+                })
+                .finally(() => {
                     this.gettingParticipantData = false;
                 })
         },
@@ -614,9 +610,9 @@ export default {
             const formData = new FormData();
             formData.append("file", file);
 
-            const res = await ApiService.post(`events/event/icalendar/${this.$route.params.uuid}/`, formData)
+            const res = await ApiService.post<any[], FormData>(`/events/event/icalendar/${this.$route.params.uuid}/`, formData)
             // handle the response
-            const unavailableDates = res.data.map((range: any) => ({
+            const unavailableDates = res.map((range: any) => ({
                 start_date: new Date(range.event_start),
                 end_date: new Date(range.event_end),
             } as DateRange));
@@ -636,10 +632,10 @@ export default {
             this.selectedDateRanges = newSelectedDateRanges;
         },
         getICalFile() {
-            ApiService.get(`events/event/icalendar/${this.$route.params.uuid}/`, { responseType: "blob" })
+            ApiService.get<Blob>(`/events/event/icalendar/${this.$route.params.uuid}/`)
                 .then(res => {
                     // handle the response
-                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                    const url = window.URL.createObjectURL(new Blob([res]));
                     this.icalFileUrl = url;
                     this.$nextTick(() => {
                         (this.$refs.icalDownload as HTMLAnchorElement).click();
@@ -659,9 +655,7 @@ export default {
 
             // handler if the event succeedes
             ApiService.post(`/events/event/participants/${this.$route.params.uuid}/`, data)
-                .then((response: AxiosResponse) => {
-                    if (response.status !== 200)
-                        return;
+                .then(() => {
                     this.previousSelectedDateRanges = this.selectedDateRanges;
                     this.storeMessages.showMessage("Your response has been submitted");
                     if (this.storeUser.user!.id === this.eventData?.organiser?.id)
@@ -727,9 +721,7 @@ export default {
         },
         declineInvitation() {
             ApiService.post(`/events/event/participants/${this.$route.params.uuid}/`, {not_comming: true})
-            .then((response: AxiosResponse) => {
-                if (response.status !== 200)
-                    return;
+            .then(() => {
                 this.storeMessages.showMessage("You have declined the invitation");
                 this.$router.push("/event/list");
             })

@@ -14,15 +14,19 @@ from coordimeet.users.models import (
     CoordimeetGroup,
     CoordimeetMemberRole,
 )
+from coordimeet.events.models import Event, EventTypeChoices
 from coordimeet.events.services import EventServices
+from coordimeet.notifications.models import EventNotificationTypeChoices
 
 
-class NotificationServices:
+
+class NotificationUtilityServices:
     @staticmethod
     def send_user_notification(
         coordimeet_user: CoordimeetUser,
         title: str,
         body: str,
+        **kwargs,
     ):
         if coordimeet_user.is_anonymous:
             return
@@ -47,6 +51,7 @@ class NotificationServices:
                     body=body,
                     icon=icon_url,
                     badge=badge_url,
+                    data=kwargs,
                 )
 
         if settings.EMAIL_ENABLED:
@@ -63,66 +68,68 @@ class NotificationServices:
 
     @staticmethod
     def send_group_notification(
-        group: CoordimeetGroup, title: str, body: str
+        group: CoordimeetGroup, title: str, body: str, **kwargs,
     ):
         """Send a notification to all members of a group."""
-        for member in group.members.all():
-            NotificationServices.send_user_notification(
-                coordimeet_user=member.user,
+        for member in group.coordimeet_members.all():
+            NotificationUtilityServices.send_user_notification(
+                coordimeet_user=member.coordimeet_user,
                 title=title,
                 body=body,
+                **kwargs,
             )
 
     @staticmethod
-    def send_event_notification(event, head: str, body: str):
+    def send_event_notification(event: Event, head: str, body: str, **kwargs):
         """
         If the event type is GROUP or CLOSED send a notification to all members.
         If the event type is PUBLIC send to all users who are in the event_participants
         """
-        from coordimeet.events.models import EventTypeChoices
-
         if event.event_type == EventTypeChoices.PUBLIC:
             for participant in event.event_participants.all():
-                NotificationServices.send_user_notification(
-                    coordimeet_user=participant.user,
+                NotificationUtilityServices.send_user_notification(
+                    coordimeet_user=participant.coordimeet_user,
                     title=head,
                     body=body,
+                    **kwargs,
                 )
-            if not event.event_participants.filter(user=event.organiser).exists():
-                NotificationServices.send_user_notification(
+            if not event.event_participants.filter(coordimeet_user=event.organiser).exists():
+                NotificationUtilityServices.send_user_notification(
                     coordimeet_user=event.organiser,
                     title=head,
                     body=body,
+                    **kwargs,
                 )
         else:
-            NotificationServices.send_group_notification(
+            NotificationUtilityServices.send_group_notification(
                 group=event.invited_group,
                 title=head,
                 body=body,
+                **kwargs,
             )
 
     @staticmethod
     @shared_task
     def _send_async_event_notification(
-        event_id: int, title: str, body: str
+        event_id: int, title: str, body: str, **kwargs,
     ):
-        from coordimeet.events.models import Event
-
         event = Event.objects.get(id=event_id)
-        NotificationServices.send_event_notification(event, title, body)
+        NotificationUtilityServices.send_event_notification(event, title, body, **kwargs)
 
     @staticmethod
     def send_event_notification_at_time(
-        event,
+        event: Event,
         title: str,
         body: str,
         time: datetime,
+        **kwargs,
     ):
         """Send a notification to all members of a group at a specific time."""
 
-        return NotificationServices._send_async_event_notification.apply_async(
+        return NotificationUtilityServices._send_async_event_notification.apply_async(
             args=[event.id, title, body],
             eta=time,
+            kwargs=kwargs,
         )
 
     @staticmethod
@@ -131,7 +138,7 @@ class NotificationServices:
         group_id: int, title: str, body: str
     ):
         group = CoordimeetGroup.objects.get(id=group_id)
-        NotificationServices.send_group_notification(group, title, body)
+        NotificationUtilityServices.send_group_notification(group, title, body)
 
     @staticmethod
     def send_group_notification_at_time(
@@ -142,7 +149,7 @@ class NotificationServices:
     ):
         """Send a notification to all members of a group at a specific time."""
 
-        return NotificationServices._send_async_group_notification.apply_async(
+        return NotificationUtilityServices._send_async_group_notification.apply_async(
             args=[group.id, title, body],
             eta=time,
         )
@@ -151,11 +158,138 @@ class NotificationServices:
     def cancel_async_notification(task_id: str):
         revoke(task_id, terminate=True)
 
+
+class EventNotificationServices:
+    @staticmethod
+    def handle_notifications_create(event: Event):
+        if not event.invited_group:
+            return
+
+        if event.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.CREATION
+        ).exists():
+            NotificationUtilityServices.send_event_notification(
+                event=event,
+                head=f"New invitation!",
+                body=f"You have been invited to participate in {event}",
+                url=event.frontend_url,
+            )
+        
+        # handle notification before deadline
+        if deadline_notifications := event.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.BEFORE_DEADLINE
+        ):
+            notification = deadline_notifications.first()
+            notification.task_id = NotificationUtilityServices.send_group_notification_at_time(
+                group=event.invited_group,
+                head=f"Event deadline!",
+                body=f"{event} deadline is coming up!",
+                time=notification.notification_time,
+                url=event.frontend_url,
+            ).id
+            notification.save()
+
+        # handle notification at the deadline
+        # notify the event's owner at the deadline, to pick a date
+        event.event_notifications.create(
+            notification_type=EventNotificationTypeChoices.DEADLINE,
+            task_id=EventNotificationServices.send_deadline_notification(event=event).id
+        )
+
+        # handle notification for automatically finishing event
+        # trigger this event at the first event's available_date
+        event.event_notifications.create(
+            notification_type=EventNotificationTypeChoices.FINISH_EVENT,
+            task_id=EventNotificationServices.send_event_finished_notification(event=event).id
+        )
+
+    @staticmethod
+    def handle_notifications_update(event: Event):
+        if event.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.UPDATE
+        ).exists():
+            NotificationUtilityServices.send_event_notification(
+                event=event,
+                head=f"Event updated!",
+                body=f"{event} has been updated, check it out!",
+                url=event.frontend_url,
+            )
+
+        if not event.invited_group:
+            return
+
+        # handle notification before deadline
+        if deadline_notifications := event.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.BEFORE_DEADLINE
+        ):
+            # remove the extra notifications
+            last_notification = deadline_notifications.last()
+            for notification in deadline_notifications.exclude(id=last_notification.id):
+                NotificationUtilityServices.cancel_async_notification(notification.task_id)
+                notification.delete()
+
+            last_notification.task_id = NotificationUtilityServices.send_group_notification_at_time(
+                group=event.invited_group,
+                head=f"Event deadline!",
+                body=f"{event} deadline is coming up!",
+                time=event.deadline,
+                url=event.frontend_url,
+            ).id
+            last_notification.save()
+
+        # handle notification at the deadline
+        # remove the previous deadline notification and create a new one
+        if deadline_notification := event.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.DEADLINE
+        ).first():
+            NotificationUtilityServices.cancel_async_notification(deadline_notification.task_id)
+            deadline_notification.delete()
+        event.event_notifications.create(
+            notification_type=EventNotificationTypeChoices.DEADLINE,
+            task_id=EventNotificationServices.send_deadline_notification(event=event).id
+        )
+
+        # handle notification for automatically finishing event
+        # remove the previous notification and create a new one
+        if finish_notification := event.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.FINISH_EVENT
+        ).first():
+            NotificationUtilityServices.cancel_async_notification(finish_notification.task_id)
+            finish_notification.delete()
+        event.event_notifications.create(
+            notification_type=EventNotificationTypeChoices.FINISH_EVENT,
+            task_id=EventNotificationServices.send_event_finished_notification(event=event).id
+        )
+
+    @staticmethod
+    def handle_notifications_finished(event: Event):
+        if event.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.EVENT_DATE_SELECT
+        ).exists():
+            NotificationUtilityServices.send_event_notification(
+                event=event,
+                head=f"An event has finished!",
+                body=f"{event} will take place {event.get_formatted_selected_date}!",
+                url=event.frontend_url,
+            )
+        
+        # handle before event starts
+        if start_notifications := event.event_notifications.filter(
+            notification_type=EventNotificationTypeChoices.EVENT_START
+        ):
+            notification = start_notifications.first()
+            notification.task_id = NotificationUtilityServices.send_event_notification_at_time(
+                event=event,
+                head=f"Event is about to start!",
+                body=f"{event} is starting soon!",
+                time=notification.notification_time,
+                url=event.frontend_url,
+            ).id
+            notification.save()
+    
     @staticmethod
     @shared_task
     def _send_deadline_notification(event_id: int):
-        from coordimeet.events.models import Event
-
         event = Event.objects.get(id=event_id)
 
         # the date was selected; no action needed
@@ -164,33 +298,32 @@ class NotificationServices:
 
         # send a notification to the organiser
         if not event.is_group_organiser:
-            NotificationServices.send_user_notification(
+            NotificationUtilityServices.send_user_notification(
                 coordimeet_user=event.organiser,
                 title=f"The event response deadline is here!",
                 body=f"{event} response period has ended. Pick a date!",
             )
         else:
-            for member in event.invited_group.members.filter(
+            for member in event.invited_group.coordimeet_members.filter(
                 role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN]
             ):
-                NotificationServices.send_user_notification(
-                    user=member.user,
+                NotificationUtilityServices.send_user_notification(
+                    coordimeet_user=member.coordimeet_user,
                     title=f"The event response deadline is here!",
                     body=f"{event} response period has ended. Pick a date!",
                 )
 
     @staticmethod
-    def send_deadline_notification(event):
-        return NotificationServices._send_deadline_notification.apply_async(
+    def send_deadline_notification(event: Event):
+        """Send a notification at the event's deadline."""
+        return EventNotificationServices._send_deadline_notification.apply_async(
             args=[event.id],
             eta=event.deadline,
         )
 
     @staticmethod
     @shared_task
-    def _send_event_finished_notification(event_id):
-        from coordimeet.events.models import Event
-
+    def _send_event_finished_notification(event_id: int):
         event = Event.objects.get(id=event_id)
 
         # the date was selected; no action needed
@@ -208,157 +341,31 @@ class NotificationServices:
 
         # send a notification to the organiser
         if not event.is_group_organiser:
-            NotificationServices.send_user_notification(
-                user=event.organiser,
+            NotificationUtilityServices.send_user_notification(
+                coordimeet_user=event.organiser,
                 head=f"A date for your event was automatically selected!",
                 body=f"The selected date for {event} is {event.get_formatted_selected_date}!",
                 url=event.frontend_url,
             )
         else:
-            for member in event.invited_group.members.filter(
+            for member in event.invited_group.coordimeet_members.filter(
                 role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN]
             ):
-                NotificationServices.send_user_notification(
-                    group=member.user,
-                    head=f"A date for your event was automatically selected!",
+                NotificationUtilityServices.send_user_notification(
+                    coordimeet_user=member.coordimeet_user,
+                    title=f"A date for your event was automatically selected!",
                     body=f"The selected date for {event} is {event.get_formatted_selected_date}!",
                     url=event.frontend_url,
                 )
 
     @staticmethod
-    def send_event_finished_notification(event):
+    def send_event_finished_notification(event: Event):
         """Send a notification at the first event's available_date."""
 
         first_available_date = (
             event.event_availability_options.order_by("start_date").first().start_date
         )
-        return NotificationServices._send_event_finished_notification.apply_async(
+        return EventNotificationServices._send_event_finished_notification.apply_async(
             args=[event.id],
             eta=first_available_date,
         )
-
-
-class EventNotificationServices:
-        def handle_notifications_create(self):
-        if not self.invited_group:
-            return
-
-        if self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.CREATION
-        ).exists():
-            NotificationServices.send_event_notification(
-                event=self,
-                head=f"New invitation!",
-                body=f"You have been invited to participate in {self}",
-                url=self.frontend_url,
-            )
-        
-        # handle notification before deadline
-        if deadline_notifications := self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.BEFORE_DEADLINE
-        ):
-            notification = deadline_notifications.first()
-            notification.task_id = NotificationServices.send_group_notification_at_time(
-                group=self.invited_group,
-                head=f"Event deadline!",
-                body=f"{self} deadline is coming up!",
-                time=notification.notification_time,
-                url=self.frontend_url,
-            ).id
-            notification.save()
-
-        # handle notification at the deadline
-        # notify the event's owner at the deadline, to pick a date
-        self.event_notifications.create(
-            notification_type=EventNotificationTypeChoices.DEADLINE,
-            task_id=NotificationServices.send_deadline_notification(event=self).id
-        )
-
-        # handle notification for automatically finishing event
-        # trigger this event at the first event's available_date
-        self.event_notifications.create(
-            notification_type=EventNotificationTypeChoices.FINISH_EVENT,
-            task_id=NotificationServices.send_event_finished_notification(event=self).id
-        )
-
-    def handle_notifications_update(self):
-        if self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.UPDATE
-        ).exists():
-            NotificationServices.send_event_notification(
-                event=self,
-                head=f"Event updated!",
-                body=f"{self} has been updated, check it out!",
-                url=self.frontend_url,
-            )
-
-        if not self.invited_group:
-            return
-
-        # handle notification before deadline
-        if deadline_notifications := self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.BEFORE_DEADLINE
-        ):
-            # remove the extra notifications
-            last_notification = deadline_notifications.last()
-            for notification in deadline_notifications.exclude(id=last_notification.id):
-                NotificationServices.cancel_async_notification(notification.task_id)
-                notification.delete()
-
-            last_notification.task_id = NotificationServices.send_group_notification_at_time(
-                group=self.invited_group,
-                head=f"Event deadline!",
-                body=f"{self} deadline is coming up!",
-                time=self.deadline,
-                url=self.frontend_url,
-            ).id
-            last_notification.save()
-
-        # handle notification at the deadline
-        # remove the previous deadline notification and create a new one
-        if deadline_notification := self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.DEADLINE
-        ).first():
-            NotificationServices.cancel_async_notification(deadline_notification.task_id)
-            deadline_notification.delete()
-        self.event_notifications.create(
-            notification_type=EventNotificationTypeChoices.DEADLINE,
-            task_id=NotificationServices.send_deadline_notification(event=self).id
-        )
-
-        # handle notification for automatically finishing event
-        # remove the previous notification and create a new one
-        if finish_notification := self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.FINISH_EVENT
-        ).first():
-            NotificationServices.cancel_async_notification(finish_notification.task_id)
-            finish_notification.delete()
-        self.event_notifications.create(
-            notification_type=EventNotificationTypeChoices.FINISH_EVENT,
-            task_id=NotificationServices.send_event_finished_notification(event=self).id
-        )
-
-    def handle_notifications_finished(self):
-        if self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.EVENT_DATE_SELECT
-        ).exists():
-            NotificationServices.send_event_notification(
-                event=self,
-                head=f"An event has finished!",
-                body=f"{self} will take place {self.get_formatted_selected_date}!",
-                url=self.frontend_url,
-            )
-        
-        # handle before event starts
-        if start_notifications := self.event_notifications.filter(
-            notification_type=EventNotificationTypeChoices.EVENT_START
-        ):
-            notification = start_notifications.first()
-            notification.task_id = NotificationServices.send_event_notification_at_time(
-                event=self,
-                head=f"Event is about to start!",
-                body=f"{self} is starting soon!",
-                time=notification.notification_time,
-                url=self.frontend_url,
-            ).id
-            notification.save()

@@ -19,7 +19,7 @@ class CoordimeetUser(models.Model):
         blank=True,
         null=True,
     )
-    anonymous_username = models.CharField(
+    anonymous_email = models.CharField(
         unique=True,
         max_length=150,
         blank=True,
@@ -27,17 +27,17 @@ class CoordimeetUser(models.Model):
     )
 
     @property
-    def username(self) -> str:
-        if not self.is_anonymous:
-            return self.user.get_username()
-        return self.anonymous_username
+    def email(self) -> str:
+        if self.user:
+            return self.user.email
+        return self.anonymous_email
 
     @property
     def is_anonymous(self) -> bool:
         return self.user is None
 
     def __str__(self) -> str:
-        return self.username
+        return self.email
 
 
 class CoordimeetGroup(models.Model):
@@ -59,15 +59,15 @@ class CoordimeetMemberRole(models.IntegerChoices):
 
 
 class CoordimeetMember(models.Model):
-    user = models.ForeignKey(
+    coordimeet_user = models.ForeignKey(
         CoordimeetUser,
         on_delete=models.CASCADE,
-        related_name="member"
+        related_name="coordimeet_member"
     )
-    group = models.ForeignKey(
+    coordimeet_group = models.ForeignKey(
         CoordimeetGroup,
         on_delete=models.CASCADE,
-        related_name="members"
+        related_name="coordimeet_members"
     )
     role = models.IntegerField(
         choices=CoordimeetMemberRole.choices,
@@ -75,4 +75,4 @@ class CoordimeetMember(models.Model):
     )
 
     def __str__(self):
-        return f"{self.user} in {self.group}"
+        return f"{self.coordimeet_user} in {self.coordimeet_group}"
