@@ -7,7 +7,7 @@ from coordimeet.events.models import Event, EventAvailabilityOption, EventPartic
 from coordimeet.notifications.models import EventNotification
 from coordimeet.notifications.services import EventNotificationServices
 
-from coordimeet.users.models import CoordimeetGroup, CoordimeetUser
+from coordimeet.users.models import CoordimeetGroup, CoordimeetMemberRole
 from coordimeet.users.serializers import CoordimeetUserSerializer, CoordimeetGroupSerializer, CoordimeetMemberSerializer
 from coordimeet.users.services import CoordimeetUserServices
 
@@ -62,58 +62,55 @@ class EventSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data: dict):
-        closed_group_users = validated_data.pop("closed_group_users")
-
-        if validated_data.get("event_type") == EventTypeChoices.CLOSED:
-            # create a new Group with is_closed=True
-            # invite all users to the group
-            group = CoordimeetGroup.objects.create(name=validated_data["title"], is_closed=True)
-            # create members from the provided users (not all users are created already)
-            for user_data in closed_group_users:
-                coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user_data["user"])
-                group.coordimeet_members.create(coordimeet_user=coordimeet_user)
-            # add current user to event
-            coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
-            group.coordimeet_members.create(coordimeet_user=coordimeet_user)
-            validated_data["invited_group"] = group
-
+        # get data for related models
         availability_options_data = validated_data.pop("event_availability_options")
         event_notifications_data = validated_data.pop("event_notifications")
+        closed_group_users = validated_data.pop("closed_group_users")
 
+        # handle the organiser
         if not validated_data.get("is_group_organiser"):
             validated_data["organiser"] = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
 
+        # create the event
         event = Event.objects.create(**validated_data)
+        
+        # handle related models
         for availability_option_data in availability_options_data:
             EventAvailabilityOption.objects.create(event=event, **availability_option_data)
 
         for event_notification_data in event_notifications_data:
             EventNotification.objects.create(event=event, **event_notification_data)
 
+        # handle closed group
+        if event.event_type == EventTypeChoices.CLOSED:
+            # create a new Group with is_closed=True
+            # invite all users to the group
+            group = CoordimeetGroup.objects.create(name=event.event_uuid, is_closed=True)
+            # create members from the provided users
+            for user_data in closed_group_users:
+                coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user_data["user"])
+                group.coordimeet_members.create(coordimeet_user=coordimeet_user, role=CoordimeetMemberRole.MEMBER)
+
+            # add current user to event
+            coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
+            group.coordimeet_members.create(coordimeet_user=coordimeet_user, role=CoordimeetMemberRole.OWNER)
+            event.invited_group = group
+            event.save()
+
+        # handle events
         EventNotificationServices.handle_notifications_create(event)
         return event
 
     def update(self, instance: Event, validated_data: dict):
-        closed_group_users = validated_data.pop("closed_group_users")
-
-        if validated_data.get("event_type") == EventTypeChoices.CLOSED:
-            # create a new Group with is_closed=True
-            # invite all users to the group
-            if instance.invited_group and instance.invited_group.is_closed:
-                instance.invited_group.delete()
-
-            group = CoordimeetGroup.objects.create(name=validated_data["title"], is_closed=True)
-            # create members from the provided users (not all users are created already)
-            for user_data in closed_group_users:
-                user, _ = get_user_model().objects.get_or_create(**user_data)
-                group.coordimeet_members.create(coordimeet_user=user)
-            # add current user to event
-            group.coordimeet_members.create(coordimeet_user=self.context["request"].user)
-            validated_data["invited_group"] = group
-
+        # get data for related models
         availability_options_data = validated_data.pop("event_availability_options")
         event_notifications_data = validated_data.pop("event_notifications")
+        closed_group_users = validated_data.pop("closed_group_users")
 
+        # update the event
+        event = super(EventSerializer, self).update(instance, validated_data)
+
+        # handle related models
         EventAvailabilityOption.objects.filter(event=instance).delete()
         for availability_option_data in availability_options_data:
             EventAvailabilityOption.objects.create(event=instance, **availability_option_data)
@@ -122,13 +119,31 @@ class EventSerializer(serializers.ModelSerializer):
         for event_notification_data in event_notifications_data:
             EventNotification.objects.create(event=instance, **event_notification_data)
 
-        event = super(EventSerializer, self).update(instance, validated_data)
+        # handle closed group
+        if event.event_type == EventTypeChoices.CLOSED:
+            group, created = CoordimeetGroup.objects.get_or_create(name=event.event_uuid, is_closed=True)
+
+            if not created:
+                group.coordimeet_members.all().delete()
+
+            # create members from the provided users (not all users are created already)
+            for user_data in closed_group_users:
+                coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user_data["user"])
+                group.coordimeet_members.create(coordimeet_user=coordimeet_user, role=CoordimeetMemberRole.MEMBER)
+
+            # add current user to event
+            coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
+            group.coordimeet_members.create(coordimeet_user=coordimeet_user, role=CoordimeetMemberRole.OWNER)
+            event.invited_group = group
+            event.save()
+
+        # handle events
         EventNotificationServices.handle_notifications_update(event)
         return event
 
     def get_closed_group_members(self, instance: Event):
         if instance.invited_group:
-            return CoordimeetMemberSerializer(instance.invited_group.coordimeet_members.all(), many=True).data
+            return CoordimeetMemberSerializer(instance.invited_group.coordimeet_members.filter(role=CoordimeetMemberRole.MEMBER), many=True).data
         return []
 
     def get_user_response(self, obj: Event):

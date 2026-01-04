@@ -1,5 +1,5 @@
 import { CalendarType, DateRange } from "@/types/calendar";
-import { CoordimeetUser, CoordimeetGroup } from "@/types/user";
+import { CoordimeetUser, CoordimeetGroup, CoordimeetMember } from "@/types/user";
 
 export enum EventType {
     Public = 1,
@@ -54,6 +54,7 @@ export interface Event {
     event_notifications: EventNotification[],
 
     closed_group_users?: CoordimeetUser[],
+    closed_group_members?: CoordimeetMember[],
 
     user_response?: boolean|null,
 }

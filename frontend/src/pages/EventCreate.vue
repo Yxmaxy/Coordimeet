@@ -107,6 +107,11 @@
                                 :options="displayedAvailableClosedGroupUsers"
                                 @confirmedOption="addClosedGroupMember"
                             />
+                            <custom-button
+                                @click="openManageFriends"
+                            >
+                                <custom-icon class="text-xl" icon="group_add" />
+                            </custom-button>
                         </div>
                         <div class="flex flex-col gap-4 mt-1">
                             <div
@@ -593,14 +598,13 @@ export default {
                     end_date: addUnitsToDate(new Date(dateRange.end_date), this.calendarType!, difference),
                 }));
 
-                // if (res.closed_group_users) {
-                //     this.closedGroupUsers = res.closed_group_users
-                //     .map((member: any) => ({
-                //         email: member.user.email,
-                //         exists: true,
-                //     }))
-                //     .filter((member: any) => member.email !== this.user?.email);
-                // }
+                if (res.closed_group_members) {
+                    this.closedGroupUsers = res.closed_group_members
+                        .map((user: any) => ({
+                            user: user.coordimeet_user.user,
+                            email: user.coordimeet_user.email,
+                        } as any));
+                }
 
                 this.eventNotifications = {
                     afterCreation: res.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Creation),
@@ -624,12 +628,15 @@ export default {
             }).catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch available users");
             });
-        },  
+        },
+        openManageFriends() {
+            window.location.href = import.meta.env.VITE_FRIENDS_MANAGE_URL;
+        },
         addClosedGroupMember(option: SelectOption<User>) {
             this.closedGroupUsers.push({
-                user: option.value,
+                user: option.value?.id,
                 email: option.value?.email,
-            });
+            } as any);
             this.closedGroupUserSearch = "";
         },
         deleteClosedGroupMember(user: CoordimeetUser) {

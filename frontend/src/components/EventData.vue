@@ -49,7 +49,7 @@ export default {
                 return this.event.invited_group.name;
             }
             if (this.event.organiser) {
-                return this.event.organiser.user?.email;
+                return this.event.organiser.email;
             }
             return "";
         }
