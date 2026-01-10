@@ -69,7 +69,7 @@ class EventSerializer(serializers.ModelSerializer):
 
         # handle the organiser
         if not validated_data.get("is_group_organiser"):
-            validated_data["organiser"] = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
+            validated_data["organiser"] = CoordimeetUserServices.get_or_create_authenticated_coordimeet_user(self.context["request"].user)
 
         # create the event
         event = Event.objects.create(**validated_data)
@@ -88,11 +88,11 @@ class EventSerializer(serializers.ModelSerializer):
             group = CoordimeetGroup.objects.create(name=event.event_uuid, is_closed=True)
             # create members from the provided users
             for user_data in closed_group_users:
-                coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user_data["user"])
+                coordimeet_user = CoordimeetUserServices.get_or_create_authenticated_coordimeet_user(user_data["user"])
                 group.coordimeet_members.create(coordimeet_user=coordimeet_user, role=CoordimeetMemberRole.MEMBER)
 
             # add current user to event
-            coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
+            coordimeet_user = CoordimeetUserServices.get_or_create_authenticated_coordimeet_user(self.context["request"].user)
             group.coordimeet_members.create(coordimeet_user=coordimeet_user, role=CoordimeetMemberRole.OWNER)
             event.invited_group = group
             event.save()
@@ -128,11 +128,11 @@ class EventSerializer(serializers.ModelSerializer):
 
             # create members from the provided users (not all users are created already)
             for user_data in closed_group_users:
-                coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user_data["user"])
+                coordimeet_user = CoordimeetUserServices.get_or_create_authenticated_coordimeet_user(user_data["user"])
                 group.coordimeet_members.create(coordimeet_user=coordimeet_user, role=CoordimeetMemberRole.MEMBER)
 
             # add current user to event
-            coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
+            coordimeet_user = CoordimeetUserServices.get_or_create_authenticated_coordimeet_user(self.context["request"].user)
             group.coordimeet_members.create(coordimeet_user=coordimeet_user, role=CoordimeetMemberRole.OWNER)
             event.invited_group = group
             event.save()
@@ -147,8 +147,7 @@ class EventSerializer(serializers.ModelSerializer):
         return []
 
     def get_user_response(self, obj: Event):
-        user = self.context["request"].user
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user)
+        coordimeet_user = CoordimeetUserServices.get_or_create_coordimeet_user_from_request(self.context["request"])
 
         if not coordimeet_user:
             return None

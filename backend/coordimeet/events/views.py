@@ -8,9 +8,10 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 
 from coordimeet.users.models import CoordimeetMemberRole
-from coordimeet.users.services import CoordimeetUserServices
+from coordimeet.users.decorators import with_coordimeet_user
 
 from coordimeet.events.permissions import IsEventOrganiserOrAdminInOrganiserGroup, IsPublicEventOrUserIsMember
 from coordimeet.events.models import Event, EventParticipant, EventParticipantAvailability, EventTypeChoices
@@ -18,6 +19,7 @@ from coordimeet.events.serializers import EventSerializer, EventParticipantSelec
 from coordimeet.events.services import EventServices
 
 
+@method_decorator(with_coordimeet_user, name="dispatch")
 class EventInvitedListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = EventSerializer
@@ -30,24 +32,22 @@ class EventInvitedListAPIView(ListAPIView):
         # - if the user is the organiser
         # - if the user is a member of the invited_group and is_group_organiser is True and the user's role is OWNER or ADMIN
 
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.request.user)
-
         all_events = Event.objects.filter(
             Q(event_type=EventTypeChoices.PUBLIC)
-            & Q(event_participants__coordimeet_user=coordimeet_user)
+            & Q(event_participants__coordimeet_user=self.request.coordimeet_user)
             | Q(event_type__in=[EventTypeChoices.GROUP, EventTypeChoices.CLOSED])
-            & Q(invited_group__coordimeet_members__coordimeet_user=coordimeet_user)
+            & Q(invited_group__coordimeet_members__coordimeet_user=self.request.coordimeet_user)
         ).distinct().order_by("-created_at")
         exclude_events = Event.objects.filter(
-            Q(organiser=coordimeet_user)
+            Q(organiser=self.request.coordimeet_user)
             | Q(is_group_organiser=True)
-            & Q(invited_group__coordimeet_members__coordimeet_user=coordimeet_user)
+            & Q(invited_group__coordimeet_members__coordimeet_user=self.request.coordimeet_user)
             & Q(invited_group__coordimeet_members__role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN])
         ).distinct().order_by("-created_at")
 
         return all_events.exclude(event_uuid__in=exclude_events.values_list("event_uuid", flat=True))
 
-
+@method_decorator(with_coordimeet_user, name="dispatch")
 class EventOrganiserListCreateAPIView(ListCreateAPIView):
     permission_classes = [IsAuthenticated, IsEventOrganiserOrAdminInOrganiserGroup]
     serializer_class = EventSerializer
@@ -57,16 +57,15 @@ class EventOrganiserListCreateAPIView(ListCreateAPIView):
         # - if the user is the organiser
         # - if the user is a member of the invited_group and is_group_organiser is True and the user's role is OWNER or ADMIN
 
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.request.user)
-
         return Event.objects.filter(
-            Q(organiser=coordimeet_user)
+            Q(organiser=self.request.coordimeet_user)
             | Q(is_group_organiser=True)
-            & Q(invited_group__coordimeet_members__coordimeet_user=coordimeet_user)
+            & Q(invited_group__coordimeet_members__coordimeet_user=self.request.coordimeet_user)
             & Q(invited_group__coordimeet_members__role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN])
         ).distinct().order_by("-created_at")
 
 
+@method_decorator(with_coordimeet_user, name="dispatch")
 class EventManageAPIView(APIView):
     permission_classes = [IsPublicEventOrUserIsMember]
 
@@ -108,16 +107,16 @@ class EventManageAPIView(APIView):
         return Response(serializer.data)
 
 
+@method_decorator(with_coordimeet_user, name="dispatch")
 class EventParticipantAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsPublicEventOrUserIsMember]
+    permission_classes = [IsPublicEventOrUserIsMember]
 
     def get(self, request, event_uuid):
         event = Event.objects.get(event_uuid=event_uuid)
         self.check_object_permissions(request, event)
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.request.user)
 
         try:
-            participant = EventParticipant.objects.get(event=event, coordimeet_user=coordimeet_user)
+            participant = EventParticipant.objects.get(event=event, coordimeet_user=self.request.coordimeet_user)
         except EventParticipant.DoesNotExist:
             participant = None
         serializer = EventParticipantSelectedSerializer(participant)
@@ -126,11 +125,10 @@ class EventParticipantAPIView(APIView):
     def post(self, request, event_uuid):
         event = Event.objects.get(event_uuid=event_uuid)
         self.check_object_permissions(request, event)
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.request.user)
 
         event_participant, _ = EventParticipant.objects.get_or_create(
             event=event,
-            coordimeet_user=coordimeet_user,
+            coordimeet_user=self.request.coordimeet_user,
         )
 
         # remove existing participation availabilities

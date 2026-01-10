@@ -15,19 +15,19 @@ def _has_group_permission(coordimeet_user: CoordimeetUser, coordimeet_group: Coo
 
 class HasGroupOwnerOrAdminPermission(permissions.BasePermission):
     def has_object_permission(self, request: Request, view, obj: CoordimeetGroup):
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(request.user)
+        coordimeet_user = CoordimeetUserServices.get_or_create_coordimeet_user_from_request(request)
         return _has_group_permission(coordimeet_user, obj, [CoordimeetMemberRole.ADMIN, CoordimeetMemberRole.OWNER])
 
 
 class HasGroupOwnerPermission(permissions.BasePermission):
     def has_object_permission(self, request: Request, view, obj: CoordimeetGroup):
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(request.user)
+        coordimeet_user = CoordimeetUserServices.get_or_create_coordimeet_user_from_request(request)
         return _has_group_permission(coordimeet_user, obj, [CoordimeetMemberRole.OWNER])
 
 
 class IsEventOrganiserOrAdminInOrganiserGroup(permissions.BasePermission):
     def has_object_permission(self, request: Request, view, obj: Event):
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(request.user)
+        coordimeet_user = CoordimeetUserServices.get_or_create_coordimeet_user_from_request(request)
         if obj.organiser == coordimeet_user:
             return True
         if obj.is_group_organiser and obj.invited_group:
@@ -37,7 +37,7 @@ class IsEventOrganiserOrAdminInOrganiserGroup(permissions.BasePermission):
 
 class IsEventOrganiserOrOwnerInOrganiserGroup(permissions.BasePermission):
     def has_object_permission(self, request: Request, view, obj: Event):
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(request.user)
+        coordimeet_user = CoordimeetUserServices.get_or_create_coordimeet_user_from_request(request)
         if obj.organiser == coordimeet_user:
             return True
         if obj.is_group_organiser and obj.invited_group:
@@ -47,7 +47,7 @@ class IsEventOrganiserOrOwnerInOrganiserGroup(permissions.BasePermission):
 
 class IsPublicEventOrUserIsMember(permissions.BasePermission):
     def has_object_permission(self, request: Request, view, obj: Event):
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(request.user)
+        coordimeet_user = CoordimeetUserServices.get_or_create_coordimeet_user_from_request(request)
         return (
             obj.event_type == EventTypeChoices.PUBLIC or
             (

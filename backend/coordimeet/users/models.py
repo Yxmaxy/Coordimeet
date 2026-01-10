@@ -19,7 +19,7 @@ class CoordimeetUser(models.Model):
         blank=True,
         null=True,
     )
-    anonymous_email = models.CharField(
+    anonymous_username = models.CharField(
         unique=True,
         max_length=150,
         blank=True,
@@ -30,7 +30,7 @@ class CoordimeetUser(models.Model):
     def email(self) -> str:
         if self.user:
             return self.user.email
-        return self.anonymous_email
+        return self.anonymous_username
 
     @property
     def is_anonymous(self) -> bool:

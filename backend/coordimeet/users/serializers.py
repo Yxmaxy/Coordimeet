@@ -36,7 +36,7 @@ class CoordimeetGroupSerializer(serializers.ModelSerializer):
         group = CoordimeetGroup.objects.create(**validated_data)
 
         # create and set the current user as the owner of the group
-        coordimeet_user = CoordimeetUserServices.get_coordimeet_user(self.context["request"].user)
+        coordimeet_user = CoordimeetUserServices.get_or_create_authenticated_coordimeet_user(self.context["request"].user)
         CoordimeetMember.objects.create(
             coordimeet_user=coordimeet_user,
             coordimeet_group=group,
@@ -47,7 +47,7 @@ class CoordimeetGroupSerializer(serializers.ModelSerializer):
         for member_data in coordimeet_members_data:
             user_data = member_data.pop("coordimeet_user")
 
-            coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user_data["user"])
+            coordimeet_user = CoordimeetUserServices.get_or_create_authenticated_coordimeet_user(user_data["user"])
             CoordimeetMember.objects.create(coordimeet_user=coordimeet_user, coordimeet_group=group, **member_data)
 
         return group
@@ -65,7 +65,7 @@ class CoordimeetGroupSerializer(serializers.ModelSerializer):
         for member_data in coordimeet_members_data:
             user_data = member_data.pop("coordimeet_user")
 
-            coordimeet_user = CoordimeetUserServices.get_coordimeet_user(user_data["user"])
+            coordimeet_user = CoordimeetUserServices.get_or_create_authenticated_coordimeet_user(user_data["user"])
             member, _ = instance.coordimeet_members.update_or_create(coordimeet_user=coordimeet_user, defaults=member_data)
             current_member_ids.append(member.coordimeet_user.id)
 

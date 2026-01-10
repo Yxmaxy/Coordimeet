@@ -1,8 +1,5 @@
 <template>
-    <div
-        v-if="isLoggedIn"
-        class="z-50 flex gap-2 relative"
-    >
+    <div class="z-50 flex gap-2 relative">
         <div
             tabindex="0"
             @click="showPopup = !showPopup"
@@ -97,9 +94,9 @@ export default {
         CustomButton,
     },
     setup() {
-        const userStore = useStoreUser();
+        const storeUser = useStoreUser();
         return {
-            userStore,
+            storeUser,
             Theme,
         }
     },
@@ -107,22 +104,20 @@ export default {
         return {
             showPopup: false,
             isMobile: true,
-            isLoggedIn: false,
             deferredInstallPrompt: null as any,
         }
     },
     computed: {
         userDisplayName() {
-            return this.userStore.user!.email;
+            return this.storeUser.user!.email;
         }
     },
     methods: {
         setTheme,
         async onLogout() {
-            await this.userStore.onLogout();
+            await this.storeUser.onLogout();
             this.showPopup = false;
             this.$router.push("/");
-            this.isLoggedIn = false;
         },
         onMenuClick(path: string) {
             this.showPopup = false;
@@ -153,18 +148,11 @@ export default {
         this.$nextTick(() => {
             this.checkScreenSize();
         });
-        this.isLoggedIn = await this.userStore.isLoggedIn();
-
         window.addEventListener("beforeinstallprompt", this.handleInstallPrompt);
     },
     unmounted() {
         window.removeEventListener("resize", this.checkScreenSize);
         window.removeEventListener("beforeinstallprompt", this.handleInstallPrompt);
-    },
-    watch: {
-        "userStore.user"(n) {
-            this.isLoggedIn = !!n;
-        }
     },
 }
 </script>

@@ -1,36 +1,22 @@
-import { defineStore } from 'pinia';
-import { jwtDecode } from "jwt-decode";
-import { User } from '@/types/user';
+import { defineStore } from "pinia";
+import { CoordimeetUser } from "@/types/user";
 
 import ApiService from "@/utils/ApiService";
-import { retrieveTokens, saveTokens, removeTokens } from "@/utils/tokens";
 
 import { useStoreMessages } from "@/stores/storeMessages";
 
 export const useStoreUser = defineStore("storeUser", {
     state: () => {
         return {
-            user: undefined as User|undefined,
+            user: undefined as CoordimeetUser|undefined,
             redirectAfterLogin: undefined as string|undefined,
         }
     },
     actions: {
-        async isLoggedIn() {
-            await this.getUserFromToken();
-            return this.user !== undefined
-        },
-        async getUserFromToken() {
-            // retrieve user from token
-            const { refreshToken } = await retrieveTokens();
-            if (refreshToken) {
-                const userData = jwtDecode(refreshToken) as any;
-                this.user = {
-                    id: userData.user_id,
-                    email: userData.email,
-                    first_name: userData.first_name,
-                    last_name: userData.last_name,
-                } as User;
-            }
+        async getUser() {
+            if (this.user) return;
+            const response = await ApiService.get<CoordimeetUser>("/users/current-user/");
+            this.user = response;
         },
         async onLogin(email: string, password: string): Promise<boolean> {
             const storeMessages = useStoreMessages();
@@ -42,7 +28,7 @@ export const useStoreUser = defineStore("storeUser", {
             
             // retrieve access token
             try {
-                const response = await ApiService.post("/users/token/", {
+                const response: any = await ApiService.post("/users/token/", {
                     email, password
                 });
                 
@@ -50,8 +36,8 @@ export const useStoreUser = defineStore("storeUser", {
                     return false;
                 }
 
-                await saveTokens(response.data.access, response.data.refresh);
-                await this.getUserFromToken();
+                // await saveTokens(response.data.access, response.data.refresh);
+                await this.getUser();
                 await this.requestNotifications();
                 
                 return true;
@@ -63,7 +49,7 @@ export const useStoreUser = defineStore("storeUser", {
         async onSignup(email: string, password: string): Promise<boolean> {
             // create a new user
             try {
-                const response = await ApiService.post("/users/user/", {
+                const response: any = await ApiService.post("/users/user/", {
                     email, password
                 });
                 if (response.status === 201) {
@@ -76,7 +62,7 @@ export const useStoreUser = defineStore("storeUser", {
             return false;
         },
         async onLogout() {
-            await removeTokens();
+            // await removeTokens();
             const registration = await navigator.serviceWorker.ready;
             registration.active?.postMessage({
                 type: "UNSUBSCRIBE_NOTIFICATIONS",
@@ -86,10 +72,10 @@ export const useStoreUser = defineStore("storeUser", {
         async onCreateAnonymousUser(): Promise<boolean> {
             // create a new anonymous user
             try {
-                const response = await ApiService.post("/users/anonymous/");
+                const response: any = await ApiService.post("/users/anonymous/");
                 if (response.status === 201) {
-                    await saveTokens(response.data.access, response.data.refresh);
-                    await this.getUserFromToken();
+                    // await saveTokens(response.data.access, response.data.refresh);
+                    await this.getUser();
                     await this.requestNotifications();
 
                     return true;
@@ -119,5 +105,8 @@ export const useStoreUser = defineStore("storeUser", {
             }
             return false;
         }
+    },
+    getters: {
+        isLoggedIn: (state) => !!state.user,
     }
 })

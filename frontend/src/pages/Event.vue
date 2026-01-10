@@ -797,7 +797,12 @@ export default {
             return types.includes(this.eventPageType);
         },
         copyLink() {
-            navigator.clipboard.writeText(`${import.meta.env.VITE_FRONTEND_URL}/event/${this.$route.params.uuid}`);
+            // remove trailing slash
+            let baseFrontendUrl = import.meta.env.VITE_BASE_FRONTEND_URL;
+            baseFrontendUrl = baseFrontendUrl.replace(/\/$/, "");
+
+            // copy the link to the clipboard
+            navigator.clipboard.writeText(`${baseFrontendUrl}/event/${this.$route.params.uuid}`);
             this.storeMessages.showMessage("Link copied to clipboard", 1000);
         },
         onShowFinishConfirm() {
