@@ -5,6 +5,9 @@ from wonderwords import RandomWord
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from simple_notifications.services import NotificationService
+
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 
 from coordimeet.users.models import CoordimeetUser
@@ -68,3 +71,9 @@ class CoordimeetUserServices:
             samesite="Lax",
         )
 
+    @staticmethod
+    def cleanup_anonymous_user(request: Request, response: Response) -> None:
+        """Delete cookie for anonymous user"""
+        if anonymous_user := CoordimeetUserServices.get_anonymous_user_from_cookie(request):
+            NotificationService.delete_subscription(anonymous_user, settings.COORDIMEEET_NOTIFICATIONS_APP_NAME)
+            response.delete_cookie(ANONYMOUS_USER_COOKIE_NAME)

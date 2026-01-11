@@ -20,6 +20,8 @@ class CurrentUserAPIView(APIView):
 
         if coordimeet_user.is_anonymous and coordimeet_user.anonymous_username:
             CoordimeetUserServices.set_anonymous_user_cookie(response, coordimeet_user.anonymous_username)
+        else:
+            CoordimeetUserServices.cleanup_anonymous_user(request, response)
 
         return response
 

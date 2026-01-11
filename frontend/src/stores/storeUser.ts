@@ -20,8 +20,8 @@ export const useStoreUser = defineStore("storeUser", {
             this.user = response;
         },
         async onLogout() {
-            window.location.href = import.meta.env.VITE_LOGOUT_URL;
             await NotificationService.unsubscribe();
+            window.location.href = import.meta.env.VITE_LOGOUT_URL;
             this.user = undefined;
         },
     },
