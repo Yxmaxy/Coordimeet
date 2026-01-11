@@ -19,7 +19,6 @@ from coordimeet.events.services import EventServices
 from coordimeet.notifications.models import EventNotificationTypeChoices
 
 
-
 class NotificationUtilityServices:
     @staticmethod
     def send_user_notification(

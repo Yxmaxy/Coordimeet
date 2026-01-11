@@ -6,4 +6,3 @@ const api = createDjangoApi({
 });
 
 export default api;
-

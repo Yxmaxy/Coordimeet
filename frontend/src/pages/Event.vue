@@ -727,7 +727,7 @@ export default {
             })
         },
         async acceptInvitation() {
-            await this.storeUser.requestNotifications();
+            // await this.storeUser.requestNotifications();
             this.eventPageType = EventPageType.Invitee;
         },
 
@@ -818,11 +818,11 @@ export default {
             this.$router.push({"name": "login"});
         },
         onSubmitAnon() {
-            this.storeUser.onCreateAnonymousUser()
-                .then(() => {
-                    this.storeMessages.showMessage("You have been logged in as an anonymous user");
-                    this.eventPageType = EventPageType.Invitee;
-                });
+            // this.storeUser.onCreateAnonymousUser()
+            //     .then(() => {
+            //         this.storeMessages.showMessage("You have been logged in as an anonymous user");
+            //         this.eventPageType = EventPageType.Invitee;
+            //     });
         },
         formatDateRange,
         addUnitsToDate,

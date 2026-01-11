@@ -25,5 +25,5 @@ urlpatterns = [
     path("users/", include("coordimeet.users.urls")),
     path("events/", include("coordimeet.events.urls")),
     # simple notifications
-    path("notifications/", include("simple_notifications.urls")),
+    path("notifications/", include("coordimeet.notifications.urls")),
 ]

@@ -8,4 +8,4 @@ celery==5.6.0
 
 wonderwords==3.0.1
 icalendar==6.3.2
-git+https://github.com/Yxmaxy/django-simple-notifications.git@v0.0.2
+git+https://github.com/Yxmaxy/django-simple-notifications.git@v01.1.0
