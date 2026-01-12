@@ -3,7 +3,6 @@ from celery.worker.control import revoke
 from datetime import datetime
 
 from simple_notifications.services import NotificationService
-from simple_notifications.models import PushSubscription
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -25,7 +24,7 @@ class NotificationUtilityServices:
         coordimeet_user: CoordimeetUser,
         title: str,
         body: str,
-        **kwargs,
+        data: dict = None,
     ):
         if coordimeet_user.is_anonymous:
             return
@@ -37,21 +36,20 @@ class NotificationUtilityServices:
             f"{settings.COORDIMEET_FRONTEND_URL}/images/maskable_icon_x96.png"
         )
 
-        subscriptions = PushSubscription.objects.filter(
+        subscription = NotificationService.get_user_subscription(
             user=coordimeet_user.user,
             app_name=settings.COORDIMEEET_NOTIFICATIONS_APP_NAME,
         )
 
-        if subscriptions.exists():
-            for subscription in subscriptions:
-                NotificationService.send_push_notification(
-                    subscription=subscription,
-                    title=title,
-                    body=body,
-                    icon=icon_url,
-                    badge=badge_url,
-                    data=kwargs,
-                )
+        if subscription:
+            NotificationService.send_push_notification(
+                subscription=subscription,
+                title=title,
+                body=body,
+                icon=icon_url,
+                badge=badge_url,
+                data=data or {},
+            )
 
         if settings.EMAIL_ENABLED:
             email_message = EmailMultiAlternatives(
@@ -67,7 +65,10 @@ class NotificationUtilityServices:
 
     @staticmethod
     def send_group_notification(
-        group: CoordimeetGroup, title: str, body: str, **kwargs,
+        group: CoordimeetGroup,
+        title: str,
+        body: str,
+        data: dict = None,
     ):
         """Send a notification to all members of a group."""
         for member in group.coordimeet_members.all():
@@ -75,11 +76,16 @@ class NotificationUtilityServices:
                 coordimeet_user=member.coordimeet_user,
                 title=title,
                 body=body,
-                **kwargs,
+                data=data or {},
             )
 
     @staticmethod
-    def send_event_notification(event: Event, head: str, body: str, **kwargs):
+    def send_event_notification(
+        event: Event,
+        title: str,
+        body: str,
+        data: dict = None,
+    ):
         """
         If the event type is GROUP or CLOSED send a notification to all members.
         If the event type is PUBLIC send to all users who are in the event_participants
@@ -88,32 +94,40 @@ class NotificationUtilityServices:
             for participant in event.event_participants.all():
                 NotificationUtilityServices.send_user_notification(
                     coordimeet_user=participant.coordimeet_user,
-                    title=head,
+                    title=title,
                     body=body,
-                    **kwargs,
+                    data=data or {},
                 )
             if not event.event_participants.filter(coordimeet_user=event.organiser).exists():
                 NotificationUtilityServices.send_user_notification(
                     coordimeet_user=event.organiser,
-                    title=head,
+                    title=title,
                     body=body,
-                    **kwargs,
+                    data=data or {},
                 )
         else:
             NotificationUtilityServices.send_group_notification(
                 group=event.invited_group,
-                title=head,
+                title=title,
                 body=body,
-                **kwargs,
+                data=data or {},
             )
 
     @staticmethod
     @shared_task
     def _send_async_event_notification(
-        event_id: int, title: str, body: str, **kwargs,
+        event_id: int,
+        title: str,
+        body: str,
+        data: dict = None,
     ):
         event = Event.objects.get(id=event_id)
-        NotificationUtilityServices.send_event_notification(event, title, body, **kwargs)
+        NotificationUtilityServices.send_event_notification(
+            event=event,
+            title=title,
+            body=body,
+            data=data or {},
+        )
 
     @staticmethod
     def send_event_notification_at_time(
@@ -121,23 +135,30 @@ class NotificationUtilityServices:
         title: str,
         body: str,
         time: datetime,
-        **kwargs,
+        data: dict,
     ):
         """Send a notification to all members of a group at a specific time."""
 
         return NotificationUtilityServices._send_async_event_notification.apply_async(
-            args=[event.id, title, body],
+            args=[event.id, title, body, data],
             eta=time,
-            kwargs=kwargs,
         )
 
     @staticmethod
     @shared_task
     def _send_async_group_notification(
-        group_id: int, title: str, body: str
+        group_id: int,
+        title: str,
+        body: str,
+        data: dict = None,
     ):
         group = CoordimeetGroup.objects.get(id=group_id)
-        NotificationUtilityServices.send_group_notification(group, title, body)
+        NotificationUtilityServices.send_group_notification(
+            group=group,
+            title=title,
+            body=body,
+            data=data or {},
+        )
 
     @staticmethod
     def send_group_notification_at_time(
@@ -145,11 +166,12 @@ class NotificationUtilityServices:
         title: str,
         body: str,
         time: datetime,
+        data: dict = None,
     ):
         """Send a notification to all members of a group at a specific time."""
 
         return NotificationUtilityServices._send_async_group_notification.apply_async(
-            args=[group.id, title, body],
+            args=[group.id, title, body, data or {}],
             eta=time,
         )
 
@@ -169,9 +191,9 @@ class EventNotificationServices:
         ).exists():
             NotificationUtilityServices.send_event_notification(
                 event=event,
-                head=f"New invitation!",
+                title=f"New invitation!",
                 body=f"You have been invited to participate in {event}",
-                url=event.frontend_url,
+                data={"url": event.frontend_url},
             )
         
         # handle notification before deadline
@@ -181,10 +203,10 @@ class EventNotificationServices:
             notification = deadline_notifications.first()
             notification.task_id = NotificationUtilityServices.send_group_notification_at_time(
                 group=event.invited_group,
-                head=f"Event deadline!",
+                title=f"Event deadline!",
                 body=f"{event} deadline is coming up!",
                 time=notification.notification_time,
-                url=event.frontend_url,
+                data={"url": event.frontend_url},
             ).id
             notification.save()
 
@@ -209,9 +231,9 @@ class EventNotificationServices:
         ).exists():
             NotificationUtilityServices.send_event_notification(
                 event=event,
-                head=f"Event updated!",
+                title=f"Event updated!",
                 body=f"{event} has been updated, check it out!",
-                url=event.frontend_url,
+                data={"url": event.frontend_url},
             )
 
         if not event.invited_group:
@@ -229,10 +251,10 @@ class EventNotificationServices:
 
             last_notification.task_id = NotificationUtilityServices.send_group_notification_at_time(
                 group=event.invited_group,
-                head=f"Event deadline!",
+                title=f"Event deadline!",
                 body=f"{event} deadline is coming up!",
                 time=event.deadline,
-                url=event.frontend_url,
+                data={"url": event.frontend_url},
             ).id
             last_notification.save()
 
@@ -267,9 +289,9 @@ class EventNotificationServices:
         ).exists():
             NotificationUtilityServices.send_event_notification(
                 event=event,
-                head=f"An event has finished!",
+                title=f"An event has finished!",
                 body=f"{event} will take place {event.get_formatted_selected_date}!",
-                url=event.frontend_url,
+                data={"url": event.frontend_url},
             )
         
         # handle before event starts
@@ -279,10 +301,10 @@ class EventNotificationServices:
             notification = start_notifications.first()
             notification.task_id = NotificationUtilityServices.send_event_notification_at_time(
                 event=event,
-                head=f"Event is about to start!",
+                title=f"Event is about to start!",
                 body=f"{event} is starting soon!",
                 time=notification.notification_time,
-                url=event.frontend_url,
+                data={"url": event.frontend_url},
             ).id
             notification.save()
     
@@ -301,6 +323,7 @@ class EventNotificationServices:
                 coordimeet_user=event.organiser,
                 title=f"The event response deadline is here!",
                 body=f"{event} response period has ended. Pick a date!",
+                data={"url": event.frontend_url},
             )
         else:
             for member in event.invited_group.coordimeet_members.filter(
@@ -310,6 +333,7 @@ class EventNotificationServices:
                     coordimeet_user=member.coordimeet_user,
                     title=f"The event response deadline is here!",
                     body=f"{event} response period has ended. Pick a date!",
+                    data={"url": event.frontend_url},
                 )
 
     @staticmethod
@@ -342,9 +366,9 @@ class EventNotificationServices:
         if not event.is_group_organiser:
             NotificationUtilityServices.send_user_notification(
                 coordimeet_user=event.organiser,
-                head=f"A date for your event was automatically selected!",
+                title=f"A date for your event was automatically selected!",
                 body=f"The selected date for {event} is {event.get_formatted_selected_date}!",
-                url=event.frontend_url,
+                data={"url": event.frontend_url},
             )
         else:
             for member in event.invited_group.coordimeet_members.filter(
@@ -354,7 +378,7 @@ class EventNotificationServices:
                     coordimeet_user=member.coordimeet_user,
                     title=f"A date for your event was automatically selected!",
                     body=f"The selected date for {event} is {event.get_formatted_selected_date}!",
-                    url=event.frontend_url,
+                    data={"url": event.frontend_url},
                 )
 
     @staticmethod
