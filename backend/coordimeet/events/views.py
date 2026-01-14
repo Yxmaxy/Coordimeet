@@ -1,7 +1,7 @@
 from icalendar import Calendar, Event as ICalEvent
 
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView, ListAPIView
+from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -21,7 +21,6 @@ from coordimeet.events.services import EventServices
 
 @method_decorator(with_coordimeet_user, name="dispatch")
 class EventInvitedListAPIView(ListAPIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = EventSerializer
 
     def get_queryset(self):
@@ -48,8 +47,8 @@ class EventInvitedListAPIView(ListAPIView):
         return all_events.exclude(event_uuid__in=exclude_events.values_list("event_uuid", flat=True))
 
 @method_decorator(with_coordimeet_user, name="dispatch")
-class EventOrganiserListCreateAPIView(ListCreateAPIView):
-    permission_classes = [IsAuthenticated, IsEventOrganiserOrAdminInOrganiserGroup]
+class EventOrganiserListAPIView(ListAPIView):
+    permission_classes = [IsEventOrganiserOrAdminInOrganiserGroup]
     serializer_class = EventSerializer
 
     def get_queryset(self):
@@ -63,6 +62,16 @@ class EventOrganiserListCreateAPIView(ListCreateAPIView):
             & Q(invited_group__coordimeet_members__coordimeet_user=self.request.coordimeet_user)
             & Q(invited_group__coordimeet_members__role__in=[CoordimeetMemberRole.OWNER, CoordimeetMemberRole.ADMIN])
         ).distinct().order_by("-created_at")
+
+
+@method_decorator(with_coordimeet_user, name="dispatch")
+class EventOrganiserCreateAPIView(CreateAPIView):
+    permission_classes = [IsAuthenticated, IsEventOrganiserOrAdminInOrganiserGroup]
+    serializer_class = EventSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+        return Response(serializer.data)
 
 
 @method_decorator(with_coordimeet_user, name="dispatch")

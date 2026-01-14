@@ -113,7 +113,7 @@
                                 <custom-icon class="text-xl" icon="group_add" />
                             </custom-button>
                         </div>
-                        <div class="flex flex-col gap-4 mt-1">
+                        <div class="flex flex-col gap-4 mt-2">
                             <div
                                 v-for="closedGroupUser in closedGroupUsers"
                                 class="flex justify-between items-center bg-main-000 px-6 py-4 rounded-2xl shadow-md"

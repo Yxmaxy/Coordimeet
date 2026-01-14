@@ -9,7 +9,7 @@
             </template>
         </tab-controller>
         <custom-button
-            v-if="storeOnline.isOnline"
+            v-if="storeOnline.isOnline && !user?.is_anonymous"
             class="right-4 bottom-4 fixed !p-3 !rounded-2xl shadow-md"
             :click="() => $router.push('/event/new')"
         >

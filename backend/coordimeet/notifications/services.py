@@ -26,9 +26,6 @@ class NotificationUtilityServices:
         body: str,
         data: dict = None,
     ):
-        if coordimeet_user.is_anonymous:
-            return
-
         icon_url = (
             f"{settings.COORDIMEET_FRONTEND_URL}/images/maskable_icon_x128.png"
         )
@@ -253,7 +250,7 @@ class EventNotificationServices:
                 group=event.invited_group,
                 title=f"Event deadline!",
                 body=f"{event} deadline is coming up!",
-                time=event.deadline,
+                time=last_notification.notification_time,
                 data={"url": event.frontend_url},
             ).id
             last_notification.save()
