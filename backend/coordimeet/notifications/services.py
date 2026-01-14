@@ -37,7 +37,7 @@ class NotificationUtilityServices:
         )
 
         subscription = NotificationService.get_user_subscription(
-            user=coordimeet_user.user,
+            user=coordimeet_user,
             app_name=settings.COORDIMEEET_NOTIFICATIONS_APP_NAME,
         )
 
