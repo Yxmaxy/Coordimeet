@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "coordimeet"
+dynamic = ["version"]
+description = "Web application for coordinating events"
+readme = "README.md"
+authors = [
+    { name = "Marko Vrečer" }
+]
+license = { text = "MIT" }
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "Django>=4.2",
+    "djangorestframework>=3.16",
+    "django-cors-headers>=4.9",
+    "python-dotenv>=1.2",
+    "redis>=7.1",
+    "celery>=5.6",
+    "wonderwords>=3.0",
+    "icalendar>=6.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/Yxmaxy/Coordimeet"
+Repository = "https://github.com/Yxmaxy/Coordimeet.git"
+
+[tool.setuptools]
+packages = [
+    "coordimeet",
+    "coordimeet.users",
+    "coordimeet.events",
+    "coordimeet.notifications",
+]
+include-package-data = true
+
+[tool.setuptools.package-dir]
+coordimeet = "backend/coordimeet"
+
+[tool.setuptools.package-data]
+"coordimeet.users" = ["migrations/*.py", "migrations/*/*.py", "templates/*.txt"]
+"coordimeet.events" = ["migrations/*.py", "migrations/*/*.py", "templates/*.txt"]
+"coordimeet.notifications" = ["migrations/*.py", "migrations/*/*.py", "templates/*.txt"]
+
+[tool.setuptools.dynamic]
+version = {file = "version.txt"}
