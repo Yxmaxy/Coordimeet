@@ -73,7 +73,7 @@ export default {
     },
     methods: {
         getEvents() {
-            ApiService.get<Event[]>("/events/event/")
+            ApiService.get<Event[]>("/events/event/list/")
                 .then(res => {
                     this.eventsCreated = res;
                 })
