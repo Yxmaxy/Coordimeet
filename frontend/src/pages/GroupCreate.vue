@@ -106,7 +106,7 @@ import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Tab } from "@/types/tabs";
 import {
-    User,
+    CoordimeetUser,
     CoordimeetMember,
     CoordimeetGroup,
     CoordimeetMemberRole,
@@ -165,7 +165,7 @@ export default {
             members: [] as CoordimeetMember[],
 
             userSearch: "",
-            availableUsers: [] as SelectOption<User>[],
+            availableUsers: [] as SelectOption<CoordimeetUser>[],
         }
     },
     computed: {
@@ -180,14 +180,14 @@ export default {
             return this.availableUsers
                 .filter(user => !this.members.some(member =>
                     member.coordimeet_user?.user === user.value.id ||    
-                    member.coordimeet_user?.user.id === user.value.id
+                    member.coordimeet_user?.id === user.value.id
                 ));
         },
     },
     methods: {
         // available users
         getAvailableUsers() {
-            ApiService.get<User[]>(`/friends/list/`).then((response) => {
+            ApiService.get<CoordimeetUser[]>(`/friends/list/`).then((response) => {
                 this.availableUsers = response.map(user => ({
                     value: user,
                     text: user.email,
@@ -255,14 +255,14 @@ export default {
                     this.storeMessages.showMessageError("Failed to update group");
                 });
         },
-        addMember(option: SelectOption<User>) {
+        addMember(option: SelectOption<CoordimeetUser>) {
             this.members.push({
                 role: CoordimeetMemberRole.MEMBER,
                 coordimeet_user: {
-                    user: option.value?.id,  // ID instead of User!
+                    user: option.value?.user,  // use user ID!
                     email: option.value?.email,
                 },
-            } as any);
+            });
             this.userSearch = "";
         },
         deleteMember(member: CoordimeetMember) {

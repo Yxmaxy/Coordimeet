@@ -305,7 +305,7 @@ import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Event, EventType, EventNotification, EventNotificationType } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
-import { CoordimeetGroup, CoordimeetUser, User } from "@/types/user";
+import { CoordimeetGroup, CoordimeetUser } from "@/types/user";
 import { SelectOption } from "@/types/ui";
 import { Tab } from "@/types/tabs";
 
@@ -359,7 +359,7 @@ export default {
 
             closedGroupUserSearch: "",
             closedGroupUsers: [] as CoordimeetUser[],
-            availableClosedGroupUsers: [] as SelectOption<User>[],
+            availableClosedGroupUsers: [] as SelectOption<CoordimeetUser>[],
         }
     },
     computed: {
@@ -403,7 +403,10 @@ export default {
         // available closed group users
         displayedAvailableClosedGroupUsers() {
             return this.availableClosedGroupUsers
-                .filter(user => !this.closedGroupUsers.some(u => u.user?.id === user.value?.id));
+                .filter(user => !this.closedGroupUsers.some(
+                    u => u?.user === user.value?.id ||
+                    u.id === user.value?.id
+                ));
         },
     },
     methods: {
@@ -601,7 +604,7 @@ export default {
                 if (res.closed_group_members) {
                     this.closedGroupUsers = res.closed_group_members
                         .map((user: any) => ({
-                            user: user.coordimeet_user.user,
+                            user: user.coordimeet_user.id,
                             email: user.coordimeet_user.email,
                         } as any));
                 }
@@ -620,7 +623,7 @@ export default {
 
         // Closed group users
         getAvailableUsers() {
-            ApiService.get<User[]>(`/friends/list/`).then((response) => {
+            ApiService.get<CoordimeetUser[]>(`/friends/list/`).then((response) => {
                 this.availableClosedGroupUsers = response.map(user => ({
                     value: user,
                     text: user.email,
@@ -632,11 +635,11 @@ export default {
         openManageFriends() {
             window.location.href = import.meta.env.VITE_FRIENDS_MANAGE_URL;
         },
-        addClosedGroupMember(option: SelectOption<User>) {
+        addClosedGroupMember(option: SelectOption<CoordimeetUser>) {
             this.closedGroupUsers.push({
-                user: option.value?.id,
+                user: option.value?.user,
                 email: option.value?.email,
-            } as any);
+            });
             this.closedGroupUserSearch = "";
         },
         deleteClosedGroupMember(user: CoordimeetUser) {

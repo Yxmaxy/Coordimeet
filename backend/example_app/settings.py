@@ -43,12 +43,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "simple_notifications",
 
-    # friends app
-    "friends",
-
     # coordimeet apps
     "coordimeet.users",
     "coordimeet.events",
+    "coordimeet.friends",
     "coordimeet.notifications",
 ]
 

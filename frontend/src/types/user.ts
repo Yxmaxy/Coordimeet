@@ -5,7 +5,7 @@ export interface User {
 
 export interface CoordimeetUser {
     id?: number,
-    user: User,
+    user: User | number,
     email: string,
     is_anonymous?: boolean,
 }
