@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
     <div class="bg-main-000">
         <tab-controller :tabs="tabs" :breakpoint="750">
             <template v-slot:login>
@@ -137,4 +137,4 @@ export default {
         }
     },
 }
-</script>
+</script> -->
