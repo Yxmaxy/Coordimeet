@@ -21,6 +21,7 @@
                     'cursor-pointer': !isOpen,
                 }, 'flex-1 pl-4 pr-4 pt-2 pb-2 focus:outline-none']"
                 @focus="isOpen = true"
+                @keydown.enter="onConfirmedOption(search)"
             >
             <custom-icon :icon="dropdownIcon" class="pr-4" />
         </label>
@@ -57,6 +58,7 @@ import CustomIcon from "@/components/ui/CustomIcon.vue";
 
 export default {
     name: "CustomSelect",
+    emits: ["update:modelValue", "confirmedOption"],
     components: {
         CustomIcon,
     },
@@ -70,7 +72,7 @@ export default {
             default: "",
         },
         options: {
-            type: Array as PropType<SelectOption[]>,
+            type: Array as PropType<SelectOption<any>[]>,
             required: true,
         },
     },
@@ -92,11 +94,20 @@ export default {
         },
     },
     methods: {
-        selectOption(option: SelectOption) {
+        selectOption(option: SelectOption<any>) {
             this.$emit("update:modelValue", option.value);
+            this.onConfirmedOption(option.value);
+
             this.placeholderData = option.text;
             this.isOpen = false;
             this.search = "";
+
+        },
+        onConfirmedOption(value: number | string) {
+            const option = this.options.find(option => option.value === value);
+            if (option) {
+                this.$emit("confirmedOption", option);
+            }
         },
     },
     mounted() {

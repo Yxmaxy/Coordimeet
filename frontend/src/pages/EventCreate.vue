@@ -102,48 +102,29 @@
                     <b class="ml-4">Invited users</b>
                     <div>
                         <div class="flex gap-2">
-                            <custom-input
-                                type="email"
-                                v-model="closedGroupUserEmail"
-                                placeholder="Enter a user's email address"
-                                :forceInvalidMessage="closedGroupUserForceInvalidMessage"
-                                :invalidMessage="closedGroupMemberInvalidMessage"
-                                @keydown.enter="addClosedGroupMember"
-                                @input="closedGroupUserForceInvalidMessage = false"
+                            <custom-select
+                                v-model="closedGroupMemberSearch"
+                                :options="displayedAvailableClosedGroupMembers"
+                                @confirmedOption="addClosedGroupMember"
                             />
                             <custom-button
-                                class="h-11 rounded-xl"
-                                :click="addClosedGroupMember"
+                                @click="openManageFriends"
                             >
-                                <custom-icon icon="add" />
+                                <custom-icon class="text-xl" icon="group_add" />
                             </custom-button>
                         </div>
-                        <div class="flex flex-col gap-4 mt-1">
+                        <div class="flex flex-col gap-4 mt-2">
                             <div
-                                v-for="closedGroupUser in closedGroupUsers"
+                                v-for="member in closedGroupMembers"
                                 class="flex justify-between items-center bg-main-000 px-6 py-4 rounded-2xl shadow-md"
                             >
                                 <div class="flex gap-1 items-center">
-                                    <b class="flex items-center h-8">{{ closedGroupUser.email }}</b>
-                                    <help-icon
-                                        v-if="!closedGroupUser.exists"
-                                        class="text-base font-normal text-calendar-unavailable" icon="info"
-                                    >
-                                        This user doesn't exist yet.
-                                        <br /><br />
-                                        You can send them the following link to create an account:
-                                        <div
-                                            class="cursor-pointer font-mono"
-                                            @click="copyInviteLink"
-                                        >
-                                            {{ inviteLink }}
-                                        </div>
-                                    </help-icon>
+                                    <b class="flex items-center h-8">{{ member.coordimeet_user?.email }}</b>
                                 </div>    
                                 <div class="flex gap-2">
                                     <custom-button
                                         class="h-8 w-8 rounded-full"
-                                        :click="() => deleteMember(closedGroupUser)"
+                                        :click="() => deleteClosedGroupMember(member)"
                                     >
                                         <custom-icon icon="delete" />
                                     </custom-button>
@@ -324,16 +305,9 @@ import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Event, EventType, EventNotification, EventNotificationType } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
-import { Group, User } from "@/types/user";
+import { CoordimeetGroup, CoordimeetUser, CoordimeetMember, CoordimeetMemberRole } from "@/types/user";
 import { SelectOption } from "@/types/ui";
 import { Tab } from "@/types/tabs";
-
-interface UserCreate extends User {
-    exists: boolean;
-}
-interface EventCreate extends Event {
-    closed_group_users: User[],
-}
 
 export default {
     setup() {
@@ -346,8 +320,6 @@ export default {
 
             user,
             storeMessages,
-
-            inviteLink: `${import.meta.env.VITE_FRONTEND_URL}/`,
         }
     },
     components: {
@@ -382,13 +354,12 @@ export default {
             },
             eventNotificationsDeadline: initializeDateInput(CalendarType.DateHour, undefined, 1),
 
-            groupOptions: [] as SelectOption[],
+            groupOptions: [] as SelectOption<number>[],
             groupInvited: undefined as number|undefined,
 
-            closedGroupUsers: [] as UserCreate[],
-            closedGroupUserEmail: "",
-            closedGroupUserForceInvalidMessage: false,
-            closedGroupMemberInvalidMessage: "",
+            closedGroupMemberSearch: "",
+            closedGroupMembers: [] as CoordimeetMember[],
+            availableClosedGroupMembers: [] as SelectOption<CoordimeetUser>[],
         }
     },
     computed: {
@@ -428,6 +399,14 @@ export default {
                 start_date: new Date(this.fromDate),
                 end_date: new Date(this.toDate),
             }
+        },
+        // available closed group users
+        displayedAvailableClosedGroupMembers() {
+            return this.availableClosedGroupMembers
+                .filter(user => !this.closedGroupMembers.some(member =>
+                    member.coordimeet_user?.user === user.value.id ||    
+                    member.coordimeet_user?.id === user.value.id
+                ));
         },
     },
     methods: {
@@ -480,7 +459,7 @@ export default {
             }
 
             // if the event type is closed, closedMembers must have something inside
-            if (this.eventType === EventType.Closed && this.closedGroupUsers.length === 0) {
+            if (this.eventType === EventType.Closed && this.closedGroupMembers.length === 0) {
                 this.storeMessages.showMessageError("Please add at least one member to this event in the Invited users section.");
                 return;
             }
@@ -501,11 +480,10 @@ export default {
                 event_calendar_type: this.calendarType,
                 event_type: this.eventType,
 
-                organiser: this.user?.id,
                 is_group_organiser: this.isGroupOrganiser,
                 invited_group: this.groupInvited,
 
-                closed_group_users: this.closedGroupUsers.map(user => ({email: user.email})),
+                closed_group_users: this.closedGroupMembers.map(member => member.coordimeet_user),
 
                 description: this.description,
                 event_length: this.length,
@@ -513,16 +491,16 @@ export default {
 
                 event_availability_options: this.selectedDateRanges,
                 event_notifications: eventNotifications,
-            } as EventCreate;
+            } as Event;
         },
         onCreateEvent() {
             const event = this.getValidatedEventData();
             if (!event)
                 return;
 
-            ApiService.post("/events/event/", event)
+            ApiService.post<Event, Event>("/events/event/", event)
             .then(res => {
-                const eventUUID = res.data.event_uuid;
+                const eventUUID = res.event_uuid;
                 this.storeMessages.showMessage(`Event successfuly created. You will now be redirected to your event page.`)
                 this.$router.push(`/event/${eventUUID}`);
             })
@@ -540,7 +518,7 @@ export default {
             if (event.event_type === EventType.Closed)
                 event.invited_group = undefined;
 
-            ApiService.put(`/events/event/${this.$route.params.uuid}/`, event)
+            ApiService.put<Event, Event>(`/events/event/${this.$route.params.uuid}/`, event)
             .then(() => {
                 this.storeMessages.showMessage(`Event successfuly updated. You will now be redirected to your event page.`)
                 this.$router.push(`/event/${this.$route.params.uuid}`);
@@ -551,12 +529,12 @@ export default {
             });
         },
         getGroups() {
-            ApiService.get("/users/group/").then((response) => {
-                this.groupOptions = response.data.map((group: Group) => {
+            ApiService.get<CoordimeetGroup[]>("/users/group/").then((response) => {
+                this.groupOptions = response.map(group => {
                     return {
                         value: group.id,
                         text: group.name,
-                    } as SelectOption;
+                    } as SelectOption<number>;
                 });
                 if (this.groupOptions.length === 1 && !this.groupInvited) {
                     if (!this.isEditing)
@@ -569,18 +547,18 @@ export default {
         },
         getEditingEvent() {
             // set all variables
-            ApiService.get(`events/event/${this.$route.params.uuid}/`)
+            ApiService.get<Event>(`/events/event/${this.$route.params.uuid}/`)
             .then(res => {
-                this.title = res.data.title;
-                this.eventType = res.data.event_type;
-                this.calendarType = res.data.event_calendar_type;
-                this.length = res.data.event_length;
+                this.title = res.title;
+                this.eventType = res.event_type;
+                this.calendarType = res.event_calendar_type;
+                this.length = res.event_length;
 
                 let difference: number = 0;
                 if (this.$route.name === "event_new") {
                     const currentDate = new Date();
                     currentDate.setHours(0, 0, 0, 0);
-                    const firstDate = new Date(res.data.event_availability_options[0].start_date);
+                    const firstDate = new Date(res.event_availability_options[0].start_date);
                     firstDate.setHours(0, 0, 0, 0);
 
                     // if the first date is in the past, add 7 days to the difference
@@ -604,40 +582,35 @@ export default {
                 }
 
                 this.fromDate = initializeDateInput(CalendarType.Date,
-                    addUnitsToDate(new Date(res.data.event_availability_options[0].start_date), this.calendarType!, difference).toString()
+                    addUnitsToDate(new Date(res.event_availability_options[0].start_date), this.calendarType!, difference).toString()
                 )
                 this.toDate = initializeDateInput(CalendarType.Date,
-                    addUnitsToDate(new Date(res.data.event_availability_options[res.data.event_availability_options.length - 1].end_date), this.calendarType!, difference).toString()
+                    addUnitsToDate(new Date(res.event_availability_options[res.event_availability_options.length - 1].end_date), this.calendarType!, difference).toString()
                 )
 
-                this.description = res.data.description as string;
+                this.description = res.description as string;
                 this.deadline = initializeDateInput(CalendarType.DateHour,
-                    addUnitsToDate(new Date(res.data.deadline), this.calendarType!, difference).toString()
+                    addUnitsToDate(new Date(res.deadline), this.calendarType!, difference).toString()
                 );
 
-                this.groupInvited = res.data.invited_group?.id;
-                this.isGroupOrganiser = res.data.is_group_organiser;
+                this.groupInvited = res.invited_group?.id;
+                this.isGroupOrganiser = res.is_group_organiser;
 
-                this.selectedDateRanges = res.data.event_availability_options.map((dateRange: DateRange) => ({
+                this.selectedDateRanges = res.event_availability_options.map((dateRange: DateRange) => ({
                     start_date: addUnitsToDate(new Date(dateRange.start_date), this.calendarType!, difference),
                     end_date: addUnitsToDate(new Date(dateRange.end_date), this.calendarType!, difference),
                 }));
 
-                if (res.data.closed_group_members) {
-                    this.closedGroupUsers = res.data.closed_group_members
-                    .map((member: any) => ({
-                        email: member.user.email,
-                        exists: true,
-                    }))
-                    .filter((member: UserCreate) => member.email !== this.user?.email);
+                if (res.closed_group_members) {
+                    this.closedGroupMembers = res.closed_group_members
                 }
 
                 this.eventNotifications = {
-                    afterCreation: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Creation),
-                    afterUpdate: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Update),
-                    beforeDeadline: res.data.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.BeforeDeadline),
+                    afterCreation: res.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Creation),
+                    afterUpdate: res.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.Update),
+                    beforeDeadline: res.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.BeforeDeadline),
                 };
-                this.eventNotificationsDeadline = initializeDateInput(CalendarType.DateHour, res.data.event_notifications.find((notification: EventNotification) => notification.notification_type === EventNotificationType.BeforeDeadline)?.notification_time);
+                this.eventNotificationsDeadline = initializeDateInput(CalendarType.DateHour, res.event_notifications.find((notification: EventNotification) => notification.notification_type === EventNotificationType.BeforeDeadline)?.notification_time?.toString());
             })
             .catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch event data.");
@@ -645,48 +618,31 @@ export default {
         },
 
         // Closed group users
-        addClosedGroupMember() {
-            // // check email format
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.closedGroupUserEmail)) {
-                this.closedGroupUserForceInvalidMessage = true;
-                this.closedGroupMemberInvalidMessage = "Invalid email format";
-                return;
-            }
-
-            // check duplicates
-            if (this.closedGroupUsers.some(user => user.email === this.closedGroupUserEmail)) {
-                this.closedGroupUserForceInvalidMessage = true;
-                this.closedGroupMemberInvalidMessage = "This member is already added";
-                return;
-            }
-
-            // can't add yourself
-            if (this.closedGroupUserEmail === this.user?.email) {
-                this.closedGroupUserForceInvalidMessage = true;
-                this.closedGroupMemberInvalidMessage = "You can't add yourself to the group";
-                return;
-            }
-
-            this.closedGroupUserForceInvalidMessage = false;
-            this.closedGroupMemberInvalidMessage = "";
-
-            ApiService.get(`/users/user/exists/${this.closedGroupUserEmail}/`).then((response: any) => {
-                this.closedGroupUsers.push({
-                    email: this.closedGroupUserEmail,
-                    exists: response.data.exists,
-                });
+        getAvailableUsers() {
+            ApiService.get<CoordimeetUser[]>(`/friends/list/`).then((response) => {
+                this.availableClosedGroupMembers = response.map(user => ({
+                    value: user,
+                    text: user.email,
+                }));
             }).catch(() => {
-                this.storeMessages.showMessageError("Failed to add user to group");
-            }).finally(() => {
-                this.closedGroupUserEmail = "";
+                this.storeMessages.showMessageError("Failed to fetch available users");
             });
         },
-        deleteMember(user: UserCreate) {
-            this.closedGroupUsers = this.closedGroupUsers.filter(u => u !== user);
+        openManageFriends() {
+            window.location.href = import.meta.env.VITE_FRIENDS_MANAGE_URL;
         },
-        async copyInviteLink() {
-            navigator.clipboard.writeText(this.inviteLink);
-            this.storeMessages.showMessage("Invite link copied to clipboard", 3000);
+        addClosedGroupMember(option: SelectOption<CoordimeetUser>) {
+            this.closedGroupMembers.push({
+                role: CoordimeetMemberRole.MEMBER,
+                coordimeet_user: {
+                    user: option.value?.user,  // use user ID!
+                    email: option.value?.email,
+                },
+            });
+            this.closedGroupMemberSearch = "";
+        },
+        deleteClosedGroupMember(member: CoordimeetMember) {
+            this.closedGroupMembers = this.closedGroupMembers.filter(m => m !== member);
         },
 
         // helpers
@@ -694,6 +650,7 @@ export default {
     },
     mounted() {
         this.getGroups();
+        this.getAvailableUsers();
         if (this.$route.params.uuid) {
             this.getEditingEvent();
         } else {

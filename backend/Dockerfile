@@ -1,7 +1,8 @@
 FROM python:3.12-alpine3.19
 
-# Install build dependencies
-RUN apk add --no-cache gcc musl-dev libffi-dev
+# Install build dependencies including git for pip git+ dependencies
+RUN apk add --no-cache gcc musl-dev libffi-dev git && \
+    git --version
 
 WORKDIR /app
 

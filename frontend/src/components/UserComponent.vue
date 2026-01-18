@@ -1,8 +1,5 @@
 <template>
-    <div
-        v-if="isLoggedIn"
-        class="z-50 flex gap-2 relative"
-    >
+    <div class="z-50 flex gap-2 relative">
         <div
             tabindex="0"
             @click="showPopup = !showPopup"
@@ -29,26 +26,47 @@
                         {{ userDisplayName }}
                         <span class="material-symbols-outlined align-middle text-lg">person</span>
                     </div>
-                    <router-link to="/event/list" @click="closePopup" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                    <router-link
+                        to="/event/list"
+                        @click="closePopup"
+                        class="hover:bg-main-400 transition-colors flex items-center justify-between"
+                    >
                         Events
                         <span class="material-symbols-outlined align-middle text-lg">calendar_today</span>
                     </router-link>
-                    <router-link to="/group/list" @click="closePopup" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                    <router-link
+                        v-if="!storeUser.user?.is_anonymous"
+                        to="/group/list"
+                        @click="closePopup"
+                        class="hover:bg-main-400 transition-colors flex items-center justify-between"
+                    >
                         Groups
                         <span class="material-symbols-outlined align-middle text-lg">groups</span>
                     </router-link>
-                    <!-- <router-link to="/" @click="closePopup" class="hover:bg-main-400 transition-colors flex items-center justify-between">
-                        My profile
-                        <span class="material-symbols-outlined align-middle text-lg">person</span>
-                    </router-link> -->
-                    <button @click="onInstall" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                    <button
+                        @click="onInstall"
+                        class="hover:bg-main-400 transition-colors flex items-center justify-between"
+                    >
                         Install app
                         <span class="material-symbols-outlined align-middle text-lg">download</span>
                     </button>
-                    <button @click="onLogout" class="hover:bg-main-400 transition-colors flex items-center justify-between">
+                    <button
+                        v-if="!storeUser.user?.is_anonymous"
+                        @click="onLogout"
+                        class="hover:bg-main-400 transition-colors flex items-center justify-between"
+                    >
                         Log out
                         <span class="material-symbols-outlined align-middle text-lg">logout</span>
                     </button>
+                    <button
+                        v-if="storeUser.user?.is_anonymous"
+                        @click="onLogin"
+                        class="hover:bg-main-400 transition-colors flex items-center justify-between"
+                    >
+                        Log in
+                        <span class="material-symbols-outlined align-middle text-lg">login</span>
+                    </button>
+                    <notification-toggle />
                     <div class="flex items-center justify-between">
                         Theme
                         <div class="flex gap-1 [&>*]:h-5 [&>*]:w-5 [&>*]:rounded-sm [&>*]:border-2 [&>*]:border-main-600 [&>*]:cursor-pointer">
@@ -74,13 +92,6 @@
             </div>
         </template>
     </div>
-    <!-- <router-link
-        v-else
-        to="/login"
-        class="h-full flex items-center cursor-pointer select-none"
-    >
-        <span class="material-symbols-outlined align-middle ml-1">login</span>
-    </router-link> -->
 </template>
 
 <script lang="ts">
@@ -89,17 +100,19 @@ import { useStoreUser } from "@/stores/storeUser";
 import { setTheme, Theme } from "@/utils/theme";
 
 import CustomButton from "@/components/ui/CustomButton.vue";
+import NotificationToggle from "@/components/ui/NotificationToggle.vue";
 
 export default {
     name: "UserComponent",
     components: {
         RouterLink,
         CustomButton,
+        NotificationToggle,
     },
     setup() {
-        const userStore = useStoreUser();
+        const storeUser = useStoreUser();
         return {
-            userStore,
+            storeUser,
             Theme,
         }
     },
@@ -107,26 +120,24 @@ export default {
         return {
             showPopup: false,
             isMobile: true,
-            isLoggedIn: false,
             deferredInstallPrompt: null as any,
         }
     },
     computed: {
         userDisplayName() {
-            if (this.userStore.user!.first_name && this.userStore.user!.last_name)
-                return `${this.userStore.user!.first_name} ${this.userStore.user!.last_name}`;
-            if (this.userStore.user!.first_name)
-                return this.userStore.user!.first_name;
-            return this.userStore.user!.email;
+            return this.storeUser.user!.email;
         }
     },
     methods: {
         setTheme,
+        onLogin() {
+            window.location.href = import.meta.env.VITE_LOGIN_URL;
+            this.showPopup = false;
+        },
         async onLogout() {
-            await this.userStore.onLogout();
+            await this.storeUser.onLogout();
             this.showPopup = false;
             this.$router.push("/");
-            this.isLoggedIn = false;
         },
         onMenuClick(path: string) {
             this.showPopup = false;
@@ -142,7 +153,7 @@ export default {
         onInstall() {
             if (this.deferredInstallPrompt) {
                 this.deferredInstallPrompt.prompt();
-                this.deferredInstallPrompt.userChoice.then((choiceResult: any) => {
+                this.deferredInstallPrompt.userChoice.then(() => {
                     this.deferredInstallPrompt = null;
                 });
             }
@@ -157,18 +168,11 @@ export default {
         this.$nextTick(() => {
             this.checkScreenSize();
         });
-        this.isLoggedIn = await this.userStore.isLoggedIn();
-
         window.addEventListener("beforeinstallprompt", this.handleInstallPrompt);
     },
     unmounted() {
         window.removeEventListener("resize", this.checkScreenSize);
         window.removeEventListener("beforeinstallprompt", this.handleInstallPrompt);
-    },
-    watch: {
-        "userStore.user"(n) {
-            this.isLoggedIn = !!n;
-        }
     },
 }
 </script>

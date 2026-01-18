@@ -50,7 +50,7 @@ import { useStoreUser } from "@/stores/storeUser";
 import { useStoreMessages } from "@/stores/storeMessages";
 import { useStoreOnline } from "@/stores/storeOnline";
 
-import { Group, Role } from "@/types/user";
+import { CoordimeetGroup, CoordimeetMemberRole } from "@/types/user";
 import { Tab } from "@/types/tabs";
 
 import TabController from "@/components/TabController.vue";
@@ -86,28 +86,28 @@ export default {
     },
     data() {
         return {
-            groups: [] as Group[],
+            groups: [] as CoordimeetGroup[],
         
         }
     },
     methods: {
         getGroups() {
-            ApiService.get("/users/group/").then((response) => {
-                this.groups = response.data;
+            ApiService.get<CoordimeetGroup[]>("/users/group/").then((response) => {
+                this.groups = response;
             }).catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch user's groups.");
             });
         },
-        isRole(group: Group, role: Role) {
-            return group.members.find((member) => member.user?.id === this.user?.id)?.role === role;
+        isRole(group: CoordimeetGroup, role: CoordimeetMemberRole) {
+            return group.coordimeet_members.find((member) => member.coordimeet_user?.id === this.user?.id)?.role === role;
         },
-        isOwner(group: Group) {
-            return this.isRole(group, Role.OWNER);
+        isOwner(group: CoordimeetGroup) {
+            return this.isRole(group, CoordimeetMemberRole.OWNER);
         },
-        isAdmin(group: Group) {
-            return this.isRole(group, Role.ADMIN);
+        isAdmin(group: CoordimeetGroup) {
+            return this.isRole(group, CoordimeetMemberRole.ADMIN);
         },
-        leaveGroup(group: Group) {
+        leaveGroup(group: CoordimeetGroup) {
             ApiService.post(`/users/group/leave/${group.id}/`).then(() => {
                 this.storeMessages.showMessage("Successfully left the group.");
                 this.getGroups();
@@ -115,7 +115,7 @@ export default {
                 this.storeMessages.showMessageError("Failed to leave group.");
             });
         },
-        deleteGroup(group: Group) {
+        deleteGroup(group: CoordimeetGroup) {
             ApiService.delete(`/users/group/delete/${group.id}/`).then(() => {
                 this.storeMessages.showMessage("Group successfully deleted.");
                 this.getGroups();
@@ -123,7 +123,7 @@ export default {
                 this.storeMessages.showMessageError("Failed to delete group.");
             });
         },
-        editGroup(group: Group) {
+        editGroup(group: CoordimeetGroup) {
             if (this.isAdmin(group) || this.isOwner(group)) {
                 this.$router.push(`/group/edit/${group.id}`);
             }

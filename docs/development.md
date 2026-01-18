@@ -1,13 +1,14 @@
 # Repository setup
 First, copy the `.env.example` file to `.env` and fill in the necessary values.
 
-You can generate the VAPID keys for push notifications on this website: https://web-push-codelab.glitch.me/.
+You can generate the VAPID keys for push notifications on this website: https://tools.reactpwa.com/vapid.
 
 You can change other values however you want, but the default values should work fine for development.
 
+After that also copy the `frontend/.env.example` file and copy the public notification key.
+
 
 # Local development
-Source the `.env` file if needed by running `source .env` in the root directory.
 
 ## Backend (Postgres, Redis, Django and Celery)
 1. I recommend using docker for the database and cache servers, so you don't have to spend too much time setting everything up. You can start the servers by running the following commands

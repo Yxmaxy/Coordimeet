@@ -1,10 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
 
-import { useStoreUser } from "@/stores/storeUser";
-
-// import Home from "@/pages/Home.vue";  NOTE: Currently not used
-import Login from "@/pages/Login.vue";
-
 import Event from "@/pages/Event.vue";
 import EventCreate from "@/pages/EventCreate.vue";
 import EventList from "@/pages/EventList.vue";
@@ -15,7 +10,7 @@ import GroupList from "@/pages/GroupList.vue";
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        { path: "/", component: Login, name: "login" },
+        { path: "/", redirect: { name: "event_list" } },
         { path: "/event/:uuid", component: Event, name: "event"},
         { path: "/event/new/:uuid?", component: EventCreate, name: "event_new" },
         { path: "/event/edit/:uuid", component: EventCreate, name: "event_edit" },
@@ -30,20 +25,6 @@ const router = createRouter({
 router.beforeEach(async (to, from) => {
     // scroll to top on route change
     window.scrollTo(0, 0);
-
-    if (from.name === to.name)
-        return false;
-
-    // retrieve is logged in
-    const userStore = useStoreUser();
-    const isLoggedIn = await userStore.isLoggedIn();
-
-    // redirect to login if not logged in
-    if (isLoggedIn && ["login"].includes(to.name as string))
-        return "/event/list";
-    if (!isLoggedIn && !["login", "event"].includes(to.name as string))
-        return "/";
-    return true;
 });
 
 export default router;
