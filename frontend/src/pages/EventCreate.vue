@@ -103,8 +103,8 @@
                     <div>
                         <div class="flex gap-2">
                             <custom-select
-                                v-model="closedGroupUserSearch"
-                                :options="displayedAvailableClosedGroupUsers"
+                                v-model="closedGroupMemberSearch"
+                                :options="displayedAvailableClosedGroupMembers"
                                 @confirmedOption="addClosedGroupMember"
                             />
                             <custom-button
@@ -115,16 +115,16 @@
                         </div>
                         <div class="flex flex-col gap-4 mt-2">
                             <div
-                                v-for="closedGroupUser in closedGroupUsers"
+                                v-for="member in closedGroupMembers"
                                 class="flex justify-between items-center bg-main-000 px-6 py-4 rounded-2xl shadow-md"
                             >
                                 <div class="flex gap-1 items-center">
-                                    <b class="flex items-center h-8">{{ closedGroupUser.email }}</b>
+                                    <b class="flex items-center h-8">{{ member.coordimeet_user?.email }}</b>
                                 </div>    
                                 <div class="flex gap-2">
                                     <custom-button
                                         class="h-8 w-8 rounded-full"
-                                        :click="() => deleteClosedGroupMember(closedGroupUser)"
+                                        :click="() => deleteClosedGroupMember(member)"
                                     >
                                         <custom-icon icon="delete" />
                                     </custom-button>
@@ -305,7 +305,7 @@ import { useStoreMessages } from "@/stores/storeMessages";
 
 import { Event, EventType, EventNotification, EventNotificationType } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
-import { CoordimeetGroup, CoordimeetUser } from "@/types/user";
+import { CoordimeetGroup, CoordimeetUser, CoordimeetMember, CoordimeetMemberRole } from "@/types/user";
 import { SelectOption } from "@/types/ui";
 import { Tab } from "@/types/tabs";
 
@@ -357,9 +357,9 @@ export default {
             groupOptions: [] as SelectOption<number>[],
             groupInvited: undefined as number|undefined,
 
-            closedGroupUserSearch: "",
-            closedGroupUsers: [] as CoordimeetUser[],
-            availableClosedGroupUsers: [] as SelectOption<CoordimeetUser>[],
+            closedGroupMemberSearch: "",
+            closedGroupMembers: [] as CoordimeetMember[],
+            availableClosedGroupMembers: [] as SelectOption<CoordimeetUser>[],
         }
     },
     computed: {
@@ -401,11 +401,11 @@ export default {
             }
         },
         // available closed group users
-        displayedAvailableClosedGroupUsers() {
-            return this.availableClosedGroupUsers
-                .filter(user => !this.closedGroupUsers.some(
-                    u => u?.user === user.value?.id ||
-                    u.id === user.value?.id
+        displayedAvailableClosedGroupMembers() {
+            return this.availableClosedGroupMembers
+                .filter(user => !this.closedGroupMembers.some(member =>
+                    member.coordimeet_user?.user === user.value.id ||    
+                    member.coordimeet_user?.id === user.value.id
                 ));
         },
     },
@@ -459,7 +459,7 @@ export default {
             }
 
             // if the event type is closed, closedMembers must have something inside
-            if (this.eventType === EventType.Closed && this.closedGroupUsers.length === 0) {
+            if (this.eventType === EventType.Closed && this.closedGroupMembers.length === 0) {
                 this.storeMessages.showMessageError("Please add at least one member to this event in the Invited users section.");
                 return;
             }
@@ -483,7 +483,7 @@ export default {
                 is_group_organiser: this.isGroupOrganiser,
                 invited_group: this.groupInvited,
 
-                closed_group_users: this.closedGroupUsers,
+                closed_group_users: this.closedGroupMembers.map(member => member.coordimeet_user),
 
                 description: this.description,
                 event_length: this.length,
@@ -602,11 +602,7 @@ export default {
                 }));
 
                 if (res.closed_group_members) {
-                    this.closedGroupUsers = res.closed_group_members
-                        .map((user: any) => ({
-                            user: user.coordimeet_user.id,
-                            email: user.coordimeet_user.email,
-                        } as any));
+                    this.closedGroupMembers = res.closed_group_members
                 }
 
                 this.eventNotifications = {
@@ -624,7 +620,7 @@ export default {
         // Closed group users
         getAvailableUsers() {
             ApiService.get<CoordimeetUser[]>(`/friends/list/`).then((response) => {
-                this.availableClosedGroupUsers = response.map(user => ({
+                this.availableClosedGroupMembers = response.map(user => ({
                     value: user,
                     text: user.email,
                 }));
@@ -636,14 +632,17 @@ export default {
             window.location.href = import.meta.env.VITE_FRIENDS_MANAGE_URL;
         },
         addClosedGroupMember(option: SelectOption<CoordimeetUser>) {
-            this.closedGroupUsers.push({
-                user: option.value?.user,
-                email: option.value?.email,
+            this.closedGroupMembers.push({
+                role: CoordimeetMemberRole.MEMBER,
+                coordimeet_user: {
+                    user: option.value?.user,  // use user ID!
+                    email: option.value?.email,
+                },
             });
-            this.closedGroupUserSearch = "";
+            this.closedGroupMemberSearch = "";
         },
-        deleteClosedGroupMember(user: CoordimeetUser) {
-            this.closedGroupUsers = this.closedGroupUsers.filter(u => u.id !== user.id);
+        deleteClosedGroupMember(member: CoordimeetMember) {
+            this.closedGroupMembers = this.closedGroupMembers.filter(m => m !== member);
         },
 
         // helpers
