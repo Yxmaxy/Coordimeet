@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Event from "@/pages/Event.vue";
 import EventCreate from "@/pages/EventCreate.vue";
 import EventList from "@/pages/EventList.vue";
+import Home from "@/pages/Home.vue";
 
 import GroupCreate from "@/pages/GroupCreate.vue";
 import GroupList from "@/pages/GroupList.vue";
@@ -10,7 +11,7 @@ import GroupList from "@/pages/GroupList.vue";
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        { path: "/", redirect: { name: "event_list" } },
+        { path: "/", component: Home, name: "home" },
         { path: "/event/:uuid", component: Event, name: "event"},
         { path: "/event/new/:uuid?", component: EventCreate, name: "event_new" },
         { path: "/event/edit/:uuid", component: EventCreate, name: "event_edit" },

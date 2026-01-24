@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-main-000 h-full">
+    <logged-in-wrapper class="bg-main-000 h-full">
         <tab-controller :tabs="tabs" :breakpoint="750">
             <template v-slot:create_group>
                 <div
@@ -96,7 +96,7 @@
                 </div>
             </template>
         </tab-controller>
-    </div>
+    </logged-in-wrapper>
 </template>
 
 <script lang="ts">
@@ -113,6 +113,8 @@ import {
 } from "@/types/user";
 import { SelectOption } from "@/types/ui";
 
+import LoggedInWrapper from "@/pages/wrappers/LoggedInWrapper.vue";
+
 import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomInput from "@/components/ui/CustomInput.vue";
@@ -120,6 +122,7 @@ import CustomToggle from "@/components/ui/CustomToggle.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
 import CustomSelect from "@/components/ui/CustomSelect.vue";
 import HelpIcon from "@/components/ui/HelpIcon.vue";
+
 
 const tabs = [
     {
@@ -138,6 +141,7 @@ const tabs = [
 export default {
     name: "GroupList",
     components: {
+        LoggedInWrapper,
         TabController,
         CustomButton,
         CustomInput,

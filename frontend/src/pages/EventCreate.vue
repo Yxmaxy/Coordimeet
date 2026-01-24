@@ -1,293 +1,297 @@
 <template>
-    <tab-controller :tabs="tabs">
-        <template v-slot:create_event>
-            <div
-                class="flex flex-col gap-4 px-4 pt-4 h-full
-                bg-main-100 min-h-[calc(100vh-7rem)]"
-            >
-                <label class="flex flex-col gap-2">
-                    <b class="ml-4">Event title</b>
-                    <custom-input
-                        type="text"
-                        placeholder="Enter a title for your event"
-                        v-model="title"
-                    />
-                </label>
-                <div class="ml-4 mb-4">
-                    <b class="flex gap-1 items-center">
-                        Event type
-                        <help-icon class="text-base font-normal">
-                            The event type determines who can see and respond to the event:
-                            <ul>
-                                <li class="ml-5 list-disc">Public - anyone with the invite link can join</li>
-                                <!-- <li class="ml-5 list-disc">Closed - only invited people can join</li> -->
-                                <li class="ml-5 list-disc">Group - only group members can join</li>
-                            </ul>
-                        </help-icon>
-                    </b>
-                    <div class="flex flex-col gap-2 mt-3">
-                        <custom-radio
-                            type="radio"
-                            v-model="eventType"
-                            :value="EventType.Public"
-                            text="Public"
+    <logged-in-wrapper>
+        <tab-controller :tabs="tabs">
+            <template v-slot:create_event>
+                <div
+                    class="flex flex-col gap-4 px-4 pt-4 h-full
+                    bg-main-100 min-h-[calc(100vh-7rem)]"
+                >
+                    <label class="flex flex-col gap-2">
+                        <b class="ml-4">Event title</b>
+                        <custom-input
+                            type="text"
+                            placeholder="Enter a title for your event"
+                            v-model="title"
                         />
-                        <div class="flex flex-row items-center gap-2">
+                    </label>
+                    <div class="ml-4 mb-4">
+                        <b class="flex gap-1 items-center">
+                            Event type
+                            <help-icon class="text-base font-normal">
+                                The event type determines who can see and respond to the event:
+                                <ul>
+                                    <li class="ml-5 list-disc">Public - anyone with the invite link can join</li>
+                                    <!-- <li class="ml-5 list-disc">Closed - only invited people can join</li> -->
+                                    <li class="ml-5 list-disc">Group - only group members can join</li>
+                                </ul>
+                            </help-icon>
+                        </b>
+                        <div class="flex flex-col gap-2 mt-3">
                             <custom-radio
                                 type="radio"
                                 v-model="eventType"
-                                :value="EventType.Group"
-                                text="Group"
-                                :disabled="groupOptions.length === 0"
+                                :value="EventType.Public"
+                                text="Public"
                             />
-                            <help-icon
-                                v-if="groupOptions.length === 0"
-                                class="text-base font-normal"
-                            >
-                                You need to be a member of a group to create a group event.
-                            </help-icon>
-                        </div>
-                        <div class="flex flex-row items-center gap-2">
-                            <custom-radio
-                                type="radio"
-                                v-model="eventType"
-                                :value="EventType.Closed"
-                                text="Closed"
-                            />
-                            <help-icon
-                                class="text-base font-normal"
-                            >
-                                You can invite users by their email address. A temporary group will be created.
-                            </help-icon>
+                            <div class="flex flex-row items-center gap-2">
+                                <custom-radio
+                                    type="radio"
+                                    v-model="eventType"
+                                    :value="EventType.Group"
+                                    text="Group"
+                                    :disabled="groupOptions.length === 0"
+                                />
+                                <help-icon
+                                    v-if="groupOptions.length === 0"
+                                    class="text-base font-normal"
+                                >
+                                    You need to be a member of a group to create a group event.
+                                </help-icon>
+                            </div>
+                            <div class="flex flex-row items-center gap-2">
+                                <custom-radio
+                                    type="radio"
+                                    v-model="eventType"
+                                    :value="EventType.Closed"
+                                    text="Closed"
+                                />
+                                <help-icon
+                                    class="text-base font-normal"
+                                >
+                                    You can invite users by their email address. A temporary group will be created.
+                                </help-icon>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div
-                    v-if="eventType === EventType.Group"
-                    class="flex flex-col gap-2 mb-4"
-                >
-                    <b class="ml-4">Group</b>
-                    <custom-select
-                        v-model="groupInvited"
-                        :options="groupOptions"
-                        placeholder="Please select a group"
-                    />
-                    <b class="mt-4 ml-4 flex gap-1 items-center">
-                        Ownership
-                        <help-icon class="text-base font-normal">
-                            The ownership determines who can edit and finish the event:
-                            <ul>
-                                <li class="ml-5 list-disc">Event creator - only you can change and edit the event</li>
-                                <li class="ml-5 list-disc">Group - all event administrators can edit the event</li>
-                            </ul>
-                        </help-icon>
-                    </b>
-                    <custom-toggle
-                        class="ml-4"
-                        v-model="isGroupOrganiser"
-                        :disabled="eventType !== EventType.Group"
+                    <div
+                        v-if="eventType === EventType.Group"
+                        class="flex flex-col gap-2 mb-4"
                     >
-                        <template v-slot:left>
-                            <span class="mr-2">Event creator</span>
-                        </template>
-                        <template v-slot:right>
-                            <span class="ml-2">Group</span>
-                        </template>
-                    </custom-toggle>
-                </div>
-                <div
-                    v-if="eventType === EventType.Closed"
-                    class="flex flex-col gap-2 mb-4"
-                >
-                    <b class="ml-4">Invited users</b>
-                    <div>
-                        <div class="flex gap-2">
-                            <custom-select
-                                v-model="closedGroupMemberSearch"
-                                :options="displayedAvailableClosedGroupMembers"
-                                @confirmedOption="addClosedGroupMember"
-                            />
-                            <custom-button
-                                @click="openManageFriends"
-                            >
-                                <custom-icon class="text-xl" icon="group_add" />
-                            </custom-button>
-                        </div>
-                        <div class="flex flex-col gap-4 mt-2">
-                            <div
-                                v-for="member in closedGroupMembers"
-                                class="flex justify-between items-center bg-main-000 px-6 py-4 rounded-2xl shadow-md"
-                            >
-                                <div class="flex gap-1 items-center">
-                                    <b class="flex items-center h-8">{{ member.coordimeet_user?.email }}</b>
-                                </div>    
-                                <div class="flex gap-2">
-                                    <custom-button
-                                        class="h-8 w-8 rounded-full"
-                                        :click="() => deleteClosedGroupMember(member)"
-                                    >
-                                        <custom-icon icon="delete" />
-                                    </custom-button>
+                        <b class="ml-4">Group</b>
+                        <custom-select
+                            v-model="groupInvited"
+                            :options="groupOptions"
+                            placeholder="Please select a group"
+                        />
+                        <b class="mt-4 ml-4 flex gap-1 items-center">
+                            Ownership
+                            <help-icon class="text-base font-normal">
+                                The ownership determines who can edit and finish the event:
+                                <ul>
+                                    <li class="ml-5 list-disc">Event creator - only you can change and edit the event</li>
+                                    <li class="ml-5 list-disc">Group - all event administrators can edit the event</li>
+                                </ul>
+                            </help-icon>
+                        </b>
+                        <custom-toggle
+                            class="ml-4"
+                            v-model="isGroupOrganiser"
+                            :disabled="eventType !== EventType.Group"
+                        >
+                            <template v-slot:left>
+                                <span class="mr-2">Event creator</span>
+                            </template>
+                            <template v-slot:right>
+                                <span class="ml-2">Group</span>
+                            </template>
+                        </custom-toggle>
+                    </div>
+                    <div
+                        v-if="eventType === EventType.Closed"
+                        class="flex flex-col gap-2 mb-4"
+                    >
+                        <b class="ml-4">Invited users</b>
+                        <div>
+                            <div class="flex gap-2">
+                                <custom-select
+                                    v-model="closedGroupMemberSearch"
+                                    :options="displayedAvailableClosedGroupMembers"
+                                    @confirmedOption="addClosedGroupMember"
+                                />
+                                <custom-button
+                                    @click="openManageFriends"
+                                >
+                                    <custom-icon class="text-xl" icon="group_add" />
+                                </custom-button>
+                            </div>
+                            <div class="flex flex-col gap-4 mt-2">
+                                <div
+                                    v-for="member in closedGroupMembers"
+                                    class="flex justify-between items-center bg-main-000 px-6 py-4 rounded-2xl shadow-md"
+                                >
+                                    <div class="flex gap-1 items-center">
+                                        <b class="flex items-center h-8">{{ member.coordimeet_user?.email }}</b>
+                                    </div>    
+                                    <div class="flex gap-2">
+                                        <custom-button
+                                            class="h-8 w-8 rounded-full"
+                                            :click="() => deleteClosedGroupMember(member)"
+                                        >
+                                            <custom-icon icon="delete" />
+                                        </custom-button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="ml-4 mb-4">
-                    <b>Select calendar type</b>
-                    <div v-if="calendarType" class="flex flex-col gap-2 mt-3">
-                        <custom-radio
-                            type="radio"
-                            v-model="calendarType"
-                            :value="CalendarType.Date"
-                            text="Date"
-                        />
-                        <custom-radio
-                            type="radio"
-                            v-model="calendarType"
-                            :value="CalendarType.DateHour"
-                            text="Date and hour"
-                        />
+                    <div class="ml-4 mb-4">
+                        <b>Select calendar type</b>
+                        <div v-if="calendarType" class="flex flex-col gap-2 mt-3">
+                            <custom-radio
+                                type="radio"
+                                v-model="calendarType"
+                                :value="CalendarType.Date"
+                                text="Date"
+                            />
+                            <custom-radio
+                                type="radio"
+                                v-model="calendarType"
+                                :value="CalendarType.DateHour"
+                                text="Date and hour"
+                            />
+                        </div>
                     </div>
-                </div>
-                <label class="flex flex-col gap-2">
-                    <b class="ml-4">Event length in {{ calendarTypeDisplay }}</b>
-                    <custom-input
-                        type="number"
-                        v-model="length"
-                        placeholder="Enter the length of the event"
-                        pattern="[0-9]+"
-                        invalidMessage="Event length must be a positive integer"
-                    />
-                </label>
-                <div>
-                    <b class="ml-4 flex gap-1 items-center">
-                        Rough event duration
-                        <help-icon class="text-base font-normal">
-                            The rough event duration is used for generating the calendar,
-                            where you can select the detailed {{ calendarTypeDisplay }} of the event.
-                        </help-icon>
-                    </b>
-                    <label>
-                        <div class="mt-2 ml-4">
-                            From
-                        </div>
+                    <label class="flex flex-col gap-2">
+                        <b class="ml-4">Event length in {{ calendarTypeDisplay }}</b>
                         <custom-input
-                            :type="selectedDateInputType"
-                            v-model="fromDate"
-                            :forceInvalidMessage="areDatesInvalid"
-                            invalidMessage="The 'From' date can't be after the 'To' date"
+                            type="number"
+                            v-model="length"
+                            placeholder="Enter the length of the event"
+                            pattern="[0-9]+"
+                            invalidMessage="Event length must be a positive integer"
                         />
                     </label>
-                    <label>
-                        <div class="ml-4">
-                            To
-                        </div>
+                    <div>
+                        <b class="ml-4 flex gap-1 items-center">
+                            Rough event duration
+                            <help-icon class="text-base font-normal">
+                                The rough event duration is used for generating the calendar,
+                                where you can select the detailed {{ calendarTypeDisplay }} of the event.
+                            </help-icon>
+                        </b>
+                        <label>
+                            <div class="mt-2 ml-4">
+                                From
+                            </div>
+                            <custom-input
+                                :type="selectedDateInputType"
+                                v-model="fromDate"
+                                :forceInvalidMessage="areDatesInvalid"
+                                invalidMessage="The 'From' date can't be after the 'To' date"
+                            />
+                        </label>
+                        <label>
+                            <div class="ml-4">
+                                To
+                            </div>
+                            <custom-input
+                                :type="selectedDateInputType"
+                                v-model="toDate"
+                                :forceInvalidMessage="areDatesInvalid"
+                                invalidMessage="The 'From' date can't be after the 'To' date"
+                            />
+                        </label>
+                    </div>
+                    <label class="flex flex-col gap-2">
+                        <b class="ml-4">Description</b>
                         <custom-input
-                            :type="selectedDateInputType"
-                            v-model="toDate"
-                            :forceInvalidMessage="areDatesInvalid"
-                            invalidMessage="The 'From' date can't be after the 'To' date"
+                            type="textarea"
+                            v-model="description"
+                            placeholder="Enter a description of the event"
+                            :ignoreValidity="true"
                         />
                     </label>
-                </div>
-                <label class="flex flex-col gap-2">
-                    <b class="ml-4">Description</b>
-                    <custom-input
-                        type="textarea"
-                        v-model="description"
-                        placeholder="Enter a description of the event"
-                        :ignoreValidity="true"
-                    />
-                </label>
-                <label class="flex flex-col gap-2">
-                    <b class="ml-4">Response deadline</b>
-                    <custom-input
-                        type="datetime-local"
-                        v-model="deadline"
-                    />
-                </label>
-                <div class="flex flex-col gap-2">
-                    <b class="ml-4">Send notifications</b>
-                    <div class="ml-3 flex flex-col gap-4">
-                        <custom-toggle
-                            v-if="eventType !== EventType.Public"
-                            class="mt-2"
-                            v-model="eventNotifications.afterCreation"
-                        >
-                            <template v-slot:right>
-                                <span class="ml-2">after the event is created</span>
-                            </template>
-                        </custom-toggle>
-
-                        <custom-toggle
-                            v-model="eventNotifications.afterUpdate"
-                        >
-                            <template v-slot:right>
-                                <span class="ml-2">when the event is updated</span>
-                            </template>
-                        </custom-toggle>
-
-                        <div class="flex flex-col gap-1">
+                    <label class="flex flex-col gap-2">
+                        <b class="ml-4">Response deadline</b>
+                        <custom-input
+                            type="datetime-local"
+                            v-model="deadline"
+                        />
+                    </label>
+                    <div class="flex flex-col gap-2">
+                        <b class="ml-4">Send notifications</b>
+                        <div class="ml-3 flex flex-col gap-4">
                             <custom-toggle
                                 v-if="eventType !== EventType.Public"
-                                v-model="eventNotifications.beforeDeadline"
+                                class="mt-2"
+                                v-model="eventNotifications.afterCreation"
                             >
                                 <template v-slot:right>
-                                    <div class="ml-2 flex gap-1 items-center">
-                                        <div>before the deadline</div>
-                                        <help-icon @click.stop>
-                                            Notify the participants who haven't responded yet, that the deadline is approaching.
-                                        </help-icon>
-                                    </div>
+                                    <span class="ml-2">after the event is created</span>
                                 </template>
                             </custom-toggle>
-                            <label
-                                v-if="eventNotifications.beforeDeadline"
-                                class="ml-8"
+
+                            <custom-toggle
+                                v-model="eventNotifications.afterUpdate"
                             >
-                                <custom-input
-                                    type="datetime-local"
-                                    v-model="eventNotificationsDeadline"
-                                    :required="eventNotifications.beforeDeadline"
-                                />
-                            </label>
+                                <template v-slot:right>
+                                    <span class="ml-2">when the event is updated</span>
+                                </template>
+                            </custom-toggle>
+
+                            <div class="flex flex-col gap-1">
+                                <custom-toggle
+                                    v-if="eventType !== EventType.Public"
+                                    v-model="eventNotifications.beforeDeadline"
+                                >
+                                    <template v-slot:right>
+                                        <div class="ml-2 flex gap-1 items-center">
+                                            <div>before the deadline</div>
+                                            <help-icon @click.stop>
+                                                Notify the participants who haven't responded yet, that the deadline is approaching.
+                                            </help-icon>
+                                        </div>
+                                    </template>
+                                </custom-toggle>
+                                <label
+                                    v-if="eventNotifications.beforeDeadline"
+                                    class="ml-8"
+                                >
+                                    <custom-input
+                                        type="datetime-local"
+                                        v-model="eventNotificationsDeadline"
+                                        :required="eventNotifications.beforeDeadline"
+                                    />
+                                </label>
+                            </div>
                         </div>
                     </div>
+                    <custom-button
+                        v-if="!isEditing"
+                        class="mt-3 mb-6"
+                        @click="onCreateEvent"
+                    >
+                        Create new event <custom-icon class="text-base" icon="event_available" />
+                    </custom-button>
+                    <custom-button
+                        v-else
+                        class="mt-3 mb-6"
+                        @click="onUpdateEvent"
+                    >
+                        Update event <custom-icon class="text-base" icon="edit_calendar" />
+                    </custom-button>
                 </div>
-                <custom-button
-                    v-if="!isEditing"
-                    class="mt-3 mb-6"
-                    @click="onCreateEvent"
-                >
-                    Create new event <custom-icon class="text-base" icon="event_available" />
-                </custom-button>
-                <custom-button
-                    v-else
-                    class="mt-3 mb-6"
-                    @click="onUpdateEvent"
-                >
-                    Update event <custom-icon class="text-base" icon="edit_calendar" />
-                </custom-button>
-            </div>
-        </template>
-        <template v-slot:calendar_input>
-            <div class="bg-main-000 h-full">
-                <calendar
-                    v-if="calendarType"
-                    v-model:selectedDateRanges="selectedDateRanges"
-                    :roughEventDateRange="roughEventDateRange"
-                    :calendarType="calendarType"
-                />
-            </div>
-        </template>
-    </tab-controller>
+            </template>
+            <template v-slot:calendar_input>
+                <div class="bg-main-000 h-full">
+                    <calendar
+                        v-if="calendarType"
+                        v-model:selectedDateRanges="selectedDateRanges"
+                        :roughEventDateRange="roughEventDateRange"
+                        :calendarType="calendarType"
+                    />
+                </div>
+            </template>
+        </tab-controller>
+    </logged-in-wrapper>
 </template>
 
 <script lang="ts">
 import ApiService from "@/utils/ApiService";
 import { initializeDateInput, addUnitsToDate } from "@/utils/dates";
+
+import LoggedInWrapper from "@/pages/wrappers/LoggedInWrapper.vue";
 
 import CustomInput from "@/components/ui/CustomInput.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
@@ -323,6 +327,7 @@ export default {
         }
     },
     components: {
+        LoggedInWrapper,
         Calendar,
         TabController,
         CustomInput,

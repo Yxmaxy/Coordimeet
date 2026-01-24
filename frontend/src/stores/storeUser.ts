@@ -1,8 +1,9 @@
 import { defineStore } from "pinia";
 import { CoordimeetUser } from "@/types/user";
 
-import ApiService from "@/utils/ApiService";
+import { useStoreMessages } from "@/stores/storeMessages";
 
+import ApiService from "@/utils/ApiService";
 import NotificationService from "@/utils/NotificationService";
 
 
@@ -18,6 +19,10 @@ export const useStoreUser = defineStore("storeUser", {
             if (this.user) return;
             const response = await ApiService.get<CoordimeetUser>("/users/current-user/");
             this.user = response;
+            if (this.user?.is_anonymous) {
+                const storeMessages = useStoreMessages();
+                storeMessages.showMessage("You are logged in as an anonymous user");
+            }
         },
         async onLogout() {
             await NotificationService.unsubscribe();

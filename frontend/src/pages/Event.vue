@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-main-000 h-full">
+    <logged-in-wrapper class="bg-main-000 h-full">
         <!-- NotLoggedIn -->
         <div
             v-if="pageTypeIn(EventPageType.NotLoggedIn) && eventData"
@@ -309,7 +309,7 @@
                 />
             </template>
         </tab-controller>
-    </div>
+    </logged-in-wrapper>
 </template>
 
 <script lang="ts">
@@ -323,6 +323,8 @@ import { Event, EventNotification, EventNotificationType, EventPageType, EventPa
 import { Tab } from "@/types/tabs";
 import { CoordimeetMember, CoordimeetMemberRole } from "@/types/user";
 import { initializeDateInput, formatDateRange, addUnitsToDate } from "@/utils/dates";
+
+import LoggedInWrapper from "@/pages/wrappers/LoggedInWrapper.vue";
 
 import EventData from "@/components/EventData.vue";
 import Calendar from "@/components/Calendar.vue";
@@ -340,6 +342,7 @@ interface DateChoice {
 
 export default {
     components: {
+        LoggedInWrapper,
         Calendar,
         TabController,
         EventData,

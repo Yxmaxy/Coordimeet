@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-main-000">
+    <logged-in-wrapper class="bg-main-000">
         <tab-controller :tabs="tabs" :breakpoint="750">
             <template v-slot:events_invited>
                 <event-list-component :events="eventsInvited" />
@@ -15,7 +15,7 @@
         >
             <custom-icon icon="add"/> New event
         </custom-button>
-    </div>
+    </logged-in-wrapper>
 </template>
 
 <script lang="ts">
@@ -26,6 +26,8 @@ import { useStoreOnline } from "@/stores/storeOnline";
 
 import { Event } from "@/types/event";
 import { Tab } from "@/types/tabs";
+
+import LoggedInWrapper from "@/pages/wrappers/LoggedInWrapper.vue";
 
 import EventListComponent from "@/components/EventListComponent.vue";
 import TabController from "@/components/TabController.vue";
@@ -48,6 +50,7 @@ const tabs = [
 export default {
     name: "EventList",
     components: {
+        LoggedInWrapper,
         EventListComponent,
         TabController,
         CustomButton,

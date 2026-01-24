@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-main-000">
+    <logged-in-wrapper class="bg-main-000">
         <tab-controller :tabs="tabs" :breakpoint="750">
             <template v-slot:groups>
                 <div class="flex flex-col mt-2">
@@ -41,7 +41,7 @@
         >
             <custom-icon icon="add"/> New Group
         </custom-button>
-    </div>
+    </logged-in-wrapper>
 </template>
 
 <script lang="ts">
@@ -53,6 +53,7 @@ import { useStoreOnline } from "@/stores/storeOnline";
 import { CoordimeetGroup, CoordimeetMemberRole } from "@/types/user";
 import { Tab } from "@/types/tabs";
 
+import LoggedInWrapper from "@/pages/wrappers/LoggedInWrapper.vue";
 import TabController from "@/components/TabController.vue";
 import CustomButton from "@/components/ui/CustomButton.vue";
 import CustomIcon from "@/components/ui/CustomIcon.vue";
@@ -68,6 +69,7 @@ const tabs = [
 export default {
     name: "GroupList",
     components: {
+        LoggedInWrapper,
         TabController,
         CustomButton,
         CustomIcon,
