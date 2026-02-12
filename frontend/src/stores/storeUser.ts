@@ -15,6 +15,10 @@ export const useStoreUser = defineStore("storeUser", {
         }
     },
     actions: {
+        async checkIfLoggedIn() {
+            const response = await ApiService.get<{is_logged_in: boolean}>("/users/is-logged-in/");
+            return response.is_logged_in;
+        },
         async getUser() {
             if (this.user) return;
             const response = await ApiService.get<CoordimeetUser>("/users/current-user/");

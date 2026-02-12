@@ -4,12 +4,12 @@
             <custom-icon icon="progress_activity" class="text-4xl animate-spin text-main-400" />
         </div>
     </div>
-    <template v-else>
+    <div v-else>
         <app-header>
             <user-component />
         </app-header>
         <slot></slot>
-    </template>
+    </div>
 </template>
 
 <script lang="ts">
