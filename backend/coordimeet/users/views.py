@@ -12,6 +12,13 @@ from coordimeet.users.services import CoordimeetUserServices
 from coordimeet.events.permissions import HasGroupOwnerOrAdminPermission, HasGroupOwnerPermission
 
 
+class IsLoggedInAPIView(APIView):
+    def get(self, request):
+        return Response({
+            "is_logged_in": request.user.is_authenticated or CoordimeetUserServices.get_anonymous_user_from_cookie(request) is not None,
+        })
+
+
 class CurrentUserAPIView(APIView):
     def get(self, request):
         coordimeet_user = CoordimeetUserServices.get_or_create_coordimeet_user_from_request(request)
