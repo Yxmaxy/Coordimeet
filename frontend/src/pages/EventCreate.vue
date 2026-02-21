@@ -209,8 +209,31 @@
                             v-model="deadline"
                         />
                     </label>
+                    <div class="ml-4 mb-4">
+                        <b>Notification method</b>
+                        <div class="flex flex-col gap-2 mt-3">
+                            <custom-radio
+                                type="radio"
+                                v-model="notificationMethod"
+                                :value="EventNotificationMethod.Push"
+                                text="Push notifications"
+                            />
+                            <custom-radio
+                                type="radio"
+                                v-model="notificationMethod"
+                                :value="EventNotificationMethod.Email"
+                                text="Email"
+                            />
+                            <custom-radio
+                                type="radio"
+                                v-model="notificationMethod"
+                                :value="EventNotificationMethod.Both"
+                                text="Both"
+                            />
+                        </div>
+                    </div>
                     <div class="flex flex-col gap-2">
-                        <b class="ml-4">Send notifications</b>
+                        <b class="ml-4">Send notifications at</b>
                         <div class="ml-3 flex flex-col gap-4">
                             <custom-toggle
                                 v-if="eventType !== EventType.Public"
@@ -307,7 +330,7 @@ import TabController from "@/components/TabController.vue";
 import { useStoreUser } from "@/stores/storeUser";
 import { useStoreMessages } from "@/stores/storeMessages";
 
-import { Event, EventType, EventNotification, EventNotificationType } from "@/types/event";
+import { Event, EventType, EventNotification, EventNotificationType, EventNotificationMethod } from "@/types/event";
 import { CalendarType, DateRange } from "@/types/calendar";
 import { CoordimeetGroup, CoordimeetUser, CoordimeetMember, CoordimeetMemberRole } from "@/types/user";
 import { SelectOption } from "@/types/ui";
@@ -321,6 +344,7 @@ export default {
             CalendarType,
             EventType,
             EventNotificationType,
+            EventNotificationMethod,
 
             user,
             storeMessages,
@@ -358,6 +382,7 @@ export default {
                 beforeDeadline: false,
             },
             eventNotificationsDeadline: initializeDateInput(CalendarType.DateHour, undefined, 1),
+            notificationMethod: EventNotificationMethod.Push,
 
             groupOptions: [] as SelectOption<number>[],
             groupInvited: undefined as number|undefined,
@@ -493,6 +518,7 @@ export default {
                 description: this.description,
                 event_length: this.length,
                 deadline: new Date(this.deadline),
+                notification_method: this.notificationMethod,
 
                 event_availability_options: this.selectedDateRanges,
                 event_notifications: eventNotifications,
@@ -616,6 +642,10 @@ export default {
                     beforeDeadline: res.event_notifications.some((notification: EventNotification) => notification.notification_type === EventNotificationType.BeforeDeadline),
                 };
                 this.eventNotificationsDeadline = initializeDateInput(CalendarType.DateHour, res.event_notifications.find((notification: EventNotification) => notification.notification_type === EventNotificationType.BeforeDeadline)?.notification_time?.toString());
+
+                if (res.notification_method) {
+                    this.notificationMethod = res.notification_method;
+                }
             })
             .catch(() => {
                 this.storeMessages.showMessageError("Failed to fetch event data.");

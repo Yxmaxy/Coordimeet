@@ -17,6 +17,12 @@ class EventCalendarTypeChoices(models.IntegerChoices):
     DATE_HOUR = 2, "Date and hour"
 
 
+class EventNotificationMethodChoices(models.IntegerChoices):
+    PUSH = 1, "Push notifications"
+    EMAIL = 2, "Email"
+    BOTH = 3, "Both"
+
+
 class Event(models.Model):
     title = models.CharField(max_length=255)
     event_uuid = models.UUIDField(
@@ -55,6 +61,17 @@ class Event(models.Model):
         help_text="Event length in units based on the event_calendar_type"
     )
     deadline = models.DateTimeField()
+
+    notification_method = models.IntegerField(
+        choices=EventNotificationMethodChoices.choices,
+        default=EventNotificationMethodChoices.PUSH,
+        help_text="Method to use for sending event notifications"
+    )
+    email_thread_message_ids = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of email Message-IDs for threading emails in this event"
+    )
 
     selected_start_date = models.DateTimeField(null=True, blank=True)
     selected_end_date = models.DateTimeField(null=True, blank=True)

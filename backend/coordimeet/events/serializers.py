@@ -52,6 +52,7 @@ class EventSerializer(serializers.ModelSerializer):
             "description",
             "event_length",
             "deadline",
+            "notification_method",
             "selected_start_date",
             "selected_end_date",
             "closed_group_users",

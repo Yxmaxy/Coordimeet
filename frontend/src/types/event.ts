@@ -28,6 +28,12 @@ export interface EventNotification {
     notification_time?: Date,
 }
 
+export enum EventNotificationMethod {
+    Push = 1,
+    Email = 2,
+    Both = 3,
+}
+
 export interface Event {
     pk?: number,
 
@@ -43,6 +49,7 @@ export interface Event {
     description?: string,
     event_length: number,
     deadline: Date,
+    notification_method?: EventNotificationMethod,
 
     selected_start_date: Date | null,
     selected_end_date: Date | null,

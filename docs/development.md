@@ -31,11 +31,11 @@ After that also copy the `frontend/.env.example` file and copy the public notifi
 
 4. Change to the `backend` directory and run the Celery worker:
     ```bash
-    celery -A coordimeet worker -l INFO -E
+    celery -A example_app worker -l INFO -E
     ```
     If you want to clear the task queue, you can use the following command:
     ```bash
-    celery -A coordimeet purge -f
+    celery -A example_app purge -f
     ```
 
 
