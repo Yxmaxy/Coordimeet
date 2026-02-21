@@ -46,9 +46,9 @@ include-package-data = true
 coordimeet = "backend/coordimeet"
 
 [tool.setuptools.package-data]
-"coordimeet.users" = ["migrations/*.py", "migrations/*/*.py", "templates/*.txt"]
-"coordimeet.events" = ["migrations/*.py", "migrations/*/*.py", "templates/*.txt"]
-"coordimeet.notifications" = ["migrations/*.py", "migrations/*/*.py", "templates/*.txt"]
+"coordimeet.users" = ["migrations/*.py", "migrations/*/*.py"]
+"coordimeet.events" = ["migrations/*.py", "migrations/*/*.py"]
+"coordimeet.notifications" = ["migrations/*.py", "migrations/*/*.py", "templates/*.html"]
 
 [tool.setuptools.dynamic]
 version = {file = "version.txt"}
