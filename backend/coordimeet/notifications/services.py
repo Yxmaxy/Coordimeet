@@ -3,7 +3,7 @@ from celery import shared_task
 from celery.worker.control import revoke
 from datetime import datetime
 
-from simple_notifications.services import NotificationService
+from simple_notifications.services import NotificationService, NotificationSubscriptionService
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
@@ -105,12 +105,8 @@ class NotificationUtilityServices:
 
         # send push notification if method is PUSH or BOTH
         if event.notification_method in [EventNotificationMethodChoices.PUSH, EventNotificationMethodChoices.BOTH]:
-            subscription = NotificationService.get_user_subscription(
-                user=coordimeet_user,
-                app_name=settings.COORDIMEEET_NOTIFICATIONS_APP_NAME,
-            )
-
-            if subscription:
+            subscriptions = NotificationSubscriptionService.get_user_subscriptions(coordimeet_user)
+            for subscription in subscriptions:
                 NotificationService.send_push_notification(
                     subscription=subscription,
                     title=title,
@@ -291,7 +287,7 @@ class NotificationUtilityServices:
         """Send a notification to all members of a group at a specific time."""
 
         return NotificationUtilityServices._send_async_group_notification.apply_async(
-            args=[group.id, title, body, data or {}, event.id],
+            args=[group.id, title, body, event.id, data or {}],
             eta=time,
         )
 

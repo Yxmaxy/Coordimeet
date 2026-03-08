@@ -27,6 +27,7 @@ dependencies = [
     "celery>=5.6",
     "wonderwords>=3.0",
     "icalendar>=6.3",
+    "django-simple-notifications @ git+https://github.com/Yxmaxy/django-simple-notifications.git@v2.0.0",
 ]
 
 [project.urls]
@@ -39,6 +40,7 @@ packages = [
     "coordimeet.users",
     "coordimeet.events",
     "coordimeet.notifications",
+    "coordimeet.friends",
 ]
 include-package-data = true
 
@@ -46,9 +48,10 @@ include-package-data = true
 coordimeet = "backend/coordimeet"
 
 [tool.setuptools.package-data]
-"coordimeet.users" = ["migrations/*.py", "migrations/*/*.py"]
-"coordimeet.events" = ["migrations/*.py", "migrations/*/*.py"]
-"coordimeet.notifications" = ["migrations/*.py", "migrations/*/*.py", "templates/*.html"]
+"coordimeet.users" = ["migrations/*.py"]
+"coordimeet.events" = ["migrations/*.py"]
+"coordimeet.notifications" = ["migrations/*.py", "templates/*.html"]
+"coordimeet.friends" = ["migrations/*.py"]
 
 [tool.setuptools.dynamic]
 version = {file = "version.txt"}

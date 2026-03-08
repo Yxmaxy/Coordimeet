@@ -48,6 +48,9 @@ INSTALLED_APPS = [
     "coordimeet.events",
     "coordimeet.friends",
     "coordimeet.notifications",
+
+    # internal apps
+    "example_app.coordimeet",
 ]
 
 MIDDLEWARE = [
@@ -142,9 +145,6 @@ SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = False
 
 # Coordimeet
-COORDIMEEET_NOTIFICATIONS_APP_NAME = os.getenv(
-    "COORDIMEEET_NOTIFICATIONS_APP_NAME"
-)
 COORDIMEET_FRONTEND_URL = os.getenv("COORDIMEET_FRONTEND_URL")
 COORDIMEET_BACKEND_URL = os.getenv("COORDIMEET_BACKEND_URL")
 
