@@ -46,9 +46,8 @@ After that also copy the `frontend/.env.example` file and copy the public notifi
 
 ## Repo
 - git clone https://github.com/Yxmaxy/Coordimeet
-- cd Coordimeet/backend
-- pip install -r requirements.txt
-- cd ..
+- cd Coordimeet
+- pip install -e .
 - cp .env.example .env
 - Change the variables...
 
@@ -167,11 +166,12 @@ restart() {
 
 
 ## Frontend
-- apk add --update npm
+- apk add --update nodejs npm
+- npm install -g pnpm@10
 - su website
-- cd /home/website/Coordimeet/frontende
-- npx npm-check-updates -u  # update if needed (if newer node version was installed)
-- npm run build
+- cd /home/website/Coordimeet/frontend
+- pnpm install --frozen-lockfile
+- pnpm build
 
 ### nginx
 - apk add nginx

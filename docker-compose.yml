@@ -14,7 +14,8 @@ services:
   backend:
     container_name: coordimeet-backend
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     volumes:
       - ./backend:/app
     ports:
@@ -27,8 +28,8 @@ services:
   celery:
     container_name: coordimeet-celery
     build:
-      context: ./backend
-      dockerfile: DockerfileCelery
+      context: .
+      dockerfile: backend/DockerfileCelery
     volumes:
       - ./backend:/app
     depends_on:

@@ -16,12 +16,19 @@ After that also copy the `frontend/.env.example` file and copy the public notifi
     docker compose up db cache -d
     ```
 
-2. Create a new [conda](https://docs.conda.io/en/latest/) environment and install the required packages:
+2. Create a new [conda](https://docs.conda.io/en/latest/) environment and install the package in editable mode (reads dependencies from `pyproject.toml`):
     ```bash
     conda create -n coordimeet python=3.12
     conda activate coordimeet
-    pip install -r requirements.txt
+    pip install -e .
     ```
+
+    Alternatively, use [uv](https://docs.astral.sh/uv/) which manages its own venv:
+    ```bash
+    uv sync
+    ```
+
+    Dependency upper bounds live in `pyproject.toml`. To re-resolve within bounds run `uv lock --upgrade`. The `tool.uv.exclude-newer` field quarantines packages published in the last ~14 days; bump it manually when needed.
 
 3. Change to the `backend` directory and run the Django server:
     ```bash
@@ -40,18 +47,18 @@ After that also copy the `frontend/.env.example` file and copy the public notifi
 
 
 ## Frontend (Vue)
-1. Change to the `frontend` directory and install the required packages:
+1. Change to the `frontend` directory and install the required packages with [pnpm](https://pnpm.io/):
     ```bash
     cd frontend
-    npm ci
+    pnpm install --frozen-lockfile
     ```
 
 2. Start the development server and open the frontend at `http://localhost:3000` (so that push notifications work):
     ```bash
-    npm run dev
+    pnpm dev
     ```
 
-If you want to build the application locally use `npm run build` and the files will be placed in the `frontend/dist` directory. You can then use `npm run preview` to preview the built application.
+If you want to build the application locally use `pnpm build` and the files will be placed in the `frontend/dist` directory. You can then use `pnpm preview` to preview the built application.
 
 # Docker development
 To use docker follow these steps:

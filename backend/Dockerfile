@@ -1,14 +1,17 @@
 FROM python:3.12-alpine3.19
 
-# Install build dependencies including git for pip git+ dependencies
 RUN apk add --no-cache gcc musl-dev libffi-dev git && \
     git --version
 
+COPY --from=ghcr.io/astral-sh/uv:0.10.6 /uv /usr/local/bin/uv
+
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+COPY pyproject.toml ./
+RUN uv sync --no-dev
 
-COPY . .
+COPY backend/ ./
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

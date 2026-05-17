@@ -7,6 +7,7 @@ name = "coordimeet"
 dynamic = ["version"]
 description = "Web application for coordinating events"
 readme = "README.md"
+requires-python = ">=3.12"
 authors = [
     { name = "Marko Vrečer" }
 ]
@@ -19,14 +20,14 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "Django>=4.2",
-    "djangorestframework>=3.16",
-    "django-cors-headers>=4.9",
-    "python-dotenv>=1.2",
-    "redis>=7.1",
-    "celery>=5.6",
-    "wonderwords>=3.0",
-    "icalendar>=6.3",
+    "Django>=4.2,<4.3",
+    "djangorestframework>=3.16,<4.0",
+    "django-cors-headers>=4.9,<5.0",
+    "python-dotenv>=1.2,<2.0",
+    "redis>=7.1,<8.0",
+    "celery>=5.6,<6.0",
+    "wonderwords>=3.0,<4.0",
+    "icalendar>=6.3,<7.0",
     "django-simple-notifications @ git+https://github.com/Yxmaxy/django-simple-notifications.git@v2.0.0",
 ]
 
@@ -55,3 +56,6 @@ coordimeet = "backend/coordimeet"
 
 [tool.setuptools.dynamic]
 version = {file = "version.txt"}
+
+[tool.uv]
+exclude-newer = "2026-04-26T00:00:00Z"

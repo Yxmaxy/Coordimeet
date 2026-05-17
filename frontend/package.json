@@ -2,6 +2,7 @@
   "name": "coordimeet",
   "private": true,
   "version": "0.0.0",
+  "packageManager": "pnpm@10.33.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host --port 3000",
@@ -9,22 +10,29 @@
     "preview": "vite preview --port 3001"
   },
   "dependencies": {
-    "pinia": "3.0.4",
-    "vue": "3.5.26",
-    "vue-router": "4.6.4",
-    "workbox-precaching": "7.4.0",
-    "django-session-api": "git+ssh://git@github.com:Yxmaxy/django-javascript-session-api.git#v1.1.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.26",
+    "vue-router": "^4.6.4",
+    "workbox-precaching": "^7.4.0",
+    "django-session-api": "git+ssh://git@github.com:Yxmaxy/django-javascript-session-api.git#v1.1.1",
     "django-simple-notifications": "git+ssh://git@github.com:Yxmaxy/django-simple-notifications.git#v2.0.0"
   },
   "devDependencies": {
-    "@types/node": "25.0.3",
-    "@vitejs/plugin-vue": "6.0.3",
-    "autoprefixer": "10.4.23",
-    "postcss": "8.5.6",
-    "tailwindcss": "3.3.2",
-    "typescript": "5.9.3",
-    "vite": "7.3.0",
-    "vite-plugin-pwa": "1.2.0",
-    "vue-tsc": "3.2.1"
+    "@types/node": "^25.0.3",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "autoprefixer": "^10.4.23",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.3.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0",
+    "vite-plugin-pwa": "^1.2.0",
+    "vue-tsc": "^3.2.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "django-session-api",
+      "django-simple-notifications",
+      "esbuild"
+    ]
   }
 }
