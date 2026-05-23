@@ -28,8 +28,6 @@ After that also copy the `frontend/.env.example` file and copy the public notifi
     uv sync
     ```
 
-    Dependency upper bounds live in `pyproject.toml`. To re-resolve within bounds run `uv lock --upgrade`. The `tool.uv.exclude-newer` field quarantines packages published in the last ~14 days; bump it manually when needed.
-
 3. Change to the `backend` directory and run the Django server:
     ```bash
     cd backend
