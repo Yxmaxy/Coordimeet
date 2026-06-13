@@ -13,7 +13,9 @@
     "pinia": "^3.0.4",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4",
+    "workbox-core": "^7.4.0",
     "workbox-precaching": "^7.4.0",
+    "workbox-window": "^7.4.0",
     "@yxmaxy/django-session-api": "^1.2.0",
     "@yxmaxy/django-simple-notifications": "^2.0.1"
   },
