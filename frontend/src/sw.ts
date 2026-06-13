@@ -1,6 +1,6 @@
 import { clientsClaim } from "workbox-core"
 import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching"
-import { serviceWorkerPushHandler } from "django-simple-notifications";
+import { serviceWorkerPushHandler } from "@yxmaxy/django-simple-notifications";
 
 declare let self: ServiceWorkerGlobalScope;
 declare const __APP_VERSION__: string | undefined;

@@ -14,8 +14,8 @@
     "vue": "^3.5.26",
     "vue-router": "^4.6.4",
     "workbox-precaching": "^7.4.0",
-    "django-session-api": "git+ssh://git@github.com:Yxmaxy/django-javascript-session-api.git#v1.1.1",
-    "django-simple-notifications": "git+ssh://git@github.com:Yxmaxy/django-simple-notifications.git#v2.0.0"
+    "@yxmaxy/django-session-api": "^1.2.0",
+    "@yxmaxy/django-simple-notifications": "^2.0.1"
   },
   "devDependencies": {
     "@types/node": "^25.0.3",
@@ -30,8 +30,6 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "django-session-api",
-      "django-simple-notifications",
       "esbuild"
     ]
   }

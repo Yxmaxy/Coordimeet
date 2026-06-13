@@ -1,5 +1,5 @@
-import { PushSubscriptionHelper } from "django-simple-notifications";
-import { getCookie } from "django-session-api";
+import { PushSubscriptionHelper } from "@yxmaxy/django-simple-notifications";
+import { getCookie } from "@yxmaxy/django-session-api";
 
 
 export default new PushSubscriptionHelper({

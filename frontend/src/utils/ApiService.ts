@@ -1,4 +1,4 @@
-import { createDjangoApi } from "django-session-api";
+import { createDjangoApi } from "@yxmaxy/django-session-api";
 import router from "./router";
 
 const api = createDjangoApi({
