@@ -11,23 +11,23 @@
   },
   "dependencies": {
     "pinia": "^3.0.4",
-    "vue": "^3.5.26",
+    "vue": "^3.5.35",
     "vue-router": "^4.6.4",
-    "workbox-core": "^7.4.0",
-    "workbox-precaching": "^7.4.0",
-    "workbox-window": "^7.4.0",
-    "@yxmaxy/django-session-api": "^1.2.0",
-    "@yxmaxy/django-simple-notifications": "^2.0.1"
+    "workbox-core": "^7.4.1",
+    "workbox-precaching": "^7.4.1",
+    "workbox-window": "^7.4.1",
+    "@yxmaxy/django-session-api": "^1.2.1",
+    "@yxmaxy/django-simple-notifications": "^2.1.0"
   },
   "devDependencies": {
-    "@types/node": "^25.0.3",
-    "@vitejs/plugin-vue": "^6.0.3",
-    "autoprefixer": "^10.4.23",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.3.2",
+    "@types/node": "^25.9.1",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "autoprefixer": "^10.5.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.9.3",
-    "vite": "^7.3.0",
-    "vite-plugin-pwa": "^1.2.0",
-    "vue-tsc": "^3.2.1"
+    "vite": "^7.3.3",
+    "vite-plugin-pwa": "^1.3.0",
+    "vue-tsc": "^3.3.3"
   }
 }
